@@ -1,261 +1,188 @@
-import { useEffect, useState } from "react";
-import Navigation from "@/components/Navigation";
-import Footer from "@/components/Footer";
-import { Card, CardContent } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Users, Trash2 } from "lucide-react";
 
-interface Member {
+interface Profile {
   id: string;
   full_name: string;
   email: string;
-  avatar_url?: string | null;
-  roles: string[];
 }
 
-const BDL = () => {
-  const [executiveMembers, setExecutiveMembers] = useState<Member[]>([]);
-  const [regularMembers, setRegularMembers] = useState<Member[]>([]);
-  const [content, setContent] = useState<Record<string, string>>({});
+interface BDLMember {
+  id: string;
+  user_id: string;
+  is_executive: boolean;
+  profiles: Profile;
+}
+
+export const BDLMembersManagement = () => {
+  const [members, setMembers] = useState<BDLMember[]>([]);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const [isExecutive, setIsExecutive] = useState(false);
 
   useEffect(() => {
     loadMembers();
-    loadContent();
+    loadProfiles();
   }, []);
 
-  const loadContent = async () => {
-    const { data } = await supabase
-      .from('bdl_content')
-      .select('*');
-    
-    if (data) {
-      const contentMap: Record<string, string> = {};
-      data.forEach(item => {
-        contentMap[item.section_key] = item.content;
-      });
-      setContent(contentMap);
-    }
-  };
-
   const loadMembers = async () => {
-    try {
-      // First, load BDL members with their profiles
-      const { data: bdlMembersData, error: membersError } = await supabase
-        .from('bdl_members')
-        .select(`
-          user_id,
-          is_executive,
-          display_order,
-          profiles!inner (
-            id,
-            full_name,
-            email,
-            avatar_url
-          )
-        `)
-        .order('is_executive', { ascending: false })
-        .order('display_order', { ascending: true });
+    const { data, error } = await supabase
+      .from('bdl_members' as any)
+      .select('id, user_id, is_executive, profiles(id, full_name, email)')
+      .order('is_executive', { ascending: false })
+      .order('display_order', { ascending: true });
 
-      if (membersError) {
-        console.error("Erreur chargement membres:", membersError);
-        toast.error("Erreur lors du chargement des membres");
-        return;
-      }
+    if (error) {
+      toast.error("Erreur lors du chargement des membres");
+    } else {
+      setMembers(data as unknown as BDLMember[]);
+    }
+  };
 
-      // Then, load roles for these users
-      const { data: roles, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('user_id, role');
+  const loadProfiles = async () => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, full_name, email')
+      .order('full_name');
 
-      if (rolesError) {
-        console.error("Erreur chargement rôles:", rolesError);
-        // Don't block if roles fail, just continue without them
-      }
+    if (error) {
+      toast.error("Erreur lors du chargement des profils");
+    } else {
+      setProfiles(data || []);
+    }
+  };
 
-      // Map the data
-      const members = (bdlMembersData || []).map((m: any) => {
-        const profile = m.profiles;
-        return {
-          id: profile.id,
-          full_name: profile.full_name,
-          email: profile.email,
-          avatar_url: profile.avatar_url || null,
-          roles: roles ? roles.filter(r => r.user_id === m.user_id).map(r => r.role) : [],
-          is_executive: m.is_executive
-        };
+  const handleAddMember = async () => {
+    if (!selectedUserId) {
+      toast.error("Veuillez sélectionner un utilisateur");
+      return;
+    }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('bdl_members' as any)
+      .insert({
+        user_id: selectedUserId,
+        is_executive: isExecutive,
+        added_by: user.id
       });
 
-      const executive = members.filter((m: any) => m.is_executive);
-      const regular = members.filter((m: any) => !m.is_executive);
-
-      setExecutiveMembers(executive);
-      setRegularMembers(regular);
-    } catch (err) {
-      console.error("Erreur inattendue:", err);
-      toast.error("Erreur lors du chargement des données");
+    if (error) {
+      if (error.code === '23505') {
+        toast.error("Ce membre est déjà dans la liste");
+      } else {
+        toast.error("Erreur lors de l'ajout du membre");
+      }
+    } else {
+      toast.success("Membre ajouté avec succès");
+      setSelectedUserId("");
+      setIsExecutive(false);
+      loadMembers();
     }
   };
 
-  const getRoleLabel = (role: string): string => {
-    const labels: Record<string, string> = {
-      'president': 'Président',
-      'vice_president': 'Vice-présidente',
-      'secretary_general': 'Secrétaire Générale',
-      'communication_manager': 'Responsable Communication',
-      'bdl_member': 'Membre BDL'
-    };
-    return labels[role] || role;
-  };
+  const handleRemoveMember = async (id: string) => {
+    if (!confirm("Êtes-vous sûr de vouloir retirer ce membre ?")) return;
 
-  const getInitials = (name: string): string => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-  };
+    const { error } = await supabase
+      .from('bdl_members' as any)
+      .delete()
+      .eq('id', id);
 
-  const getRoleGradient = (roles: string[]): string => {
-    if (roles.includes('president') || roles.includes('secretary_general')) return 'gradient-institutional';
-    if (roles.includes('vice_president') || roles.includes('communication_manager')) return 'gradient-gold';
-    return 'gradient-institutional';
-  };
-
-  const getPrimaryRole = (roles: string[]): string => {
-    const priority = ['president', 'vice_president', 'secretary_general', 'communication_manager', 'bdl_member'];
-    for (const role of priority) {
-      if (roles.includes(role)) return role;
+    if (error) {
+      toast.error("Erreur lors de la suppression");
+    } else {
+      toast.success("Membre retiré");
+      loadMembers();
     }
-    return roles[0] || 'bdl_member';
-  };
-
-  const renderMemberCard = (member: Member) => {
-    const primaryRole = getPrimaryRole(member.roles);
-    const gradient = getRoleGradient(member.roles);
-
-    return (
-      <Card 
-        key={member.id} 
-        className="group hover:shadow-elegant transition-all duration-300 hover:-translate-y-2"
-      >
-        <CardContent className="p-6 space-y-4">
-          <div className="flex flex-col items-center space-y-4">
-            {member.avatar_url ? (
-              <Avatar className="w-24 h-24 ring-4 ring-background group-hover:scale-110 transition-transform duration-300">
-                <AvatarImage src={member.avatar_url} alt={member.full_name} />
-                <AvatarFallback className={`${gradient} text-white text-2xl font-bold`}>
-                  {getInitials(member.full_name)}
-                </AvatarFallback>
-              </Avatar>
-            ) : (
-              <div className={`w-24 h-24 rounded-full ${gradient} flex items-center justify-center text-white text-2xl font-bold shadow-elegant ring-4 ring-background group-hover:scale-110 transition-transform duration-300`}>
-                {getInitials(member.full_name)}
-              </div>
-            )}
-            <div className="text-center space-y-2">
-              <h3 className="text-xl font-bold">{member.full_name}</h3>
-              <Badge variant="secondary" className="text-xs font-medium">
-                {getRoleLabel(primaryRole)}
-              </Badge>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navigation />
-      
-      <main className="flex-1">
-        <section className="py-16 gradient-institutional text-white">
-          <div className="container mx-auto px-4">
-            <div className="max-w-3xl mx-auto text-center space-y-4">
-              <h1 className="text-5xl font-bold">Le Bureau des Lycéens</h1>
-              <p className="text-xl">{content.hero_subtitle || 'Votre voix au sein de l\'établissement'}</p>
+    <Card className="shadow-card">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Users className="h-6 w-6" />
+          Gestion de l'Affichage BDL
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="border rounded-lg p-6 space-y-4 bg-muted/30">
+          <h3 className="font-semibold">Ajouter un membre à l'affichage</h3>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="user">Utilisateur</Label>
+              <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+                <SelectTrigger id="user">
+                  <SelectValue placeholder="Sélectionner un utilisateur" />
+                </SelectTrigger>
+                <SelectContent>
+                  {profiles.map((profile) => (
+                    <SelectItem key={profile.id} value={profile.id}>
+                      {profile.full_name} ({profile.email})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          </div>
-        </section>
-
-        <section className="py-16">
-          <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto space-y-8">
-              <Card className="shadow-card">
-                <CardContent className="p-8">
-                  <h2 className="text-3xl font-bold mb-6">{content.mission_title || 'Notre Mission'}</h2>
-                  <div 
-                    className="prose prose-lg max-w-none"
-                    dangerouslySetInnerHTML={{ 
-                      __html: content.mission_content || '<p>Le Bureau des Lycéens (BDL) du Lycée Saint-André est l\'instance représentative des élèves.</p>' 
-                    }}
-                  />
-                </CardContent>
-              </Card>
+            
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="executive"
+                checked={isExecutive}
+                onCheckedChange={setIsExecutive}
+              />
+              <Label htmlFor="executive">Membre de l'équipe exécutive</Label>
             </div>
+            
+            <Button onClick={handleAddMember}>
+              Ajouter à l'affichage
+            </Button>
           </div>
-        </section>
+        </div>
 
-        <section className="py-16 bg-muted/30">
-          <div className="container mx-auto px-4">
-            <div className="space-y-12">
-              <div>
-                <h2 className="text-4xl font-bold text-center mb-8">Équipe Exécutive</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
-                  {executiveMembers.map(renderMemberCard)}
-                </div>
-              </div>
-
-              {regularMembers.length > 0 && (
-                <div>
-                  <h2 className="text-4xl font-bold text-center mb-8">Membres</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
-                    {regularMembers.map(renderMemberCard)}
+        <div className="space-y-4">
+          <h3 className="font-semibold">Membres affichés</h3>
+          
+          {members.map((member) => (
+            <Card key={member.id} className="bg-muted/30">
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-2 flex-1">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-medium">{member.profiles.full_name}</h4>
+                      {member.is_executive && (
+                        <Badge variant="default">Exécutif</Badge>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {member.profiles.email}
+                    </p>
                   </div>
+                  
+                  <Button 
+                    size="sm" 
+                    variant="destructive"
+                    onClick={() => handleRemoveMember(member.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
-              )}
-            </div>
-          </div>
-        </section>
-
-        <section className="py-16">
-          <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
-              <h2 className="text-4xl font-bold text-center mb-12">{content.responsibilities_title || 'Nos Responsabilités'}</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {[
-                  {
-                    title: "Représentation des élèves",
-                    description: "Porter la voix des lycéens auprès de l'administration et participer aux instances décisionnelles."
-                  },
-                  {
-                    title: "Organisation d'événements",
-                    description: "Planifier et coordonner des événements culturels, sportifs et festifs tout au long de l'année."
-                  },
-                  {
-                    title: "Gestion des clubs",
-                    description: "Superviser les activités des clubs étudiants et faciliter leur développement."
-                  },
-                  {
-                    title: "Médiation et écoute",
-                    description: "Être à l'écoute des préoccupations des élèves et faciliter le dialogue au sein de l'établissement."
-                  }
-                ].map((item, index) => (
-                  <Card key={index} className="shadow-card">
-                    <CardContent className="p-6 space-y-3">
-                      <h3 className="text-xl font-semibold">{item.title}</h3>
-                      <p className="text-muted-foreground">{item.description}</p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
-      </main>
-
-      <Footer />
-    </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
-
-export default BDL;

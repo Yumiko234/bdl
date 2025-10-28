@@ -185,7 +185,7 @@ const BDL = () => {
                   <div 
                     className="prose prose-lg max-w-none"
                     dangerouslySetInnerHTML={{ 
-                      __html: content.mission_content || '<p>Le Bureau des Lycéens (BDL) du Lycée Saint-André est l\'instance représentative des élèves.</p>' 
+                      __html: content.mission_content || '<p>Le Bureau des Lycéens (BDL) du Lycée Saint-André est l'instance représentative des élèves. Il a pour mission de favoriser l'expression, la participation et l'engagementdes lycéens dans la vie de l'établissement, d'assurer le lien permenant entre les élèves, la communauté éducative et la direction, et de promouvoir les valeurs d'initiative, de respect et de responsabilité.</p>' 
                     }}
                   />
                 </CardContent>

@@ -42,15 +42,15 @@ const Documents = () => {
   const faq = [
     {
       question: "Comment puis-je contacter le BDL ?",
-      answer: "Vous pouvez nous contacter via le formulaire de contact sur notre site, nous rencontrer lors de nos permanences (lundi et jeudi 12h-14h en salle B103), ou nous envoyer un email à contact@bdl-saintandre.fr"
+      answer: "Vous pouvez nous contacter via le formulaire de contact sur notre site ou nous envoyer un email à contact@bdl-saintandre.fr"
     },
     {
       question: "Comment créer un nouveau club ?",
-      answer: "Pour créer un club, vous devez constituer un groupe d'au moins 10 élèves intéressés, désigner un président et un trésorier, puis soumettre un dossier au BDL comprenant : projet détaillé, budget prévisionnel et planning des activités. Le dossier sera examiné lors de la prochaine réunion du BDL."
+      answer: "La création de club n'est malheureusement pas possible pour le moment."
     },
     {
       question: "Comment accéder à l'intranet ?",
-      answer: "Les identifiants de connexion à l'intranet sont distribués en début d'année scolaire par les délégués de classe. En cas de perte ou de problème, contactez le secrétaire général du BDL."
+      answer: "Vous avez la possibilité de vous créer un compte via le formulaire dédié sur la page intranet. Veuillez renseigner des informations valides. En cas de perte ou de problème, contactez la Secrétaire Générale du BDL."
     },
     {
       question: "Puis-je proposer un événement ?",

@@ -82,6 +82,14 @@ const Footer = () => {
                 }}
               />
               <a 
+                href="https://www.instagram.com/bdllgsaintandre"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block text-muted-foreground hover:text-accent transition-colors"
+              >
+                Instagram — @bdllgsaintandre
+              </a>
+              <a 
                 href="https://www.st-andre.com" 
                 target="_blank" 
                 rel="noopener noreferrer" 

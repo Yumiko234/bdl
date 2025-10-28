@@ -51,6 +51,7 @@ const Footer = () => {
               <li><Link to="/etablissement" className="hover:text-accent transition-colors">L'Établissement</Link></li>
               <li><Link to="/bdl" className="hover:text-accent transition-colors">Le BDL</Link></li>
               <li><Link to="/clubs" className="hover:text-accent transition-colors">Clubs</Link></li>
+              <li><Link to="/contact" className="hover:text-accent transition-colors">Contact</Link></li>
             </ul>
           </div>
 
@@ -59,7 +60,8 @@ const Footer = () => {
             <ul className="space-y-2 text-sm">
               <li><Link to="/actualites" className="hover:text-accent transition-colors">Actualités</Link></li>
               <li><Link to="/documents" className="hover:text-accent transition-colors">Documents</Link></li>
-              <li><Link to="/contact" className="hover:text-accent transition-colors">Contact</Link></li>
+              <li><Link to="/evenements" className="hover:text-accent transition-colors">Évènements</Link></li>
+              <li><Link to="/jobdl" className="hover:text-accent transition-colors">JoBDL</Link></li>
               <li><Link to="/intranet" className="hover:text-accent transition-colors">Intranet</Link></li>
             </ul>
           </div>
@@ -79,6 +81,14 @@ const Footer = () => {
                   __html: content.contact_email || 'contact@bdl-saintandre.fr' 
                 }}
               />
+              <a 
+                href="https://www.st-andre.com" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="block text-muted-foreground hover:text-accent transition-colors"
+              >
+                www.st-andre.com
+              </a>
             </p>
           </div>
         </div>

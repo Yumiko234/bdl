@@ -136,7 +136,7 @@ const Auth = () => {
                             required
                             value={signupCredentials.fullName}
                             onChange={(e) => setSignupCredentials({ ...signupCredentials, fullName: e.target.value })}
-                            placeholder="Votre nom complet"
+                            placeholder="Votre Prénom et Nom complet"
                           />
                         </div>
 
@@ -148,7 +148,7 @@ const Auth = () => {
                             required
                             value={signupCredentials.email}
                             onChange={(e) => setSignupCredentials({ ...signupCredentials, email: e.target.value })}
-                            placeholder="votre.email@exemple.com"
+                            placeholder="votre.email@exemple.fr"
                           />
                         </div>
 

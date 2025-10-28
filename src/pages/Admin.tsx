@@ -137,7 +137,7 @@ const Admin = () => {
               <Shield className="h-16 w-16 mx-auto mb-4 text-destructive" />
               <h2 className="text-2xl font-bold mb-2">Accès Refusé</h2>
               <p className="text-muted-foreground">
-                Cette section est réservée aux membres du Bureau des Lycéens.
+                Cette section est réservée aux membres du Bureau des Lycéens. Si vous pensez qu'il s'agit d'une erreur, veuillez contacter la Secrétaire Générale.
               </p>
             </CardContent>
           </Card>
@@ -191,13 +191,13 @@ const Admin = () => {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <FileText className="h-6 w-6" />
-                      Demandes d'Audience ({audienceRequests.length})
+                      Gestion Demandes ({audienceRequests.length})
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {audienceRequests.length === 0 ? (
                       <p className="text-muted-foreground text-center py-8">
-                        Aucune demande d'audience pour le moment
+                        Aucun message pour le moment
                       </p>
                     ) : (
                       audienceRequests.map((request) => (

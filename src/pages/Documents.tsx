@@ -41,6 +41,10 @@ const Documents = () => {
 
   const faq = [
     {
+      question : "Comment rejoindre le BDL en tant que membre ?",
+      answer: "Pour devenir membre du BDL, vous devez être élève au Lycée général Saint-André et vous présenter à la Vie Scolaire ou à un membre de l'Exécutif. Renseignez-vous auprès de la Secrétaire Générale pour plus d'informations."
+    },
+    {
       question: "Comment puis-je contacter le BDL ?",
       answer: "Vous pouvez nous contacter via le formulaire de contact sur notre site ou nous envoyer un email à contact@bdl-saintandre.fr"
     },

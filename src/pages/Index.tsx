@@ -77,7 +77,7 @@ const Index = () => {
                   </Button>
                 </Link>
                 <Link to="/intranet">
-                  <Button size="lg" variant="outline" className="text-lg px-8 border-white text-white hover:bg-white hover:text-primary">
+                  <Button size="lg" variant="outline" className="text-lg px-8 border-white text-black hover:bg-white hover:text-primary">
                     Accès Intranet
                   </Button>
                 </Link>
@@ -92,7 +92,7 @@ const Index = () => {
             <div className="flex items-center justify-center gap-2 text-sm md:text-base">
               <AlertCircle className="h-5 w-5 text-accent flex-shrink-0" />
               <p className="text-center">
-                <span className="font-semibold">Site destiné à tous et aux membres de l'établissement.</span>
+                <span className="font-semibold">Site d'informations disponible à tous.</span>
                 {" "}Connexion requise pour accéder à certains contenus.
               </p>
             </div>

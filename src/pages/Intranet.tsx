@@ -36,7 +36,7 @@ const Intranet = () => {
               <Shield className="h-20 w-20 mx-auto" />
               <h1 className="text-5xl font-bold">Bienvenue sur l'Intranet</h1>
               <p className="text-xl">Espace réservé aux membres authentifiés</p>
-              <Button variant="outline" onClick={signOut} className="border-white text-white hover:bg-white hover:text-primary">
+              <Button variant="outline" onClick={signOut} className="border-white text-black hover:bg-white hover:text-primary">
                 Se déconnecter
               </Button>
             </div>
@@ -65,25 +65,11 @@ const Intranet = () => {
 
                 <Card className="shadow-card">
                   <CardContent className="p-6 space-y-4">
-                    <div className="w-12 h-12 rounded-lg gradient-gold flex items-center justify-center">
-                      <FileText className="h-6 w-6 text-secondary" />
-                    </div>
-                    <h3 className="text-xl font-semibold">
-                      Documents Internes
-                    </h3>
-                    <p className="text-muted-foreground">
-                      Accès aux documents réservés aux membres
-                    </p>
-                  </CardContent>
-                </Card>
-
-                <Card className="shadow-card">
-                  <CardContent className="p-6 space-y-4">
                     <div className="w-12 h-12 rounded-lg gradient-institutional flex items-center justify-center">
                       <MessageSquare className="h-6 w-6 text-white" />
                     </div>
                     <h3 className="text-xl font-semibold">
-                      Forum de Classe
+                      Forum de Classe | Fonctionnalité en développement
                     </h3>
                     <p className="text-muted-foreground">
                       Discussions avec les élèves de votre classe
@@ -97,7 +83,7 @@ const Intranet = () => {
                       <Users className="h-6 w-6 text-secondary" />
                     </div>
                     <h3 className="text-xl font-semibold">
-                      Annuaire
+                      Annuaire | Fonctionnalité en développement
                     </h3>
                     <p className="text-muted-foreground">
                       Liste des membres et délégués de classe

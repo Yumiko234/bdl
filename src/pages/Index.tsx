@@ -97,9 +97,9 @@ const Index = () => {
               <AlertCircle className="h-5 w-5 text-accent flex-shrink-0" />
               <p className="text-center">
                 <span className="font-semibold">
-                  Site d'informations disponible à tous.
+                  Site d’information accessible à tous.
                 </span>{" "}
-                Connexion requise pour accéder à certains contenus.
+                Une connexion est requise pour consulter certains contenus.
               </p>
             </div>
           </div>
@@ -112,7 +112,7 @@ const Index = () => {
               <CardContent className="p-8 md:p-12">
                 <div className="flex flex-col md:flex-row gap-8 items-start">
                   <div className="flex-shrink-0">
-                    <div className="w-24 h-24 rounded-full bg-gradient-institutional flex items-center justify-center text-white text-3xl font-bold shadow-elegant">
+                    <div className="w-24 h-24 rounded-full bg-gradient-institutional flex items-center justify-center text-gold text-3xl font-bold shadow-elegant">
                       AL
                     </div>
                   </div>

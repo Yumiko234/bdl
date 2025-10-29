@@ -1,0 +1,107 @@
+/* ==============================
+   Journal Officiel du BDL
+   Feuille institutionnelle
+   ============================== */
+
+.journal-article {
+  /* Typographie institutionnelle */
+  font-family: "Georgia", "Times New Roman", serif;
+  color: #1a1a1a;
+  line-height: 1.7;
+  font-size: 1.05rem;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+/* Titres hiérarchisés */
+.journal-article h1,
+.journal-article h2,
+.journal-article h3 {
+  text-align: center;
+  font-weight: 700;
+  margin: 2rem 0 1rem 0;
+  line-height: 1.3;
+}
+
+.journal-article h1 {
+  font-size: 2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.journal-article h2 {
+  font-size: 1.5rem;
+  font-style: italic;
+}
+
+.journal-article h3 {
+  font-size: 1.25rem;
+}
+
+/* Paragraphes justifiés */
+.journal-article p {
+  text-align: justify;
+  margin-bottom: 1rem;
+}
+
+/* Mise en valeur typographique */
+.journal-article strong {
+  font-weight: 600;
+}
+
+.journal-article em {
+  font-style: italic;
+}
+
+/* Citations et références */
+.journal-article blockquote {
+  margin: 1.5rem 2rem;
+  padding: 0.75rem 1.25rem;
+  border-left: 4px solid #2c3e50;
+  background-color: #f9f9f9;
+  font-style: italic;
+  color: #333;
+}
+
+/* Sections juridiques */
+.journal-article .decision,
+.journal-article .decret {
+  border-top: 2px solid #000;
+  padding-top: 1rem;
+  margin-top: 2rem;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+/* Signatures finales */
+.journal-article .signature {
+  margin-top: 3rem;
+  text-align: right;
+  font-style: italic;
+}
+
+/* Mentions NOR et dates */
+.journal-article .nor {
+  font-size: 0.95rem;
+  font-style: italic;
+  color: #555;
+}
+
+.journal-article .date-publication {
+  font-size: 0.95rem;
+  color: #444;
+}
+
+/* Adaptation aux classes Quill (ou TipTap) */
+.journal-article .ql-align-center {
+  text-align: center;
+}
+
+.journal-article .ql-align-right {
+  text-align: right;
+}
+
+.journal-article .ql-align-justify {
+  text-align: justify;
+}

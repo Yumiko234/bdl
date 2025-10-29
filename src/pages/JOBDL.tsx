@@ -1,11 +1,18 @@
 import { useEffect, useState } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import "@/styles/journal.css"; // ✅ Feuille institutionnelle
 
 interface JournalEntry {
   id: string;
@@ -28,9 +35,9 @@ const JOBDL = () => {
 
   const loadEntries = async () => {
     const { data, error } = await supabase
-      .from('official_journal' as any)
-      .select('*')
-      .order('publication_date', { ascending: false });
+      .from("official_journal" as any)
+      .select("*")
+      .order("publication_date", { ascending: false });
 
     if (error) {
       toast.error("Erreur lors du chargement du journal");
@@ -42,10 +49,10 @@ const JOBDL = () => {
   const getRoleLabel = (role: string | null): string => {
     if (!role) return "BDL";
     const labels: Record<string, string> = {
-      'president': 'Le Président',
-      'vice_president': 'La Vice-Présidente',
-      'secretary_general': 'La Secrétaire Générale',
-      'communication_manager': 'Le Responsable Communication'
+      president: "Le Président",
+      vice_president: "La Vice-Présidente",
+      secretary_general: "La Secrétaire Générale",
+      communication_manager: "Le Responsable Communication"
     };
     return labels[role] || "BDL";
   };
@@ -53,17 +60,23 @@ const JOBDL = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navigation />
-      
+
       <main className="flex-1">
+        {/* En-tête institutionnel */}
         <section className="py-16 gradient-institutional text-white">
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center space-y-4">
-              <h1 className="text-5xl font-bold">Journal Officiel du BDL</h1>
-              <p className="text-xl">Communications officielles du Bureau des Lycéens</p>
+              <h1 className="text-5xl font-bold">
+                Journal Officiel du Bureau des Lycéens
+              </h1>
+              <p className="text-xl">
+                Communications et décisions officielles du Bureau des Lycéens
+              </p>
             </div>
           </div>
         </section>
 
+        {/* Corps du Journal */}
         <section className="py-16">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto space-y-8">
@@ -75,26 +88,39 @@ const JOBDL = () => {
                 </Card>
               ) : (
                 entries.map((entry) => (
-                  <Card key={entry.id} className="shadow-card">
+                  <Card
+                    key={entry.id}
+                    className="shadow-card hover:shadow-elegant transition-all duration-300"
+                  >
                     <CardHeader>
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
-                          <CardTitle className="text-2xl">{entry.title}</CardTitle>
+                          <CardTitle className="text-2xl font-bold">
+                            {entry.title}
+                          </CardTitle>
                           <CardDescription className="italic mt-2">
                             NOR : {entry.nor_number}
                           </CardDescription>
                           <CardDescription>
-                            Publié le {new Date(entry.publication_date).toLocaleDateString('fr-FR', {
-                              day: 'numeric',
-                              month: 'long',
-                              year: 'numeric'
+                            Publié le{" "}
+                            {new Date(
+                              entry.publication_date
+                            ).toLocaleDateString("fr-FR", {
+                              day: "numeric",
+                              month: "long",
+                              year: "numeric"
                             })}
                           </CardDescription>
                         </div>
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => setExpandedEntry(expandedEntry === entry.id ? null : entry.id)}
+                          onClick={() =>
+                            setExpandedEntry(
+                              expandedEntry === entry.id ? null : entry.id
+                            )
+                          }
+                          className="mt-1"
                         >
                           {expandedEntry === entry.id ? (
                             <ChevronUp className="h-4 w-4" />
@@ -104,17 +130,21 @@ const JOBDL = () => {
                         </Button>
                       </div>
                     </CardHeader>
+
+                    {/* ✅ Contenu stylé avec la feuille institutionnelle */}
                     {expandedEntry === entry.id && (
                       <CardContent>
-                        <div 
-                          className="prose prose-sm max-w-none dark:prose-invert mb-4"
+                        <article
+                          className="journal-article"
                           dangerouslySetInnerHTML={{ __html: entry.content }}
                         />
+
                         {entry.author_name && (
                           <div className="flex items-center gap-2 mt-4 pt-4 border-t">
                             <span className="text-sm text-muted-foreground">
                               Par {entry.author_name}
-                              {entry.author_role && ` - ${getRoleLabel(entry.author_role)}`}
+                              {entry.author_role &&
+                                ` — ${getRoleLabel(entry.author_role)}`}
                             </span>
                           </div>
                         )}

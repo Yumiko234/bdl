@@ -161,6 +161,38 @@ All colors MUST be HSL.
 .rich-text-editor .ql-editor.ql-blank::before {
   @apply text-muted-foreground;
 }
-.ql-font-times-new-roman {
-  font-family: 'Times New Roman', Times, serif !important;
+
+/* ============================================================
+   Correctif d'affichage du menu déroulant d'interligne (Quill)
+   ============================================================ */
+
+/* Fond et bordure du menu */
+.ql-picker.ql-lineheight .ql-picker-options {
+  background-color: #f9f9f9;
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  z-index: 100;
+}
+
+/* Options visibles et lisibles */
+.ql-picker.ql-lineheight .ql-picker-item {
+  color: #000001;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.ql-picker.ql-lineheight .ql-picker-item:hover {
+  background-color: #e6e6e6;
+}
+
+/* Texte de l’option actuellement sélectionnée */
+.ql-picker.ql-lineheight .ql-picker-label {
+  color: #000001;
+  background-color: #fff;
+  border: 1px solid #ccc;
+}
+
+/* Pour que le texte soit visible dans tous les thèmes */
+.ql-snow .ql-picker-options {
+  color: #000001 !important;
 }

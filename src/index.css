@@ -161,3 +161,6 @@ All colors MUST be HSL.
 .rich-text-editor .ql-editor.ql-blank::before {
   @apply text-muted-foreground;
 }
+.ql-font-times-new-roman {
+  font-family: 'Times New Roman', Times, serif !important;
+}

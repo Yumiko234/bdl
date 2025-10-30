@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import "@/styles/journal.css"; // ✅ Feuille institutionnelle
+import "@/styles/journal.css"; // ✅ Feuille institutionnelle commune (mêmes styles que l'éditeur)
 
 interface JournalEntry {
   id: string;
@@ -58,7 +58,7 @@ const JOBDL = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-background">
       <Navigation />
 
       <main className="flex-1">
@@ -79,7 +79,7 @@ const JOBDL = () => {
         {/* Corps du Journal */}
         <section className="py-16">
           <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto space-y-8">
+            <div className="max-w-4xl mx-auto space-y-10">
               {entries.length === 0 ? (
                 <Card className="shadow-card">
                   <CardContent className="p-8 text-center text-muted-foreground">
@@ -95,21 +95,22 @@ const JOBDL = () => {
                     <CardHeader>
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
-                          <CardTitle className="text-2xl font-bold">
+                          <CardTitle className="text-2xl font-bold tracking-tight">
                             {entry.title}
                           </CardTitle>
-                          <CardDescription className="italic mt-2">
+                          <CardDescription className="italic mt-1">
                             NOR : {entry.nor_number}
                           </CardDescription>
                           <CardDescription>
                             Publié le{" "}
-                            {new Date(
-                              entry.publication_date
-                            ).toLocaleDateString("fr-FR", {
-                              day: "numeric",
-                              month: "long",
-                              year: "numeric"
-                            })}
+                            {new Date(entry.publication_date).toLocaleDateString(
+                              "fr-FR",
+                              {
+                                day: "numeric",
+                                month: "long",
+                                year: "numeric"
+                              }
+                            )}
                           </CardDescription>
                         </div>
                         <Button
@@ -131,7 +132,7 @@ const JOBDL = () => {
                       </div>
                     </CardHeader>
 
-                    {/* ✅ Contenu stylé avec la feuille institutionnelle */}
+                    {/* ✅ Contenu harmonisé */}
                     {expandedEntry === entry.id && (
                       <CardContent>
                         <article
@@ -140,7 +141,7 @@ const JOBDL = () => {
                         />
 
                         {entry.author_name && (
-                          <div className="flex items-center gap-2 mt-4 pt-4 border-t">
+                          <div className="flex items-center gap-2 mt-6 pt-4 border-t">
                             <span className="text-sm text-muted-foreground">
                               Par {entry.author_name}
                               {entry.author_role &&

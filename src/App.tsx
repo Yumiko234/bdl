@@ -14,7 +14,8 @@ import Contact from "./pages/Contact";
 import Intranet from "./pages/Intranet";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
-import JOBDL from "./pages/JOBDL";
+import JOBDL from "./pages/jobdl/JOBDL";
+import JobdlArticle from "./pages/jobdl/[nor]";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
         <Route path="/documents" element={<Documents />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/jobdl" element={<JOBDL />} />
+        <Route path="/jobdl/:nor" element={<JobdlArticle />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/intranet" element={<Intranet />} />
         <Route path="/admin" element={<Admin />} />

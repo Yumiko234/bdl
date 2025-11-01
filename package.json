@@ -3,11 +3,18 @@
   "version": "1.0.0",
   "main": "index.js",
   "type": "module",
+  "ts-node": {
+    "esm": true,
+    "commpilerOptions": {
+      "module": "ESNext"
+    }
+  },
   "engines": {
     "node": ">=18.0.0"
   },
   "scripts": {
     "dev": "vite",
+    "prebuild": "ts-node scripts/generate-sitemap.ts",
     "build": "vite build",
     "preview": "vite preview",
     "start": "vite"
@@ -25,7 +32,9 @@
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.13",
     "tailwindcss-animate": "^1.0.7",
+    "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
+    "tsx": "^4.20.6",
     "typescript": "^5.9.3",
     "vite": "^7.1.12",
     "vite-tsconfig-paths": "^5.1.4"

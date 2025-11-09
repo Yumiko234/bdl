@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -58,26 +59,31 @@ export const DocumentManagement = () => {
     }
   };
 
-  // Upload direct du fichier vers Supabase Storage
+  // --- Upload direct vers Supabase Storage ---
   const handleFileUpload = async (file: File) => {
     setUploading(true);
-    const filePath = `${Date.now()}_${file.name}`;
+
+    // Nettoyage du nom de fichier
+    const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+    const filePath = `${Date.now()}_${sanitizedFileName}`;
 
     const { data, error } = await supabase.storage
       .from("documents")
       .upload(filePath, file);
 
     if (error) {
+      console.error("Erreur upload Supabase:", error);
       toast.error("Erreur lors de l'upload du fichier");
       setUploading(false);
       return null;
     }
 
-    const { publicUrl, error: urlError } = supabase.storage
+    const { data: { publicUrl }, error: urlError } = supabase.storage
       .from("documents")
       .getPublicUrl(filePath);
 
     if (urlError) {
+      console.error("Erreur récupération URL Supabase:", urlError);
       toast.error("Erreur lors de la récupération du lien du fichier");
       setUploading(false);
       return null;
@@ -153,6 +159,7 @@ export const DocumentManagement = () => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* --- Formulaire Ajout Document --- */}
         <div className="border rounded-lg p-6 space-y-4 bg-muted/30">
           <div className="flex items-center gap-2">
             <Upload className="h-5 w-5" />
@@ -188,30 +195,17 @@ export const DocumentManagement = () => {
                 type="file"
                 onChange={async (e) => {
                   if (e.target.files?.[0]) {
-                    const file = e.target.files[0];
-                    const url = await handleFileUpload(file);
-                    if (url) {
-                      setFormData({
-                        ...formData,
-                        file_url: url,
-                        file_size: `${(file.size / 1024).toFixed(2)} KB`,
-                      });
-                    }
+                    const url = await handleFileUpload(e.target.files[0]);
+                    if (url) setFormData({ ...formData, file_url: url, file_size: `${(e.target.files[0].size / 1024 / 1024).toFixed(2)} MB` });
                   }
                 }}
               />
-              <p className="text-xs text-muted-foreground">
-                Le fichier sera stocké directement sur le site et disponible au téléchargement.
-              </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="doc-category">Catégorie</Label>
-                <Select
-                  value={formData.category}
-                  onValueChange={(value) => setFormData({ ...formData, category: value })}
-                >
+                <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
                   <SelectTrigger id="doc-category">
                     <SelectValue />
                   </SelectTrigger>
@@ -225,10 +219,7 @@ export const DocumentManagement = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="doc-visibility">Visibilité</Label>
-                <Select
-                  value={formData.visibility}
-                  onValueChange={(value: any) => setFormData({ ...formData, visibility: value })}
-                >
+                <Select value={formData.visibility} onValueChange={(value: any) => setFormData({ ...formData, visibility: value })}>
                   <SelectTrigger id="doc-visibility">
                     <SelectValue />
                   </SelectTrigger>
@@ -247,6 +238,7 @@ export const DocumentManagement = () => {
           </div>
         </div>
 
+        {/* --- Liste des documents --- */}
         <div className="space-y-4">
           <h3 className="font-semibold">Documents publiés</h3>
 
@@ -258,16 +250,14 @@ export const DocumentManagement = () => {
                     <div className="flex items-center gap-2">
                       <h4 className="font-medium">{doc.title}</h4>
                       <Badge variant="secondary">
-                        {doc.visibility === 'public' ? 'Public' :
-                         doc.visibility === 'authenticated' ? 'Connectés' : 'BDL'}
+                        {doc.visibility === "public" ? "Public" :
+                         doc.visibility === "authenticated" ? "Connectés" : "BDL"}
                       </Badge>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      {doc.description}
-                    </p>
+                    <p className="text-sm text-muted-foreground">{doc.description}</p>
                     <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                      <span>Catégorie: {categoryLabels[doc.category] || doc.category}</span>
-                      <span>{new Date(doc.created_at).toLocaleDateString('fr-FR')}</span>
+                      <span>Catégorie: {categoryLabels[doc.category]}</span>
+                      <span>{new Date(doc.created_at).toLocaleDateString("fr-FR")}</span>
                     </div>
                   </div>
 
@@ -276,7 +266,7 @@ export const DocumentManagement = () => {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => window.open(doc.file_url!, '_blank')}
+                        onClick={() => window.open(doc.file_url!, "_blank")}
                       >
                         <Download className="h-4 w-4" />
                       </Button>

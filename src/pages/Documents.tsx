@@ -4,11 +4,7 @@ import Footer from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Upload, Trash2, Download } from "lucide-react";
+import { FileText, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -17,10 +13,8 @@ interface Document {
   title: string;
   description: string;
   category: string;
-  file_url: string | null;
   file_size: string | null;
-  visibility: string;
-  created_at: string;
+  file_url: string | null;
 }
 
 const categoryLabels: Record<string, string> = {
@@ -34,23 +28,28 @@ const categoryLabels: Record<string, string> = {
 const faq = [
   {
     question: "Comment rejoindre le BDL en tant que membre ?",
-    answer: "Pour devenir membre du BDL, vous devez être élève au Lycée général Saint-André et vous présenter à la Vie Scolaire ou à un membre de l'Exécutif. Renseignez-vous auprès de la Secrétaire Générale pour plus d'informations.",
+    answer:
+      "Pour devenir membre du BDL, vous devez être élève au Lycée général Saint-André et vous présenter à la Vie Scolaire ou à un membre de l'Exécutif. Renseignez-vous auprès de la Secrétaire Générale pour plus d'informations.",
   },
   {
     question: "Comment puis-je contacter le BDL ?",
-    answer: "Vous pouvez nous contacter via le formulaire de contact sur notre site ou nous envoyer un email à contact@bdl-saintandre.fr",
+    answer:
+      "Vous pouvez nous contacter via le formulaire de contact sur notre site ou nous envoyer un email à contact@bdl-saintandre.fr",
   },
   {
     question: "Comment créer un nouveau club ?",
-    answer: "La création de club n'est malheureusement pas possible pour le moment.",
+    answer:
+      "La création de club n'est malheureusement pas possible pour le moment.",
   },
   {
     question: "Comment accéder à l'intranet ?",
-    answer: "Vous avez la possibilité de vous créer un compte via le formulaire dédié sur la page intranet. Veuillez renseigner des informations valides. En cas de perte ou de problème, contactez la Secrétaire Générale du BDL.",
+    answer:
+      "Vous avez la possibilité de vous créer un compte via le formulaire dédié sur la page intranet. Veuillez renseigner des informations valides. En cas de perte ou de problème, contactez la Secrétaire Générale du BDL.",
   },
   {
     question: "Puis-je proposer un événement ?",
-    answer: "Absolument ! Le BDL encourage toutes les initiatives. Soumettez votre projet via le formulaire de contact en détaillant votre idée, le public visé et le budget estimé. Le BDL étudiera votre proposition et vous répondra sous 15 jours.",
+    answer:
+      "Absolument ! Le BDL encourage toutes les initiatives. Soumettez votre projet via le formulaire de contact en détaillant votre idée, le public visé et le budget estimé. Le BDL étudiera votre proposition et vous répondra sous 15 jours.",
   },
 ];
 
@@ -63,15 +62,6 @@ const Documents = () => {
     "autre",
     "jobdl",
   ]);
-  const [uploading, setUploading] = useState(false);
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    category: "reglement",
-    file_url: "",
-    file_size: "",
-    visibility: "public" as "public" | "authenticated" | "bdl_only",
-  });
 
   useEffect(() => {
     loadDocuments();
@@ -98,93 +88,25 @@ const Documents = () => {
     );
   };
 
-  const filteredDocuments = documents.filter(
-    (doc) => selectedCategories.includes(doc.category)
+  const filteredDocuments = documents.filter((doc) =>
+    selectedCategories.includes(doc.category)
   );
 
-  // Upload direct vers Supabase Storage
-  const handleFileUpload = async (file: File) => {
-    setUploading(true);
-    const filePath = `${Date.now()}_${file.name}`;
-
-    const { data, error } = await supabase.storage
-      .from("documents")
-      .upload(filePath, file);
-
-    if (error) {
-      toast.error("Erreur lors de l'upload du fichier");
-      setUploading(false);
-      return null;
-    }
-
-    const { publicUrl, error: urlError } = supabase.storage
-      .from("documents")
-      .getPublicUrl(filePath);
-
-    if (urlError) {
-      toast.error("Erreur lors de la récupération du lien du fichier");
-      setUploading(false);
-      return null;
-    }
-
-    setUploading(false);
-    return publicUrl;
-  };
-
-  const handleSubmit = async () => {
-    if (!formData.title || !formData.description || !formData.file_url) {
-      toast.error("Veuillez remplir tous les champs et uploader un fichier");
-      return;
-    }
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    setUploading(true);
-
-    const { error } = await supabase
-      .from("documents")
-      .insert({
-        title: formData.title,
-        description: formData.description,
-        category: formData.category,
-        file_url: formData.file_url,
-        file_size: formData.file_size || null,
-        visibility: formData.visibility,
-        uploaded_by: user.id,
-      });
-
-    if (error) {
-      toast.error("Erreur lors de l'ajout du document");
-    } else {
-      toast.success("Document ajouté avec succès");
-      setFormData({
-        title: "",
-        description: "",
-        category: "reglement",
-        file_url: "",
-        file_size: "",
-        visibility: "public",
-      });
-      loadDocuments();
-    }
-
-    setUploading(false);
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer ce document ?")) return;
-
-    const { error } = await supabase
-      .from("documents")
-      .delete()
-      .eq("id", id);
-
-    if (error) {
-      toast.error("Erreur lors de la suppression");
-    } else {
-      toast.success("Document supprimé");
-      loadDocuments();
+  // Téléchargement direct
+  const handleDownload = async (url: string, filename: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const link = document.createElement("a");
+      link.href = window.URL.createObjectURL(blob);
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(link.href);
+    } catch (err) {
+      console.error("Erreur téléchargement:", err);
+      toast.error("Impossible de télécharger le fichier");
     }
   };
 
@@ -193,6 +115,7 @@ const Documents = () => {
       <Navigation />
 
       <main className="flex-1">
+        {/* Bannière */}
         <section className="py-16 gradient-institutional text-white">
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center space-y-4">
@@ -204,13 +127,14 @@ const Documents = () => {
           </div>
         </section>
 
+        {/* Documents */}
         <section className="py-16">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto space-y-8">
               <div>
                 <h2 className="text-4xl font-bold mb-6">Documents Officiels</h2>
 
-                {/* --- Filtres de catégorie --- */}
+                {/* Filtres */}
                 <div className="flex flex-wrap gap-6 mb-8">
                   {Object.entries(categoryLabels).map(([value, label]) => (
                     <label
@@ -226,7 +150,7 @@ const Documents = () => {
                   ))}
                 </div>
 
-                {/* --- Liste des documents --- */}
+                {/* Liste */}
                 {filteredDocuments.length === 0 ? (
                   <Card className="shadow-card">
                     <CardContent className="p-8 text-center text-muted-foreground">
@@ -245,11 +169,15 @@ const Documents = () => {
                             <div className="flex-1">
                               <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                                 <div className="flex-1">
-                                  <h3 className="text-xl font-bold mb-2">{doc.title}</h3>
-                                  <p className="text-muted-foreground mb-2">{doc.description}</p>
+                                  <h3 className="text-xl font-bold mb-2">
+                                    {doc.title}
+                                  </h3>
+                                  <p className="text-muted-foreground mb-2">
+                                    {doc.description}
+                                  </p>
                                   <div className="flex gap-3 text-sm text-muted-foreground">
                                     <span className="font-medium text-primary capitalize">
-                                      {categoryLabels[doc.category] || doc.category}
+                                      {categoryLabels[doc.category]}
                                     </span>
                                     {doc.file_size && (
                                       <>
@@ -263,7 +191,9 @@ const Documents = () => {
                                   <Button
                                     variant="outline"
                                     className="flex items-center gap-2"
-                                    onClick={() => window.open(doc.file_url!, "_blank")}
+                                    onClick={() =>
+                                      handleDownload(doc.file_url!, doc.title)
+                                    }
                                   >
                                     <Download className="h-4 w-4" />
                                     Télécharger
@@ -282,7 +212,7 @@ const Documents = () => {
           </div>
         </section>
 
-        {/* --- Foire Aux Questions --- */}
+        {/* FAQ */}
         <section className="py-16 bg-muted/30">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
@@ -291,8 +221,12 @@ const Documents = () => {
                 {faq.map((item, index) => (
                   <Card key={index} className="shadow-card">
                     <CardContent className="p-6">
-                      <h3 className="text-xl font-bold mb-3 text-primary">{item.question}</h3>
-                      <p className="text-foreground leading-relaxed">{item.answer}</p>
+                      <h3 className="text-xl font-bold mb-3 text-primary">
+                        {item.question}
+                      </h3>
+                      <p className="text-foreground leading-relaxed">
+                        {item.answer}
+                      </p>
                     </CardContent>
                   </Card>
                 ))}

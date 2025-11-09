@@ -180,6 +180,7 @@ export const DocumentManagement = () => {
                     <SelectItem value="compte-rendu">Compte-rendu</SelectItem>
                     <SelectItem value="formulaire">Formulaire</SelectItem>
                     <SelectItem value="autre">Autre</SelectItem>
+                    <SelectItem value="jobdl">JoBDL</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

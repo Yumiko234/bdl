@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -59,11 +58,9 @@ export const DocumentManagement = () => {
     }
   };
 
-  // --- Upload direct vers Supabase Storage ---
+  // Upload direct avec nom de fichier nettoyé
   const handleFileUpload = async (file: File) => {
     setUploading(true);
-
-    // Nettoyage du nom de fichier
     const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
     const filePath = `${Date.now()}_${sanitizedFileName}`;
 
@@ -159,7 +156,7 @@ export const DocumentManagement = () => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* --- Formulaire Ajout Document --- */}
+        {/* Formulaire ajout document */}
         <div className="border rounded-lg p-6 space-y-4 bg-muted/30">
           <div className="flex items-center gap-2">
             <Upload className="h-5 w-5" />
@@ -196,7 +193,12 @@ export const DocumentManagement = () => {
                 onChange={async (e) => {
                   if (e.target.files?.[0]) {
                     const url = await handleFileUpload(e.target.files[0]);
-                    if (url) setFormData({ ...formData, file_url: url, file_size: `${(e.target.files[0].size / 1024 / 1024).toFixed(2)} MB` });
+                    if (url)
+                      setFormData({
+                        ...formData,
+                        file_url: url,
+                        file_size: `${(e.target.files[0].size / 1024 / 1024).toFixed(2)} MB`,
+                      });
                   }
                 }}
               />
@@ -205,13 +207,18 @@ export const DocumentManagement = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="doc-category">Catégorie</Label>
-                <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
+                <Select
+                  value={formData.category}
+                  onValueChange={(value) => setFormData({ ...formData, category: value })}
+                >
                   <SelectTrigger id="doc-category">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {Object.entries(categoryLabels).map(([value, label]) => (
-                      <SelectItem key={value} value={value}>{label}</SelectItem>
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -219,7 +226,10 @@ export const DocumentManagement = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="doc-visibility">Visibilité</Label>
-                <Select value={formData.visibility} onValueChange={(value: any) => setFormData({ ...formData, visibility: value })}>
+                <Select
+                  value={formData.visibility}
+                  onValueChange={(value: any) => setFormData({ ...formData, visibility: value })}
+                >
                   <SelectTrigger id="doc-visibility">
                     <SelectValue />
                   </SelectTrigger>
@@ -238,7 +248,7 @@ export const DocumentManagement = () => {
           </div>
         </div>
 
-        {/* --- Liste des documents --- */}
+        {/* Liste des documents */}
         <div className="space-y-4">
           <h3 className="font-semibold">Documents publiés</h3>
 
@@ -250,8 +260,11 @@ export const DocumentManagement = () => {
                     <div className="flex items-center gap-2">
                       <h4 className="font-medium">{doc.title}</h4>
                       <Badge variant="secondary">
-                        {doc.visibility === "public" ? "Public" :
-                         doc.visibility === "authenticated" ? "Connectés" : "BDL"}
+                        {doc.visibility === "public"
+                          ? "Public"
+                          : doc.visibility === "authenticated"
+                          ? "Connectés"
+                          : "BDL"}
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">{doc.description}</p>

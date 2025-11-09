@@ -17,6 +17,14 @@ interface Document {
   file_url: string | null;
 }
 
+const categoryLabels: Record<string, string> = {
+  "reglement": "Règlements",
+  "compte-rendu": "Comptes-rendus",
+  "formulaire": "Formulaires",
+  "autre": "Autres",
+  "jobdl": "JoBDL",
+};
+
 const Documents = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([
@@ -24,6 +32,7 @@ const Documents = () => {
     "compte-rendu",
     "formulaire",
     "autre",
+    "jobdl", // Ajout de JoBDL par défaut
   ]);
 
   useEffect(() => {
@@ -109,21 +118,16 @@ const Documents = () => {
 
                 {/* --- Filtres de catégorie --- */}
                 <div className="flex flex-wrap gap-6 mb-8">
-                  {[
-                    { label: "Règlements", value: "reglement" },
-                    { label: "Comptes-rendus", value: "compte-rendu" },
-                    { label: "Formulaires", value: "formulaire" },
-                    { label: "Autres", value: "autre" },
-                  ].map((cat) => (
+                  {Object.entries(categoryLabels).map(([value, label]) => (
                     <label
-                      key={cat.value}
+                      key={value}
                       className="flex items-center gap-2 cursor-pointer"
                     >
                       <Checkbox
-                        checked={selectedCategories.includes(cat.value)}
-                        onCheckedChange={() => handleCategoryToggle(cat.value)}
+                        checked={selectedCategories.includes(value)}
+                        onCheckedChange={() => handleCategoryToggle(value)}
                       />
-                      <span className="text-sm font-medium">{cat.label}</span>
+                      <span className="text-sm font-medium">{label}</span>
                     </label>
                   ))}
                 </div>
@@ -155,7 +159,7 @@ const Documents = () => {
                                   </p>
                                   <div className="flex gap-3 text-sm text-muted-foreground">
                                     <span className="font-medium text-primary capitalize">
-                                      {doc.category}
+                                      {categoryLabels[doc.category] || doc.category}
                                     </span>
                                     {doc.file_size && (
                                       <>

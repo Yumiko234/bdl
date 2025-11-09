@@ -60,7 +60,7 @@ const Footer = () => {
             <ul className="space-y-2 text-sm">
               <li><Link to="/actualites" className="hover:text-accent transition-colors">Actualités</Link></li>
               <li><Link to="/documents" className="hover:text-accent transition-colors">Documents</Link></li>
-              <li><Link to="/evenements" className="hover:text-accent transition-colors">Évènements</Link></li>
+              <li><Link to="/events" className="hover:text-accent transition-colors">Évènements</Link></li>
               <li><Link to="/jobdl" className="hover:text-accent transition-colors">JoBDL</Link></li>
               <li><Link to="/intranet" className="hover:text-accent transition-colors">Intranet</Link></li>
             </ul>

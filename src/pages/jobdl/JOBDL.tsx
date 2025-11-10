@@ -71,6 +71,20 @@ const JOBDL = () => {
           </div>
         </section>
 
+        {/* Alert Banner */}
+        <div className="bg-accent/10 border-y border-accent/20 py-4">
+          <div className="container mx-auto px-4">
+            <div className="flex items-center justify-center gap-2 text-sm md:text-base">
+              <AlertCircle className="h-5 w-5 text-accent flex-shrink-0" />
+              <p className="text-center">
+                <span className="font-semibold">
+                  Une version PDF des articles est disponible au téléchargement dans l'onglet "Documents" du site.
+                </span>{" "}
+              </p>
+            </div>
+          </div>
+        </div>
+
         <section className="py-16">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto mb-10">

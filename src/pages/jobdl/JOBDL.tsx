@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/ca
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { AlertCircle } from "lucide-react"; // ✅ Import manquant ajouté ici
 
 interface JournalEntry {
   id: string;
@@ -38,7 +39,7 @@ const JOBDL = () => {
     loadEntries();
   }, []);
 
-  // Filtrage progressif par NOR (affinage au fur et à mesure)
+  // Filtrage progressif par NOR
   useEffect(() => {
     const term = searchTerm.trim().toLowerCase();
     if (term === "") {
@@ -71,15 +72,16 @@ const JOBDL = () => {
           </div>
         </section>
 
-        {/* Alert Banner */}
+        {/* ✅ Alert Banner corrigée */}
         <div className="bg-accent/10 border-y border-accent/20 py-4">
           <div className="container mx-auto px-4">
-            <div className="flex items-center justify-center gap-2 text-sm md:text-base">
-              <AlertCircle className="h-5 w-5 text-accent flex-shrink-0" />
-              <p className="text-center">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 text-sm md:text-base text-accent">
+              <AlertCircle className="h-5 w-5 flex-shrink-0" />
+              <p className="text-center sm:text-left">
                 <span className="font-semibold">
-                  Une version PDF des articles est disponible au téléchargement dans l'onglet "Documents" du site.
-                </span>{" "}
+                  Une version PDF des articles est disponible au téléchargement
+                  dans l’onglet « Documents » du site.
+                </span>
               </p>
             </div>
           </div>

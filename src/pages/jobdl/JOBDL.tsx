@@ -77,7 +77,7 @@ const JOBDL = () => {
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-center gap-2 text-sm md:text-base">
               <AlertCircle className="h-5 w-5 text-accent flex-shrink-0" />
-              <p className="text-center text-accent">
+              <p className="text-center text-black">
                 <span className="font-semibold">
                   Une version PDF des articles est disponible au téléchargement dans l'onglet "Documents" du site.
                 </span>{" "}

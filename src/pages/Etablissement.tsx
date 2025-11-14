@@ -46,7 +46,7 @@ const Etablissement = () => {
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center space-y-4">
               <h1 className="text-5xl font-bold">Le Lycée Saint-André</h1>
-              <p className="text-xl">Un établissement d'excellence depuis des générations</p>
+              <p className="text-xl">Ouvert à tous, le Collège Épiscopal Saint André offre un regard chrétien sur l’éducation, pour permettre à chaque jeune de devenir libre et responsable.</p>
             </div>
           </div>
         </section>

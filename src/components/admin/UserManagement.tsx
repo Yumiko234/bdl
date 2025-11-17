@@ -26,9 +26,10 @@ export const UserManagement = () => {
     role: "student"
   });
 
-  // Rôle courant de l'utilisateur connecté (à adapter selon ton auth)
-  const currentUserRole = "secretary_general";
+  // rôle courant déterminé dynamiquement depuis Supabase (fallback = student)
+  const [currentUserRole, setCurrentUserRole] = useState<string>("student");
 
+  // hiérarchie : plus la valeur est élevée, plus le rôle est puissant
   const roleHierarchy: Record<string, number> = {
     student: 0,
     bdl_member: 1,
@@ -38,13 +39,71 @@ export const UserManagement = () => {
     president: 5
   };
 
+  const roleLabel = (role: string) =>
+    role === "student" ? "Étudiant"
+    : role === "bdl_member" ? "Membre BDL"
+    : role === "communication_manager" ? "Responsable Communication"
+    : role === "secretary_general" ? "Secrétaire Générale"
+    : role === "vice_president" ? "Vice-présidente"
+    : "Président";
+
+  // renvoie vrai si l'utilisateur courant peut attribuer targetRole (<= son niveau)
   const canAssignRole = (targetRole: string) => {
-    return roleHierarchy[targetRole] <= roleHierarchy[currentUserRole];
+    const currentLevel = roleHierarchy[currentUserRole] ?? 0;
+    const targetLevel = roleHierarchy[targetRole] ?? 0;
+    return targetLevel <= currentLevel;
   };
 
   useEffect(() => {
+    // lancer les deux chargements : utilisateurs et rôle courant
+    loadCurrentUserRole();
     loadUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // récupère le rôle(s) du user courant et choisit le rôle le plus élevé
+  const loadCurrentUserRole = async () => {
+    try {
+      const {
+        data: { user },
+        error: userError
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        // fallback si pas d'user
+        setCurrentUserRole("student");
+        return;
+      }
+
+      const { data: rolesData, error: rolesError } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id);
+
+      if (rolesError) {
+        setCurrentUserRole("student");
+        return;
+      }
+
+      const roles: string[] = (rolesData ?? []).map((r: any) => r.role);
+
+      if (roles.length === 0) {
+        setCurrentUserRole("student");
+        return;
+      }
+
+      // déterminer le rôle de plus haut niveau si plusieurs rôles
+      const highest = roles.reduce((acc, role) => {
+        const accLevel = roleHierarchy[acc] ?? 0;
+        const roleLevel = roleHierarchy[role] ?? 0;
+        return roleLevel > accLevel ? role : acc;
+      }, roles[0]);
+
+      setCurrentUserRole(highest);
+    } catch (e) {
+      setCurrentUserRole("student");
+    }
+  };
 
   const loadUsers = async () => {
     const { data: profiles, error: profilesError } = await supabase
@@ -65,9 +124,9 @@ export const UserManagement = () => {
       return;
     }
 
-    const usersWithRoles = profiles.map((profile) => ({
+    const usersWithRoles = (profiles ?? []).map((profile: any) => ({
       ...profile,
-      roles: roles.filter((r) => r.user_id === profile.id).map((r) => r.role)
+      roles: (roles ?? []).filter((r: any) => r.user_id === profile.id).map((r: any) => r.role)
     }));
 
     setUsers(usersWithRoles);
@@ -98,7 +157,7 @@ export const UserManagement = () => {
       return;
     }
 
-    if (data.user && newUser.role !== "student") {
+    if (data?.user && newUser.role !== "student") {
       const { error: roleError } = await supabase
         .from("user_roles")
         .insert({
@@ -117,26 +176,36 @@ export const UserManagement = () => {
     loadUsers();
   };
 
+  // modification du rôle principal d'un utilisateur (sécurité serveur idéale : vérification côté backend également)
   const handleChangeRole = async (userId: string, newRole: string, currentRoles: string[]) => {
-    const oldRole = currentRoles[0] ?? "student";
-
+    // sécurité client : vérifier qu'on a le droit d'assigner ce rôle
     if (!canAssignRole(newRole)) {
-      toast.error("Vous n'avez pas l'autorité nécessaire pour attribuer ce rôle.");
+      toast.error("Autorisation insuffisante pour attribuer ce rôle.");
       return;
     }
 
-    await supabase.from("user_roles").delete().eq("user_id", userId);
+    // supprimer tous les rôles existants puis insérer le nouveau rôle principal
+    const { error: deleteError } = await supabase
+      .from("user_roles")
+      .delete()
+      .eq("user_id", userId);
 
-    const { error } = await supabase
+    if (deleteError) {
+      toast.error("Erreur lors de la suppression des anciens rôles");
+      return;
+    }
+
+    const { error: insertError } = await supabase
       .from("user_roles")
       .insert({ user_id: userId, role: newRole });
 
-    if (error) {
-      toast.error("Erreur lors de la modification du rôle");
-    } else {
-      toast.success("Rôle mis à jour");
-      loadUsers();
+    if (insertError) {
+      toast.error("Erreur lors de l'attribution du rôle");
+      return;
     }
+
+    toast.success(`Rôle mis à jour : ${roleLabel(newRole)}`);
+    loadUsers();
   };
 
   return (
@@ -145,6 +214,9 @@ export const UserManagement = () => {
         <CardTitle className="flex items-center gap-2">
           <Users className="h-6 w-6" />
           Gestion des Utilisateurs
+          <span style={{ marginLeft: 12, fontSize: 12, opacity: 0.8 }}>
+            (Vous : {roleLabel(currentUserRole)})
+          </span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -228,6 +300,11 @@ export const UserManagement = () => {
                   <div className="space-y-1">
                     <p className="font-medium">{user.full_name}</p>
                     <p className="text-sm text-muted-foreground">{user.email}</p>
+                    <div className="flex gap-2 mt-2">
+                      {user.roles.map((r) => (
+                        <Badge key={r} variant="secondary">{roleLabel(r)}</Badge>
+                      ))}
+                    </div>
                   </div>
 
                   <div className="w-56">
@@ -242,21 +319,14 @@ export const UserManagement = () => {
                       </SelectTrigger>
 
                       <SelectContent>
-                        {Object.entries(roleHierarchy)
-                          .filter(([role]) => canAssignRole(role))
-                          .map(([role, _]) => (
+                        {Object.keys(roleHierarchy)
+                          // n'afficher que les rôles qu'on est autorisé à assigner
+                          .filter((role) => canAssignRole(role))
+                          // trier du plus bas au plus haut (optionnel)
+                          .sort((a, b) => roleHierarchy[a] - roleHierarchy[b])
+                          .map((role) => (
                             <SelectItem key={role} value={role}>
-                              {role === "student"
-                                ? "Étudiant"
-                                : role === "bdl_member"
-                                ? "Membre BDL"
-                                : role === "communication_manager"
-                                ? "Responsable Communication"
-                                : role === "secretary_general"
-                                ? "Secrétaire Générale"
-                                : role === "vice_president"
-                                ? "Vice-présidente"
-                                : "Président"}
+                              {roleLabel(role)}
                             </SelectItem>
                           ))}
                       </SelectContent>

@@ -1,358 +1,249 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Users, UserPlus, Shield } from "lucide-react";
 
-interface UserProfile {
-  id: string;
-  full_name: string;
-  email: string;
-  roles: string[];        // roles tels qu'en base, ex: ["student"] ou ["president","bdl_member"]
-  primaryRole: string;   // rôle principal calculé (ex: "president")
+// Définition des rôles disponibles
+const availableRoles = [
+  "president",
+  "vice_president",
+  "sg",
+  "resp_com",
+  "bdl",
+  "student"
+];
+
+// Classification par préséance
+const rolePrecedence: Record<string, number> = {
+  "president": 1,
+  "vice_president": 2,
+  "sg": 3,
+  "resp_com": 4,
+  "bdl": 5,
+  "student": 6
+};
+
+// Libellés publics
+function roleLabel(role: string): string {
+  switch (role) {
+    case "president": return "Président";
+    case "vice_president": return "Vice-président";
+    case "sg": return "Secrétaire général";
+    case "resp_com": return "Responsable communication";
+    case "bdl": return "Membre BDL";
+    default: return "Étudiant";
+  }
 }
 
-export const UserManagement = () => {
-  const [users, setUsers] = useState<UserProfile[]>([]);
-  const [loading, setLoading] = useState(false);
+// Conversion rôle Étudiant → rôle institutionnel du BDL
+function convertRole(roleEtudiant: string): string {
+  switch (roleEtudiant) {
+    case "Président": return "president";
+    case "VP": return "vice_president";
+    case "SG": return "sg";
+    case "RespCom": return "resp_com";
+    case "Membre": return "bdl";
+    default: return "student";
+  }
+}
+
+export default function UsersPage() {
+  const [users, setUsers] = useState<any[]>([]);
   const [newUser, setNewUser] = useState({
     email: "",
-    password: "",
-    fullName: "",
+    firstname: "",
+    lastname: "",
     role: "student"
   });
 
-  // rôle et classement : plus le chiffre est petit, plus l'autorité est élevée.
-  const roleRanks: Record<string, number> = {
-    president: 1,
-    vice_president: 2,
-    secretary_general: 3,
-    communication_manager: 4,
-    bdl_member: 5,
-    student: 6
-  };
+  const [currentUserRole, setCurrentUserRole] = useState<string>("student");
+  const [loading, setLoading] = useState(false);
 
-  const roleLabel = (r: string) =>
-    r === "president" ? "Président" :
-    r === "vice_president" ? "Vice-président" :
-    r === "secretary_general" ? "Secrétaire général" :
-    r === "communication_manager" ? "Responsable communication" :
-    r === "bdl_member" ? "Membre BDL" :
-    "Étudiant";
+  // Vérification si le créateur peut attribuer un rôle donné
+  function canAssignRole(targetRole: string): boolean {
+    return rolePrecedence[currentUserRole] <= rolePrecedence[targetRole];
+  }
 
-  // rôle du user courant (calculé dynamiquement). Par défaut "student" si non authentifié.
-  const [currentUserPrimaryRole, setCurrentUserPrimaryRole] = useState<string>("student");
+  // Chargement du rôle de l'utilisateur connecté
+  useEffect(() => {
+    async function fetchRole() {
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth?.user) return;
 
-  // UTILITAIRE : retourne le rôle principal (celui de plus haute autorité) parmi un tableau de rôles
-  const getPrimaryRole = (roles: string[] | undefined): string => {
-    if (!roles || roles.length === 0) return "student";
-    return roles.reduce((best, r) => {
-      return (roleRanks[r] ?? 999) < (roleRanks[best] ?? 999) ? r : best;
-    }, roles[0]);
-  };
-
-  // UTILITAIRE : peut-on, en tant qu'utilisateur courant, attribuer targetRole ?
-  // Règle : autoriser si rank(targetRole) >= rank(currentUserPrimaryRole)
-  const canAssignRole = (targetRole: string) => {
-    const currentRank = roleRanks[currentUserPrimaryRole] ?? 999;
-    const targetRank = roleRanks[targetRole] ?? 999;
-    return targetRank >= currentRank;
-  };
-
-  // Chargement du rôle du user courant : récupère la session puis les user_roles
-  const loadCurrentUserRole = async () => {
-    try {
-      const { data: authData, error: authError } = await supabase.auth.getUser();
-      if (authError || !authData?.user) {
-        setCurrentUserPrimaryRole("student");
-        return;
-      }
-
-      const user = authData.user;
-      const { data: rolesData, error: rolesError } = await supabase
+      const { data } = await supabase
         .from("user_roles")
         .select("role")
-        .eq("user_id", user.id);
+        .eq("user_id", auth.user.id)
+        .single();
 
-      if (rolesError) {
-        setCurrentUserPrimaryRole("student");
-        return;
-      }
-
-      const roles: string[] = (rolesData ?? []).map((r: any) => r.role);
-      const primary = getPrimaryRole(roles);
-      setCurrentUserPrimaryRole(primary);
-    } catch (e) {
-      setCurrentUserPrimaryRole("student");
+      setCurrentUserRole(data?.role || "student");
     }
-  };
 
-  // Chargement et fusion des profils + rôles ; calcul du rôle principal ; tri par préséance
-  const loadUsers = async () => {
-    try {
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("id, full_name, email");
-
-      if (profilesError) {
-        toast.error("Erreur lors du chargement des profils");
-        return;
-      }
-
-      const { data: rolesRows, error: rolesError } = await supabase
-        .from("user_roles")
-        .select("user_id, role");
-
-      if (rolesError) {
-        toast.error("Erreur lors du chargement des rôles");
-        return;
-      }
-
-      const rolesByUser: Record<string, string[]> = {};
-      (rolesRows ?? []).forEach((r: any) => {
-        if (!rolesByUser[r.user_id]) rolesByUser[r.user_id] = [];
-        rolesByUser[r.user_id].push(r.role);
-      });
-
-      const assembled: UserProfile[] = (profiles ?? []).map((p: any) => {
-        const roles = rolesByUser[p.id] ?? ["student"];
-        const primaryRole = getPrimaryRole(roles);
-        return {
-          id: p.id,
-          full_name: p.full_name,
-          email: p.email,
-          roles,
-          primaryRole
-        };
-      });
-
-      // tri : par rang (1 = Président en haut)
-      assembled.sort((a, b) => (roleRanks[a.primaryRole] ?? 999) - (roleRanks[b.primaryRole] ?? 999));
-
-      setUsers(assembled);
-    } catch (e) {
-      toast.error("Erreur inattendue lors du chargement des utilisateurs");
-    }
-  };
-
-  useEffect(() => {
-    // on charge d'abord le rôle courant puis la liste (pour cohérence d'UI)
-    loadCurrentUserRole().then(() => loadUsers());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchRole();
   }, []);
 
-  // Création d'un nouvel utilisateur (identique à ta logique)
+  // Chargement et tri des utilisateurs
+  useEffect(() => {
+    const fetchUsers = async () => {
+      const { data, error } = await supabase.from("users").select("*");
+      if (error) return;
+
+      const processed = data.map((u) => ({
+        ...u,
+        role: convertRole(u.role_etudiant)
+      }));
+
+      const sorted = processed.sort(
+        (a, b) => rolePrecedence[a.role] - rolePrecedence[b.role]
+      );
+
+      setUsers(sorted);
+    };
+
+    fetchUsers();
+  }, []);
+
+  // Création utilisateur
   const handleCreateUser = async () => {
-    if (!newUser.email || !newUser.password || !newUser.fullName) {
-      toast.error("Veuillez remplir tous les champs");
+    setLoading(true);
+
+    if (!canAssignRole(newUser.role)) {
+      toast.error("Vous n’êtes pas autorisé à attribuer ce rôle.");
+      setLoading(false);
       return;
     }
-
-    setLoading(true);
 
     const { data, error } = await supabase.auth.signUp({
       email: newUser.email,
-      password: newUser.password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/`,
-        data: {
-          full_name: newUser.fullName
-        }
-      }
+      password: crypto.randomUUID()
     });
 
     if (error) {
-      toast.error("Erreur lors de la création: " + error.message);
+      toast.error("Erreur lors de la création.");
       setLoading(false);
       return;
     }
 
-    if (data?.user && newUser.role && newUser.role !== "student") {
-      const { error: roleError } = await supabase
-        .from("user_roles")
-        .insert({ user_id: data.user.id, role: newUser.role });
+    if (data?.user) {
+      const { error: insertError } = await supabase
+        .from("users")
+        .insert({
+          id: data.user.id,
+          firstname: newUser.firstname,
+          lastname: newUser.lastname,
+          role_etudiant: newUser.role
+        });
 
-      if (roleError) {
-        toast.error("Utilisateur créé mais erreur lors de l'assignation du rôle");
+      if (insertError) {
+        toast.error("Erreur dans l’enregistrement des informations.");
       }
+
+      const { error: roleErr } = await supabase
+        .from("user_roles")
+        .insert({
+          user_id: data.user.id,
+          role: newUser.role
+        });
+
+      if (roleErr) {
+        toast.error("Utilisateur créé mais rôle non attribué.");
+      }
+
+      toast.success("Utilisateur créé.");
     }
 
-    toast.success("Utilisateur créé avec succès");
-    setNewUser({ email: "", password: "", fullName: "", role: "student" });
     setLoading(false);
-    loadUsers();
   };
-
-  // Modification du rôle principal d'un utilisateur
-  const handleChangeRole = async (userId: string, newRole: string) => {
-    // double sécurité côté client
-    if (!canAssignRole(newRole)) {
-      toast.error("Autorisation insuffisante pour attribuer ce rôle.");
-      return;
-    }
-
-    setLoading(true);
-
-    // suppression des rôles existants (si logique DB différente, adapter)
-    const { error: delError } = await supabase
-      .from("user_roles")
-      .delete()
-      .eq("user_id", userId);
-
-    if (delError) {
-      toast.error("Erreur lors de la suppression des anciens rôles");
-      setLoading(false);
-      return;
-    }
-
-    const { error: insError } = await supabase
-      .from("user_roles")
-      .insert({ user_id: userId, role: newRole });
-
-    if (insError) {
-      toast.error("Erreur lors de l'attribution du rôle");
-      setLoading(false);
-      return;
-    }
-
-    toast.success(`Rôle attribué : ${roleLabel(newRole)}`);
-    setLoading(false);
-    // recharger pour refléter les changements et recalculer préséance
-    loadUsers();
-  };
-
-  // Options de rôles disponibles (triées par préséance)
-  const availableRolesOrdered = Object.keys(roleRanks)
-    .sort((a, b) => (roleRanks[a] - roleRanks[b]));
 
   return (
-    <Card className="shadow-card">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Users className="h-6 w-6" />
-          Gestion des utilisateurs
-          <span style={{ marginLeft: 12, fontSize: 12, opacity: 0.85 }}>
-            (Vous : {roleLabel(currentUserPrimaryRole)})
-          </span>
-        </CardTitle>
-      </CardHeader>
+    <div>
+      <Navigation />
+      <main className="container mx-auto py-10">
 
-      <CardContent className="space-y-6">
-        {/* Création d'utilisateur */}
-        <div className="border rounded-lg p-6 space-y-4 bg-muted/30">
-          <div className="flex items-center gap-2 mb-4">
-            <UserPlus className="h-5 w-5" />
-            <h3 className="font-semibold">Créer un nouvel utilisateur</h3>
+        <h1 className="text-3xl font-bold mb-6">Liste des membres</h1>
+
+        <div className="grid grid-cols-2 gap-6">
+
+          {/* Liste des utilisateurs */}
+          <div className="space-y-4">
+            {users.map((u) => (
+              <div key={u.id} className="border p-4 rounded shadow bg-white">
+                <p className="font-semibold">
+                  {u.firstname} {u.lastname}
+                </p>
+                <p className="text-gray-700">{roleLabel(u.role)}</p>
+              </div>
+            ))}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Nom complet</Label>
-              <Input
-                id="fullName"
-                value={newUser.fullName}
-                onChange={(e) => setNewUser({ ...newUser, fullName: e.target.value })}
-                placeholder="Nom Prénom"
-              />
-            </div>
+          {/* Création utilisateur */}
+          <div className="border p-5 rounded shadow bg-white">
+            <h2 className="text-xl font-bold mb-4">Créer un utilisateur</h2>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={newUser.email}
-                onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                placeholder="email@example.com"
-              />
-            </div>
+            <Input
+              className="mb-3"
+              placeholder="Adresse e-mail"
+              value={newUser.email}
+              onChange={(e) =>
+                setNewUser({ ...newUser, email: e.target.value })
+              }
+            />
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Mot de passe</Label>
-              <Input
-                id="password"
-                type="password"
-                value={newUser.password}
-                onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                placeholder="••••••••"
-              />
-            </div>
+            <Input
+              className="mb-3"
+              placeholder="Prénom"
+              value={newUser.firstname}
+              onChange={(e) =>
+                setNewUser({ ...newUser, firstname: e.target.value })
+              }
+            />
 
-            <div className="space-y-2">
-              <Label htmlFor="role">Rôle initial</Label>
-              <Select
-                value={newUser.role}
-                onValueChange={(value) => setNewUser({ ...newUser, role: value })}
-              >
-                <SelectTrigger id="role">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableRolesOrdered.map((r) => (
-                    <SelectItem key={r} value={r}>{roleLabel(r)}</SelectItem>
+            <Input
+              className="mb-3"
+              placeholder="Nom"
+              value={newUser.lastname}
+              onChange={(e) =>
+                setNewUser({ ...newUser, lastname: e.target.value })
+              }
+            />
+
+            <Select
+              onValueChange={(value) =>
+                setNewUser({ ...newUser, role: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Rôle" />
+              </SelectTrigger>
+
+              <SelectContent>
+                {availableRoles
+                  .sort((a, b) => rolePrecedence[a] - rolePrecedence[b])
+                  .filter((r) => canAssignRole(r))
+                  .map((r) => (
+                    <SelectItem key={r} value={r}>
+                      {roleLabel(r)}
+                    </SelectItem>
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
+              </SelectContent>
+            </Select>
+
+            <Button
+              className="mt-4 w-full"
+              disabled={loading}
+              onClick={handleCreateUser}
+            >
+              Créer
+            </Button>
           </div>
 
-          <Button onClick={handleCreateUser} disabled={loading}>
-            {loading ? "Création..." : "Créer l'utilisateur"}
-          </Button>
         </div>
-
-        {/* Liste des utilisateurs triée par préséance */}
-        <div className="space-y-4">
-          <h3 className="font-semibold flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            Liste des utilisateurs
-          </h3>
-
-          {users.map((u) => (
-            <Card key={u.id} className="bg-muted/30">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1">
-                    <p className="font-medium">{u.full_name}</p>
-                    <p className="text-sm text-muted-foreground">{u.email}</p>
-                    <div className="flex gap-2 mt-2">
-                      {/* Affiche tous les rôles sous forme de badges */}
-                      {u.roles.map((r) => (
-                        <Badge key={r} variant="secondary">{roleLabel(r)}</Badge>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="w-56">
-                    <Select
-                      value={u.primaryRole ?? "student"}
-                      onValueChange={(value) => handleChangeRole(u.id, value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-
-                      <SelectContent>
-                        {/* n'afficher que les rôles que l'on a le droit d'attribuer */}
-                        {availableRolesOrdered
-                          .filter((r) => canAssignRole(r))
-                          .map((r) => (
-                            <SelectItem key={r} value={r}>{roleLabel(r)}</SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+      </main>
+      <Footer />
+    </div>
   );
-};
+}

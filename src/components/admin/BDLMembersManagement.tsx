@@ -1,148 +1,188 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabaseClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { toast } from "react-hot-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Users, Trash2 } from "lucide-react";
 
-export default function BDLMembersManagement() {
-  const [users, setUsers] = useState<any[]>([]);
-  const [members, setMembers] = useState<any[]>([]);
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [executif, setExecutif] = useState<boolean>(false);
-  const [customRole, setCustomRole] = useState<string>("");
+interface Profile {
+  id: string;
+  full_name: string;
+  email: string;
+}
+
+interface BDLMember {
+  id: string;
+  user_id: string;
+  is_executive: boolean;
+  profiles: Profile;
+}
+
+export const BDLMembersManagement = () => {
+  const [members, setMembers] = useState<BDLMember[]>([]);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const [isExecutive, setIsExecutive] = useState(false);
 
   useEffect(() => {
-    fetchUsers();
-    fetchMembers();
+    loadMembers();
+    loadProfiles();
   }, []);
 
-  const fetchUsers = async () => {
-    const { data, error } = await supabase.from("users").select("*");
-    if (!error) setUsers(data);
+  const loadMembers = async () => {
+    const { data, error } = await supabase
+      .from('bdl_members' as any)
+      .select('id, user_id, is_executive, profiles(id, full_name, email)')
+      .order('is_executive', { ascending: false })
+      .order('display_order', { ascending: true });
+
+    if (error) {
+      toast.error("Erreur lors du chargement des membres");
+    } else {
+      setMembers(data as unknown as BDLMember[]);
+    }
   };
 
-  const fetchMembers = async () => {
+  const loadProfiles = async () => {
     const { data, error } = await supabase
-      .from("bdl_members")
-      .select("*, users(*), user_roles(role)")
-      .order("created_at", { ascending: true });
+      .from('profiles')
+      .select('id, full_name, email')
+      .order('full_name');
 
-    if (!error) setMembers(data);
+    if (error) {
+      toast.error("Erreur lors du chargement des profils");
+    } else {
+      setProfiles(data || []);
+    }
   };
 
   const handleAddMember = async () => {
     if (!selectedUserId) {
-      toast.error("Veuillez sélectionner un utilisateur.");
+      toast.error("Veuillez sélectionner un utilisateur");
       return;
     }
 
-    const { error } = await supabase.from("bdl_members").insert({
-      user_id: selectedUserId,
-      is_executif: executif
-    });
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
 
-    if (error) {
-      toast.error("Erreur lors de l’ajout du membre.");
-      return;
-    }
-
-    if (customRole.trim() !== "") {
-      const { error: roleError } = await supabase.from("user_roles").insert({
+    const { error } = await supabase
+      .from('bdl_members' as any)
+      .insert({
         user_id: selectedUserId,
-        role: `custom:${customRole.trim()}`
+        is_executive: isExecutive,
+        added_by: user.id
       });
 
-      if (roleError) {
-        toast.error(
-          "Le membre a été ajouté, mais la fonction personnalisée n’a pas pu être enregistrée."
-        );
+    if (error) {
+      if (error.code === '23505') {
+        toast.error("Ce membre est déjà dans la liste");
+      } else {
+        toast.error("Erreur lors de l'ajout du membre");
       }
+    } else {
+      toast.success("Membre ajouté avec succès");
+      setSelectedUserId("");
+      setIsExecutive(false);
+      loadMembers();
     }
-
-    setExecutif(false);
-    setSelectedUserId(null);
-    setCustomRole("");
-
-    toast.success("Membre ajouté avec succès.");
-    fetchMembers();
   };
 
-  const handleRemoveMember = async (id: string, userId: string) => {
-    const { error } = await supabase.from("bdl_members").delete().eq("id", id);
+  const handleRemoveMember = async (id: string) => {
+    if (!confirm("Êtes-vous sûr de vouloir retirer ce membre ?")) return;
 
-    if (!error) {
-      await supabase.from("user_roles").delete().eq("user_id", userId).like("role", "custom:%");
-      fetchMembers();
-      toast.success("Membre retiré.");
+    const { error } = await supabase
+      .from('bdl_members' as any)
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      toast.error("Erreur lors de la suppression");
+    } else {
+      toast.success("Membre retiré");
+      loadMembers();
     }
   };
 
   return (
-    <Card>
+    <Card className="shadow-card">
       <CardHeader>
-        <CardTitle>Gestion des membres du BDL</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <Users className="h-6 w-6" />
+          Gestion de l'Affichage BDL
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="space-y-2">
-          <Label>Ajouter un membre</Label>
-          <select
-            className="border rounded p-2 w-full"
-            value={selectedUserId || ""}
-            onChange={(e) => setSelectedUserId(e.target.value)}
-          >
-            <option value="">Sélectionner un utilisateur</option>
-            {users.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.full_name}
-              </option>
-            ))}
-          </select>
+        <div className="border rounded-lg p-6 space-y-4 bg-muted/30">
+          <h3 className="font-semibold">Ajouter un membre à l'affichage</h3>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="user">Utilisateur</Label>
+              <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+                <SelectTrigger id="user">
+                  <SelectValue placeholder="Sélectionner un utilisateur" />
+                </SelectTrigger>
+                <SelectContent>
+                  {profiles.map((profile) => (
+                    <SelectItem key={profile.id} value={profile.id}>
+                      {profile.full_name} ({profile.email})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="executive"
+                checked={isExecutive}
+                onCheckedChange={setIsExecutive}
+              />
+              <Label htmlFor="executive">Membre de l'équipe exécutive</Label>
+            </div>
+            
+            <Button onClick={handleAddMember}>
+              Ajouter à l'affichage
+            </Button>
+          </div>
         </div>
-
-        <div className="flex items-center space-x-2">
-          <Switch checked={executif} onCheckedChange={setExecutif} />
-          <Label>Membre exécutif</Label>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="customRole">Fonction personnalisée (optionnel)</Label>
-          <input
-            id="customRole"
-            type="text"
-            className="border rounded p-2 w-full"
-            placeholder="ex : Photographe, Responsable logistique…"
-            value={customRole}
-            onChange={(e) => setCustomRole(e.target.value)}
-          />
-        </div>
-
-        <Button onClick={handleAddMember}>Ajouter</Button>
-
-        <hr className="my-4" />
 
         <div className="space-y-4">
-          {members.map((m) => (
-            <div key={m.id} className="border p-4 rounded flex justify-between">
-              <div>
-                <p className="font-semibold">{m.users.full_name}</p>
-                <p>{m.is_executif ? "Exécutif" : "Membre"}</p>
-                {m.user_roles?.map((r: any) => (
-                  <p key={r.role} className="text-muted-foreground text-sm">{r.role}</p>
-                ))}
-              </div>
-
-              <Button
-                variant="destructive"
-                onClick={() => handleRemoveMember(m.id, m.user_id)}
-              >
-                Retirer
-              </Button>
-            </div>
+          <h3 className="font-semibold">Membres affichés</h3>
+          
+          {members.map((member) => (
+            <Card key={member.id} className="bg-muted/30">
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-2 flex-1">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-medium">{member.profiles.full_name}</h4>
+                      {member.is_executive && (
+                        <Badge variant="default">Exécutif</Badge>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {member.profiles.email}
+                    </p>
+                  </div>
+                  
+                  <Button 
+                    size="sm" 
+                    variant="destructive"
+                    onClick={() => handleRemoveMember(member.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       </CardContent>
     </Card>
   );
-}
+};

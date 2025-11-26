@@ -10,8 +10,13 @@
 <url><loc>https://bdl-saintandre.fr/documents</loc><changefreq>monthly</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/events</loc><changefreq>monthly</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/intranet</loc><changefreq>monthly</changefreq></url>
+<url><loc>https://bdl-saintandre.fr/jobdl/</loc><changefreq>monthly</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/jobdl/BDL25DE0001A</loc><changefreq>weekly</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/jobdl/PBDL25DC0001A</loc><changefreq>weekly</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/jobdl/BDL25DE0003A</loc><changefreq>weekly</changefreq></url>
+<url><loc>https://bdl-saintandre.fr/jobdl/BDL25DE0002B</loc><changefreq>weekly</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/jobdl/BDL25DE0002A</loc><changefreq>weekly</changefreq></url>
+<url><loc>https://bdl-saintandre.fr/jobdl/PBDL25AR0001A</loc><changefreq>weekly</changefreq></url>
+<url><loc>https://bdl-saintandre.fr/jobdl/PBDL25CM0001A</loc><changefreq>weekly</changefreq></url>
+<url><loc>https://bdl-saintandre.fr/jobdl/PBDL25DC0002A</loc><changefreq>weekly</changefreq></url>
+<url><loc>https://bdl-saintandre.fr/jobdl/RCBDL25DC0003B</loc><changefreq>weekly</changefreq></url>
   </urlset>

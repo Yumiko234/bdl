@@ -101,7 +101,7 @@ const BDL = () => {
   const getRoleLabel = (role: string): string => {
     const labels: Record<string, string> = {
       'president': 'Président',
-      'vice_president': 'Vice-présidente',
+      'vice_president': 'Vice-Présidente',
       'secretary_general': 'Secrétaire Générale',
       'communication_manager': 'Directeur de la Communication et de la Communauté',
       'bdl_member': 'Membre BDL'

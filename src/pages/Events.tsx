@@ -52,10 +52,10 @@ export default function Events() {
 
   const getRoleLabel = (role: string | null): string => {
     const roleLabels: { [key: string]: string } = {
-      president: "Le Président",
-      vice_president: "La Vice-présidente",
-      secretary_general: "La Secrétaire Générale",
-      communication_manager: "Le Responsable Communication",
+      president: "Président",
+      vice_president: "Vice-Présidente",
+      secretary_general: "Secrétaire Générale",
+      communication_manager: "Directeur de la Communication et de la Communauté",
       bdl_member: "Membre du BDL",
     };
     return role ? roleLabels[role] || "BDL" : "BDL";

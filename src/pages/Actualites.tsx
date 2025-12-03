@@ -24,7 +24,7 @@ const roleLabels: Record<string, string> = {
   "president": "Président",
   "vice_president": "Vice-Présidente",
   "secretary_general": "Secrétaire Générale",
-  "communication_manager": "Responsable Communication",
+  "communication_manager": "Directeur de la Communication et de la Communauté",
 };
 
 const Actualites = () => {

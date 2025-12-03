@@ -103,7 +103,7 @@ const BDL = () => {
       'president': 'Président',
       'vice_president': 'Vice-présidente',
       'secretary_general': 'Secrétaire Générale',
-      'communication_manager': 'Responsable Communication',
+      'communication_manager': 'Directeur de la Communication et de la Communauté',
       'bdl_member': 'Membre BDL'
     };
     return labels[role] || role;

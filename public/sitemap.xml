@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
   <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://bdl-saintandre.fr/</loc><changefreq>monthly</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/actualites</loc><changefreq>monthly</changefreq></url>
+<url><loc>https://bdl-saintandre.fr/actualites</loc><changefreq>daily</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/admin</loc><changefreq>monthly</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/auth</loc><changefreq>monthly</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/bdl</loc><changefreq>monthly</changefreq></url>
+<url><loc>https://bdl-saintandre.fr/bdl</loc><changefreq>daily</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/clubs</loc><changefreq>monthly</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/contact</loc><changefreq>monthly</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/documents</loc><changefreq>monthly</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/events</loc><changefreq>monthly</changefreq></url>
+<url><loc>https://bdl-saintandre.fr/documents</loc><changefreq>daily</changefreq></url>
+<url><loc>https://bdl-saintandre.fr/events</loc><changefreq>daily</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/intranet</loc><changefreq>monthly</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/jobdl/</loc><changefreq>monthly</changefreq></url>
+<url><loc>https://bdl-saintandre.fr/jobdl/</loc><changefreq>daily</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/jobdl/BDL25DE0001A</loc><changefreq>weekly</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/jobdl/PBDL25DC0001A</loc><changefreq>weekly</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/jobdl/BDL25DE0002B</loc><changefreq>weekly</changefreq></url>

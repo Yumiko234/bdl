@@ -277,7 +277,7 @@ const Index = () => {
                   title: "JoBDL",
                   description: "Consultez le Journal officiel du Bureau des Lycéens",
                   icon: FileText,
-                  link: "/jobdl",
+                  link: "/jo",
                   gradient: "gradient-institutional",
                 },
                 {

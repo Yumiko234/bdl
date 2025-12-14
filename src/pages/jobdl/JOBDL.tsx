@@ -132,7 +132,7 @@ const JOBDL = () => {
                       </div>
 
                       <a
-                        href={`/jobdl/${entry.nor_number}`}
+                        href={`/jo/${entry.nor_number}`}
                         className="mt-4 sm:mt-0 inline-block px-5 py-2 bg-[#07419e] text-white rounded-lg font-semibold hover:bg-[#052a70] transition-colors"
                       >
                         Voir l’article

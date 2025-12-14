@@ -76,7 +76,7 @@ const JobdlArticle = () => {
       president: "Le Président",
       vice_president: "La Vice-Présidente",
       secretary_general: "La Secrétaire Générale",
-      communication_manager: "Le Responsable Communication",
+      communication_manager: "Le Directeur de la Communauté et de la Communication",
     };
     return labels[role] || "Bureau des Lycéens";
   };

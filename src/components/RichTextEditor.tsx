@@ -104,17 +104,19 @@ export const RichTextEditor = ({ value, onChange, placeholder }: RichTextEditorP
   };
 
   return (
-    <div className="rich-text-editor relative">
+    <div className="rich-text-editor">
       {/* Bouton pour basculer en mode HTML */}
-      <button
-        type="button"
-        onClick={toggleHtmlMode}
-        className="absolute top-2 right-2 z-10 flex items-center gap-2 px-3 py-1.5 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors shadow-sm"
-        title={isHtmlMode ? "Retour au mode visuel" : "Mode HTML / Code source"}
-      >
-        <Code className="h-4 w-4" />
-        {isHtmlMode ? 'Mode Visuel' : 'HTML'}
-      </button>
+      <div className="flex justify-end mb-2">
+        <button
+          type="button"
+          onClick={toggleHtmlMode}
+          className="flex items-center gap-2 px-3 py-1.5 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors shadow-sm"
+          title={isHtmlMode ? "Retour au mode visuel" : "Mode HTML / Code source"}
+        >
+          <Code className="h-4 w-4" />
+          {isHtmlMode ? 'Mode Visuel' : 'HTML'}
+        </button>
+      </div>
 
       {isHtmlMode ? (
         <div className="border rounded-md overflow-hidden">
@@ -143,10 +145,6 @@ export const RichTextEditor = ({ value, onChange, placeholder }: RichTextEditorP
       )}
 
       <style>{`
-        .rich-text-editor .ql-toolbar {
-          padding-top: 45px !important;
-        }
-        
         .rich-text-editor .ql-container {
           min-height: 300px;
         }

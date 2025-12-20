@@ -143,12 +143,6 @@ export const RichTextEditor = ({ value, onChange, placeholder }: RichTextEditorP
           className="bg-background text-foreground"
         />
       )}
-
-      <style>{`
-        .rich-text-editor .ql-container {
-          min-height: 300px;
-        }
-      `}</style>
     </div>
   );
 };

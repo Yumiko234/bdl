@@ -6,7 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import "@/styles/journal.css";
 
-// --- Interfaces ---
 interface Modification {
   date: string;
   oldText: string;
@@ -25,7 +24,7 @@ interface JournalEntry {
   modifications?: Modification[];
 }
 
-// --- Composant pour le rendu de l'article ---
+// Composant pour le rendu de l'article avec modifications et pliage
 const ArticleContent = ({ entry }: { entry: JournalEntry }) => {
   const [collapsedSections, setCollapsedSections] = useState<Set<number>>(new Set());
 
@@ -40,124 +39,127 @@ const ArticleContent = ({ entry }: { entry: JournalEntry }) => {
   };
 
   const renderContentWithModifications = (content: string, modifications?: Modification[]) => {
-    let displayContent = content;
-
-    // Application des modifications visuelles
-    if (modifications && modifications.length > 0) {
-      const sortedMods = [...modifications].sort((a, b) => b.position - a.position);
-      sortedMods.forEach(mod => {
-        const oldTextEscaped = mod.oldText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const regex = new RegExp(oldTextEscaped, 'g');
-        const replacement = `<span class="modification-group">
-          <del class="text-red-600 line-through">${mod.oldText}</del>
-          <ins class="text-green-700 no-underline font-semibold">${mod.newText}</ins>
-          <sup class="text-xs text-blue-600 ml-1">[v. ${new Date(mod.date).toLocaleDateString('fr-FR')}]</sup>
-        </span>`;
-        displayContent = displayContent.replace(regex, replacement);
-      });
+    if (!modifications || modifications.length === 0) {
+      return renderCollapsibleContent(content);
     }
 
-    // Parsing pour le pliage
+    let modifiedContent = content;
+    const sortedMods = [...modifications].sort((a, b) => b.position - a.position);
+
+    sortedMods.forEach(mod => {
+      const oldTextEscaped = mod.oldText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(oldTextEscaped, 'g');
+      
+      const replacement = `<span class="modification-group">
+        <del class="text-red-600 line-through">${mod.oldText}</del>
+        <ins class="text-green-700 no-underline font-semibold">${mod.newText}</ins>
+        <sup class="text-xs text-blue-600 ml-1">[Version du ${new Date(mod.date).toLocaleDateString('fr-FR')}]</sup>
+      </span>`;
+      
+      modifiedContent = modifiedContent.replace(regex, replacement);
+    });
+
+    return renderCollapsibleContent(modifiedContent);
+  };
+
+  const renderCollapsibleContent = (content: string) => {
     const parser = new DOMParser();
-    const doc = parser.parseFromString(displayContent, 'text/html');
-    const nodes = Array.from(doc.body.childNodes);
+    const doc = parser.parseFromString(content, 'text/html');
+    const elements = Array.from(doc.body.childNodes);
     
-    const result: JSX.Element[] = [];
+    const sections: { title: string; level: string; content: string; index: number }[] = [];
     let currentSection: { title: string; level: string; content: string; index: number } | null = null;
-    let sectionCounter = 0;
+    let sectionIndex = 0;
 
-    // Fonction pour fermer et pousser une section pliable dans le résultat
-    const flushSection = () => {
-      if (currentSection) {
-        const isCollapsed = collapsedSections.has(currentSection.index);
-        const levelClass = currentSection.level === 'h1' ? 'text-2xl' : currentSection.level === 'h2' ? 'text-xl' : 'text-lg';
-        const idx = currentSection.index;
-        
-        result.push(
-          <div key={`section-${idx}`} className="border-l-4 border-[#FFD700] pl-4 my-6">
-            <button
-              onClick={() => toggleSection(idx)}
-              className="flex items-center gap-2 w-full text-left hover:bg-gray-50 p-2 rounded transition-colors group"
-            >
-              {isCollapsed ? <ChevronRight className="h-5 w-5 text-gray-400" /> : <ChevronDown className="h-5 w-5 text-gray-400" />}
-              <h3 className={`font-bold ${levelClass} text-[#07419e] group-hover:text-blue-700`}>
-                {currentSection.title}
-              </h3>
-            </button>
-            {!isCollapsed && (
-              <div 
-                className="mt-2 ml-7 journal-article" 
-                dangerouslySetInnerHTML={{ __html: currentSection.content }} 
-              />
-            )}
-          </div>
-        );
-        currentSection = null;
-      }
-    };
-
-    nodes.forEach((node, i) => {
+    elements.forEach((node) => {
       if (node instanceof HTMLElement) {
         const tagName = node.tagName.toLowerCase();
-        // Détection des éléments exclus du pliage
-        const isExcluded = node.classList.contains('no-collapse') || 
-                           node.classList.contains('no-collapse-true') ||
-                           node.classList.contains('always-visible');
-
-        if (['h1', 'h2', 'h3'].includes(tagName) && !isExcluded) {
-          flushSection();
+        
+        if (['h1', 'h2', 'h3'].includes(tagName)) {
+          if (currentSection) {
+            sections.push(currentSection);
+          }
           currentSection = {
             title: node.textContent || '',
             level: tagName,
             content: '',
-            index: sectionCounter++
+            index: sectionIndex++
           };
-        } else if (isExcluded) {
-          flushSection(); // On termine la section en cours avant d'afficher l'élément fixe
-          result.push(
-            <div key={`fixed-${i}`} className="journal-article no-collapse-true my-6" dangerouslySetInnerHTML={{ __html: node.outerHTML }} />
-          );
-        } else {
-          if (currentSection) {
-            currentSection.content += node.outerHTML;
-          } else {
-            result.push(<div key={`raw-${i}`} className="journal-article" dangerouslySetInnerHTML={{ __html: node.outerHTML }} />);
-          }
+        } else if (currentSection) {
+          currentSection.content += node.outerHTML;
         }
-      } else if (node.textContent?.trim()) {
-        if (currentSection) {
-          currentSection.content += node.textContent;
-        } else {
-          result.push(<p key={`text-${i}`} className="journal-article">{node.textContent}</p>);
-        }
+      } else if (currentSection && node.textContent?.trim()) {
+        currentSection.content += node.textContent;
       }
     });
 
-    flushSection();
-    return <div className="space-y-2">{result}</div>;
+    if (currentSection) {
+      sections.push(currentSection);
+    }
+
+    // Si pas de sections avec titres, retourner le contenu tel quel
+    if (sections.length === 0) {
+      return <div className="journal-article" dangerouslySetInnerHTML={{ __html: content }} />;
+    }
+
+    return (
+      <div className="space-y-4">
+        {sections.map((section) => {
+          const isCollapsed = collapsedSections.has(section.index);
+          const levelClass = section.level === 'h1' ? 'text-2xl' : section.level === 'h2' ? 'text-xl' : 'text-lg';
+          
+          return (
+            <div key={section.index} className="border-l-4 border-[#FFD700] pl-4">
+              <button
+                onClick={() => toggleSection(section.index)}
+                className="flex items-center gap-2 w-full text-left hover:bg-gray-50 p-2 rounded transition-colors"
+              >
+                {isCollapsed ? (
+                  <ChevronRight className="h-5 w-5 text-gray-500 flex-shrink-0" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-gray-500 flex-shrink-0" />
+                )}
+                <h3 className={`font-bold ${levelClass} text-[#07419e]`}>
+                  {section.title}
+                </h3>
+              </button>
+              
+              {!isCollapsed && (
+                <div 
+                  className="mt-2 ml-7 text-justify leading-relaxed journal-article"
+                  dangerouslySetInnerHTML={{ __html: section.content }}
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
   };
 
   return (
     <>
-      <div className="article-container">
+      <article className="text-black">
         {renderContentWithModifications(entry.content, entry.modifications)}
-      </div>
+      </article>
 
       {entry.modifications && entry.modifications.length > 0 && (
-        <div className="mt-12 pt-6 border-t border-gray-200">
-          <h3 className="font-bold text-lg mb-4 text-[#07419e] font-serif">Historique des modifications</h3>
+        <div className="mt-8 pt-4 border-t border-gray-300">
+          <h3 className="font-bold text-lg mb-3 text-[#07419e]">Historique des modifications</h3>
           <div className="space-y-3">
             {entry.modifications.map((mod, idx) => (
-              <div key={idx} className="text-sm bg-slate-50 p-4 rounded-lg border border-slate-200 font-serif">
-                <p className="font-semibold text-slate-900 mb-1">
-                  Mise à jour du {new Date(mod.date).toLocaleDateString('fr-FR', {
-                    day: 'numeric', month: 'long', year: 'numeric'
+              <div key={idx} className="text-sm bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <p className="font-semibold text-blue-900 mb-1">
+                  📅 {new Date(mod.date).toLocaleDateString('fr-FR', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
                   })}
                 </p>
-                <p className="text-slate-700">
-                  <span className="line-through text-red-500 opacity-70">{mod.oldText}</span>
+                <p className="text-gray-700">
+                  <span className="line-through text-red-600">{mod.oldText}</span>
                   {' → '}
-                  <span className="text-emerald-700 font-medium">{mod.newText}</span>
+                  <span className="text-green-700 font-semibold">{mod.newText}</span>
                 </p>
               </div>
             ))}
@@ -168,7 +170,6 @@ const ArticleContent = ({ entry }: { entry: JournalEntry }) => {
   );
 };
 
-// --- Page Principale ---
 const JobdlArticle = () => {
   const { nor } = useParams<{ nor: string }>();
   const [entry, setEntry] = useState<JournalEntry | null>(null);
@@ -179,63 +180,86 @@ const JobdlArticle = () => {
     const fetchEntry = async () => {
       if (!nor) return;
       setLoading(true);
-      const { data, error: supabaseError } = await supabase
+      setError(null);
+
+      const { data, error } = await supabase
         .from("official_journal")
         .select("*")
         .eq("nor_number", nor)
         .single();
 
-      if (supabaseError) {
-        setError("Impossible de charger la publication. Elle n'existe peut-être plus.");
+      if (error) {
+        console.error("Erreur Supabase :", error);
+        setError("Impossible de charger la publication officielle demandée. Si vous pensez qu'il s'agit d'une erreur, veuillez contacter la Secrétaire Générale.");
       } else {
         setEntry(data as JournalEntry);
       }
+
       setLoading(false);
     };
+
     fetchEntry();
   }, [nor]);
 
   const getRoleLabel = (role: string | null): string => {
+    if (!role) return "Bureau des Lycéens";
     const labels: Record<string, string> = {
       president: "Le Président",
       vice_president: "La Vice-Présidente",
       secretary_general: "La Secrétaire Générale",
-      communication_manager: "Le Directeur de la Communication",
+      communication_manager: "Le Directeur de la Communauté et de la Communication",
     };
-    return role ? (labels[role] || "Le Bureau") : "Le Bureau des Lycéens";
+    return labels[role] || "Bureau des Lycéens";
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center italic text-slate-500">Chargement du document officiel...</div>;
-  if (error || !entry) return <div className="min-h-screen flex items-center justify-center text-red-600 font-bold">{error || "Document introuvable."}</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background text-lg text-muted-foreground">
+        Chargement de la publication officielle...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background text-lg text-red-700">
+        {error}
+      </div>
+    );
+  }
+
+  if (!entry) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background text-lg text-muted-foreground">
+        Aucune publication trouvée pour ce numéro NOR.
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#fdfdfd]">
+    <div className="min-h-screen flex flex-col bg-[#f9f9f9] font-[Times_New_Roman]">
       <Navigation />
-      <main className="flex-1 py-12 px-4">
-        <div className="container mx-auto max-w-4xl">
-          <div className="border border-[#FFD700] rounded-2xl bg-white shadow-xl p-6 md:p-12">
-            <header className="mb-10 text-center border-b pb-8">
-              <h1 className="text-3xl md:text-4xl font-bold mb-4 text-[#07419e] font-serif leading-tight">
-                {entry.title}
-              </h1>
-              <div className="text-sm text-slate-500 uppercase tracking-widest font-sans">
-                NOR : {entry.nor_number} — {new Date(entry.publication_date).toLocaleDateString("fr-FR", {
-                  day: "numeric", month: "long", year: "numeric"
-                })}
-              </div>
-            </header>
+      <main className="flex-1 py-16">
+        <div className="container mx-auto px-6 max-w-4xl">
+          <div className="border border-[#FFD700] rounded-2xl bg-white/95 shadow-card p-10">
+            <h1 className="text-4xl font-bold mb-4 text-[#07419e] text-center">
+              {entry.title}
+            </h1>
+            <p className="text-sm text-center text-muted-foreground italic mb-6">
+              NOR : {entry.nor_number} — publié le{" "}
+              {new Date(entry.publication_date).toLocaleDateString("fr-FR", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })}
+            </p>
             
             <ArticleContent entry={entry} />
             
             {entry.author_name && (
-              <footer className="mt-16 pt-6 border-t-2 border-slate-100 text-right">
-                <p className="text-slate-800 font-serif text-lg font-bold">
-                  {getRoleLabel(entry.author_role)}
-                </p>
-                <p className="text-slate-600 font-serif italic">
-                  {entry.author_name}
-                </p>
-              </footer>
+              <div className="mt-8 pt-4 border-t text-right text-sm text-gray-600 italic">
+                {getRoleLabel(entry.author_role)} : {entry.author_name}
+              </div>
             )}
           </div>
         </div>

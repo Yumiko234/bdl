@@ -82,15 +82,20 @@ const ArticleRenderer = ({ entry }: { entry: JournalEntry }) => {
     const doc = parser.parseFromString(content, 'text/html');
     const elements = Array.from(doc.body.childNodes);
     
-    const sections: { title: string; level: string; content: string; index: number }[] = [];
-    let currentSection: { title: string; level: string; content: string; index: number } | null = null;
+    const sections: { title: string; level: string; content: string; index: number; collapsible: boolean }[] = [];
+    const nonCollapsibleContent: string[] = [];
+    let currentSection: { title: string; level: string; content: string; index: number; collapsible: boolean } | null = null;
     let sectionIndex = 0;
 
     elements.forEach((node) => {
       if (node instanceof HTMLElement) {
         const tagName = node.tagName.toLowerCase();
+        const hasNoCollapseClass = node.classList.contains('no-collapse') || 
+                                     node.classList.contains('always-visible') ||
+                                     node.parentElement?.classList.contains('always-visible');
         
-        if (['h1', 'h2', 'h3'].includes(tagName)) {
+        if (['h1', 'h2', 'h3'].includes(tagName) && !hasNoCollapseClass) {
+          // Titre pliable
           if (currentSection) {
             sections.push(currentSection);
           }
@@ -98,13 +103,24 @@ const ArticleRenderer = ({ entry }: { entry: JournalEntry }) => {
             title: node.textContent || '',
             level: tagName,
             content: '',
-            index: sectionIndex++
+            index: sectionIndex++,
+            collapsible: true
           };
-        } else if (currentSection) {
+        } else if (currentSection && !hasNoCollapseClass) {
+          // Contenu dans une section pliable
           currentSection.content += node.outerHTML;
+        } else {
+          // Contenu non-pliable
+          if (currentSection) {
+            sections.push(currentSection);
+            currentSection = null;
+          }
+          nonCollapsibleContent.push(node.outerHTML || node.textContent || '');
         }
       } else if (currentSection && node.textContent?.trim()) {
         currentSection.content += node.textContent;
+      } else if (node.textContent?.trim()) {
+        nonCollapsibleContent.push(node.textContent);
       }
     });
 
@@ -112,12 +128,25 @@ const ArticleRenderer = ({ entry }: { entry: JournalEntry }) => {
       sections.push(currentSection);
     }
 
-    if (sections.length === 0) {
+    if (sections.length === 0 && nonCollapsibleContent.length === 0) {
       return <div dangerouslySetInnerHTML={{ __html: content }} />;
+    }
+
+    if (sections.length === 0) {
+      return <div dangerouslySetInnerHTML={{ __html: nonCollapsibleContent.join('') }} />;
     }
 
     return (
       <div className="space-y-4">
+        {/* Contenu non-pliable en premier */}
+        {nonCollapsibleContent.length > 0 && (
+          <div 
+            className="mb-6"
+            dangerouslySetInnerHTML={{ __html: nonCollapsibleContent.join('') }} 
+          />
+        )}
+        
+        {/* Sections pliables */}
         {sections.map((section) => {
           const isCollapsed = collapsedSections.has(section.index);
           const levelClass = section.level === 'h1' ? 'text-2xl' : section.level === 'h2' ? 'text-xl' : 'text-lg';

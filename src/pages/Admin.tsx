@@ -4,7 +4,6 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
@@ -22,6 +21,7 @@ import { ContactManagement } from "@/components/admin/ContactManagement";
 import { BDLContentManagement } from "@/components/admin/BDLContentManagement";
 import { FooterManagement } from "@/components/admin/FooterManagement";
 import { RichTextEditor } from "@/components/RichTextEditor";
+import { ScrutinManagement } from "@/components/admin/ScrutinManagement";
 
 const Admin = () => {
   const { user, loading } = useAuth();
@@ -59,12 +59,14 @@ const Admin = () => {
       const roles = data.map(r => r.role);
       setIsPresident(roles.includes('president' as any));
       setIsVicePresident(roles.includes('vice_president' as any));
-      setIsBDLStaff(roles.some((r: any) => ['president', 'vice_president', 'secretary_general', 'communication_manager', 'bdl_member'].includes(r)));
+      setIsBDLStaff(roles.some((r: any) => 
+        ['president', 'vice_president', 'secretary_general', 'communication_manager', 'bdl_member'].includes(r)
+      ));
     }
   };
 
   const loadPresidentMessage = async () => {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('president_message')
       .select('content')
       .single();
@@ -75,7 +77,7 @@ const Admin = () => {
   };
 
   const loadAudienceRequests = async () => {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('audience_requests')
       .select('*')
       .order('created_at', { ascending: false });
@@ -87,12 +89,14 @@ const Admin = () => {
 
   const handleSaveMessage = async () => {
     if (!isPresident) return;
-
     setSaving(true);
+    
+    const { data: currentMessage } = await supabase.from('president_message').select('id').single();
+    
     const { error } = await supabase
       .from('president_message')
       .update({ content: presidentMessage, updated_by: user?.id })
-      .eq('id', (await supabase.from('president_message').select('id').single()).data?.id);
+      .eq('id', currentMessage?.id);
 
     if (error) {
       toast.error("Erreur lors de la sauvegarde");
@@ -124,7 +128,7 @@ const Admin = () => {
   };
 
   if (loading) {
-    return <div>Chargement...</div>;
+    return <div className="flex items-center justify-center min-h-screen">Chargement...</div>;
   }
 
   if (!isBDLStaff) {
@@ -165,7 +169,8 @@ const Admin = () => {
         <section className="py-16">
           <div className="container mx-auto px-4 max-w-6xl">
             <Tabs defaultValue="audience" className="space-y-8">
-              <TabsList className="grid w-full grid-cols-3 lg:grid-cols-11">
+              {/* FIXED: All triggers must be inside TabsList */}
+              <TabsList className="grid w-full grid-cols-3 lg:grid-cols-11 h-auto">
                 <TabsTrigger value="audience">Demandes</TabsTrigger>
                 {isPresident && <TabsTrigger value="message">Message</TabsTrigger>}
                 <TabsTrigger value="members">Membres</TabsTrigger>
@@ -182,6 +187,9 @@ const Admin = () => {
                 )}
                 {(isPresident || isVicePresident) && (
                   <TabsTrigger value="footer">Footer</TabsTrigger>
+                )}
+                {(isPresident || isVicePresident) && (
+                  <TabsTrigger value="scrutins">Scrutins</TabsTrigger>
                 )}
                 {isBDLStaff && <TabsTrigger value="contact">Contact</TabsTrigger>}
               </TabsList>
@@ -232,17 +240,10 @@ const Admin = () => {
                             
                             {isPresident && request.status === 'pending' && (
                               <div className="flex gap-2 pt-2">
-                                <Button 
-                                  size="sm" 
-                                  onClick={() => handleUpdateRequestStatus(request.id, 'approved')}
-                                >
+                                <Button size="sm" onClick={() => handleUpdateRequestStatus(request.id, 'approved')}>
                                   Approuver
                                 </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="destructive"
-                                  onClick={() => handleUpdateRequestStatus(request.id, 'rejected')}
-                                >
+                                <Button size="sm" variant="destructive" onClick={() => handleUpdateRequestStatus(request.id, 'rejected')}>
                                   Refuser
                                 </Button>
                               </div>
@@ -285,11 +286,9 @@ const Admin = () => {
                 </TabsContent>
               )}
 
-              {(isPresident || isVicePresident) && (
-                <TabsContent value="members">
-                  <BDLMembersManagement />
-                </TabsContent>
-              )}
+              <TabsContent value="members">
+                <BDLMembersManagement />
+              </TabsContent>
 
               <TabsContent value="users">
                 <UserManagement />
@@ -307,30 +306,34 @@ const Admin = () => {
                 <DocumentManagement />
               </TabsContent>
 
-            <TabsContent value="journal">
-              <OfficialJournalManagement />
-            </TabsContent>
+              <TabsContent value="journal">
+                <OfficialJournalManagement />
+              </TabsContent>
 
-            <TabsContent value="establishment">
-              <EstablishmentManagement />
-            </TabsContent>
+              <TabsContent value="establishment">
+                <EstablishmentManagement />
+              </TabsContent>
 
-            <TabsContent value="contact">
-              <ContactManagement />
-            </TabsContent>
+              <TabsContent value="contact">
+                <ContactManagement />
+              </TabsContent>
 
-            {(isPresident || isVicePresident || isBDLStaff) && (
               <TabsContent value="bdl-content">
                 <BDLContentManagement />
               </TabsContent>
-            )}
 
-            {(isPresident || isVicePresident) && (
-              <TabsContent value="footer">
-                <FooterManagement />
-              </TabsContent>
-            )}
-          </Tabs>
+              {(isPresident || isVicePresident) && (
+                <TabsContent value="footer">
+                  <FooterManagement />
+                </TabsContent>
+              )}
+
+              {(isPresident || isVicePresident) && (
+                <TabsContent value="scrutins">
+                  <ScrutinManagement />
+                </TabsContent>
+              )}
+            </Tabs>
           </div>
         </section>
       </main>

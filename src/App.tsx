@@ -18,6 +18,7 @@ import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import JOBDL from "./pages/jobdl/JOBDL";
 import JobdlArticle from "./pages/jobdl/[nor]";
+import Scrutin from "./pages/Scrutin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,7 @@ const App = () => {
           <Route path="/auth" element={<Auth />} />
           <Route path="/intranet" element={<Intranet />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/scrutin" element={<Scrutin />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
 

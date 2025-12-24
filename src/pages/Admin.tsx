@@ -22,6 +22,7 @@ import { BDLContentManagement } from "@/components/admin/BDLContentManagement";
 import { FooterManagement } from "@/components/admin/FooterManagement";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { ScrutinManagement } from "@/components/admin/ScrutinManagement";
+import { BDLHistoryManagement } from "@/components/admin/BDLHistoryManagement";
 
 const Admin = () => {
   const { user, loading } = useAuth();
@@ -169,8 +170,8 @@ const Admin = () => {
         <section className="py-16">
           <div className="container mx-auto px-4 max-w-6xl">
             <Tabs defaultValue="audience" className="space-y-8">
-              {/* FIXED: All triggers must be inside TabsList */}
-              <TabsList className="grid w-full grid-cols-3 lg:grid-cols-11 h-auto">
+              {/* FIXED: Moved History inside TabsList and improved grid responsiveness */}
+              <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-12 h-auto gap-1 bg-muted p-1">
                 <TabsTrigger value="audience">Demandes</TabsTrigger>
                 {isPresident && <TabsTrigger value="message">Message</TabsTrigger>}
                 <TabsTrigger value="members">Membres</TabsTrigger>
@@ -183,7 +184,7 @@ const Admin = () => {
                   <TabsTrigger value="establishment">Établissement</TabsTrigger>
                 )}
                 {(isPresident || isVicePresident || isBDLStaff) && (
-                  <TabsTrigger value="bdl-content">Contenu BDL</TabsTrigger>
+                  <TabsTrigger value="bdl-content">Contenu</TabsTrigger>
                 )}
                 {(isPresident || isVicePresident) && (
                   <TabsTrigger value="footer">Footer</TabsTrigger>
@@ -192,6 +193,7 @@ const Admin = () => {
                   <TabsTrigger value="scrutins">Scrutins</TabsTrigger>
                 )}
                 {isBDLStaff && <TabsTrigger value="contact">Contact</TabsTrigger>}
+                {isPresident && <TabsTrigger value="history">Historique</TabsTrigger>}
               </TabsList>
 
               <TabsContent value="audience">
@@ -286,52 +288,24 @@ const Admin = () => {
                 </TabsContent>
               )}
 
-              <TabsContent value="members">
-                <BDLMembersManagement />
-              </TabsContent>
-
-              <TabsContent value="users">
-                <UserManagement />
-              </TabsContent>
-
-              <TabsContent value="news">
-                <NewsManagement isPresident={isPresident} />
-              </TabsContent>
-
-              <TabsContent value="events">
-                <EventManagement isPresident={isPresident} />
-              </TabsContent>
-
-              <TabsContent value="documents">
-                <DocumentManagement />
-              </TabsContent>
-
-              <TabsContent value="journal">
-                <OfficialJournalManagement />
-              </TabsContent>
-
-              <TabsContent value="establishment">
-                <EstablishmentManagement />
-              </TabsContent>
-
-              <TabsContent value="contact">
-                <ContactManagement />
-              </TabsContent>
-
-              <TabsContent value="bdl-content">
-                <BDLContentManagement />
-              </TabsContent>
-
+              <TabsContent value="members"><BDLMembersManagement /></TabsContent>
+              <TabsContent value="users"><UserManagement /></TabsContent>
+              <TabsContent value="news"><NewsManagement isPresident={isPresident} /></TabsContent>
+              <TabsContent value="events"><EventManagement isPresident={isPresident} /></TabsContent>
+              <TabsContent value="documents"><DocumentManagement /></TabsContent>
+              <TabsContent value="journal"><OfficialJournalManagement /></TabsContent>
+              <TabsContent value="establishment"><EstablishmentManagement /></TabsContent>
+              <TabsContent value="contact"><ContactManagement /></TabsContent>
+              <TabsContent value="bdl-content"><BDLContentManagement /></TabsContent>
+              
               {(isPresident || isVicePresident) && (
-                <TabsContent value="footer">
-                  <FooterManagement />
-                </TabsContent>
+                <TabsContent value="footer"><FooterManagement /></TabsContent>
               )}
-
               {(isPresident || isVicePresident) && (
-                <TabsContent value="scrutins">
-                  <ScrutinManagement />
-                </TabsContent>
+                <TabsContent value="scrutins"><ScrutinManagement /></TabsContent>
+              )}
+              {isPresident && (
+                <TabsContent value="history"><BDLHistoryManagement /></TabsContent>
               )}
             </Tabs>
           </div>

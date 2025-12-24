@@ -30,6 +30,7 @@ interface VoteData {
   profiles: {
     full_name: string;
     avatar_url: string | null;
+    user_roles: Array<{ role: string }>;
   };
 }
 
@@ -45,19 +46,14 @@ const Scrutin = () => {
   const [myVotes, setMyVotes] = useState<Record<string, MyVote>>({});
   const [loading, setLoading] = useState(true);
   const [canVote, setCanVote] = useState(false);
+  const [isPresident, setIsPresident] = useState(false);
   const [openDetails, setOpenDetails] = useState<Record<string, boolean>>({});
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/auth");
-    }
-  }, [user, authLoading, navigate]);
 
   useEffect(() => {
     if (user) {
       checkVotingRights();
-      loadScrutins();
     }
+    loadScrutins();
   }, [user]);
 
   const checkVotingRights = async () => {
@@ -77,6 +73,7 @@ const Scrutin = () => {
         "vice_president",
       ];
       setCanVote(roles.some((r) => votingRoles.includes(r)));
+      setIsPresident(roles.includes("president"));
     }
   };
 
@@ -110,7 +107,15 @@ const Scrutin = () => {
   const loadVotes = async (scrutinId: string) => {
     const { data, error } = await supabase
       .from("scrutin_votes")
-      .select("user_id, vote, profiles(full_name, avatar_url)")
+      .select(`
+        user_id, 
+        vote, 
+        profiles!scrutin_votes_user_id_fkey(
+          full_name, 
+          avatar_url,
+          user_roles(role)
+        )
+      `)
       .eq("scrutin_id", scrutinId);
 
     if (error) {
@@ -208,19 +213,53 @@ const Scrutin = () => {
       }
     }
     
-    return "";
+    // Add hover effects for non-voted buttons
+    if (hasVoted) {
+      return "opacity-50 cursor-not-allowed";
+    }
+    
+    switch (voteValue) {
+      case "pour":
+        return "hover:bg-green-100 hover:border-green-600 hover:text-green-700";
+      case "contre":
+        return "hover:bg-red-100 hover:border-red-600 hover:text-red-700";
+      case "abstention":
+        return "hover:bg-blue-100 hover:border-blue-600 hover:text-blue-700";
+    }
+  };
+
+  const getRoleLabel = (profile: VoteData['profiles']) => {
+    if (!profile?.user_roles || profile.user_roles.length === 0) return "Membre BDL";
+    
+    const roleLabels: Record<string, string> = {
+      president: "Président",
+      vice_president: "Vice-Présidente",
+      secretary_general: "Secrétaire Générale",
+      communication_manager: "Directeur de la Communication",
+      bdl_member: "Membre BDL",
+    };
+    
+    // Get the highest priority role
+    const rolePriority = ["president", "vice_president", "secretary_general", "communication_manager", "bdl_member"];
+    for (const priority of rolePriority) {
+      if (profile.user_roles.some(r => r.role === priority)) {
+        return roleLabels[priority] || "Membre BDL";
+      }
+    }
+    
+    return "Membre BDL";
   };
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-lg text-muted-foreground">Chargement...</p>
+      <div className="min-h-screen flex flex-col">
+        <Navigation />
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-lg text-muted-foreground">Chargement...</p>
+        </div>
+        <Footer />
       </div>
     );
-  }
-
-  if (!user) {
-    return null;
   }
 
   return (
@@ -243,7 +282,30 @@ const Scrutin = () => {
         <section className="py-16">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto space-y-6">
-              {!canVote && (
+              {!user && (
+                <Card className="border-accent bg-accent/10">
+                  <CardContent className="p-6">
+                    <p className="text-center text-muted-foreground">
+                      Vous devez être connecté pour voter sur les scrutins.{" "}
+                      <a href="/auth" className="text-primary hover:underline font-semibold">
+                        Se connecter
+                      </a>
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {user && isPresident && (
+                <Card className="border-primary bg-primary/10">
+                  <CardContent className="p-6">
+                    <p className="text-center font-semibold">
+                      En tant que Président, vous ne pouvez pas voter sur les scrutins (neutralité présidentielle).
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {user && !canVote && !isPresident && (
                 <Card className="border-accent bg-accent/10">
                   <CardContent className="p-6">
                     <p className="text-center text-muted-foreground">
@@ -288,12 +350,12 @@ const Scrutin = () => {
                       </div>
 
                       {/* Voting buttons for open scrutins */}
-                      {scrutin.status === "open" && canVote && (
+                      {scrutin.status === "open" && user && canVote && !isPresident && (
                         <div className="flex gap-3 pt-4 border-t">
                           <Button
                             onClick={() => handleVote(scrutin.id, "pour")}
                             variant={myVotes[scrutin.id] ? "default" : "outline"}
-                            className={`flex-1 ${getButtonClassName(scrutin.id, "pour")}`}
+                            className={`flex-1 transition-all ${getButtonClassName(scrutin.id, "pour")}`}
                             disabled={!!myVotes[scrutin.id]}
                           >
                             <ThumbsUp className="h-4 w-4 mr-2" />
@@ -302,7 +364,7 @@ const Scrutin = () => {
                           <Button
                             onClick={() => handleVote(scrutin.id, "contre")}
                             variant={myVotes[scrutin.id] ? "default" : "outline"}
-                            className={`flex-1 ${getButtonClassName(scrutin.id, "contre")}`}
+                            className={`flex-1 transition-all ${getButtonClassName(scrutin.id, "contre")}`}
                             disabled={!!myVotes[scrutin.id]}
                           >
                             <ThumbsDown className="h-4 w-4 mr-2" />
@@ -311,7 +373,7 @@ const Scrutin = () => {
                           <Button
                             onClick={() => handleVote(scrutin.id, "abstention")}
                             variant={myVotes[scrutin.id] ? "default" : "outline"}
-                            className={`flex-1 ${getButtonClassName(scrutin.id, "abstention")}`}
+                            className={`flex-1 transition-all ${getButtonClassName(scrutin.id, "abstention")}`}
                             disabled={!!myVotes[scrutin.id]}
                           >
                             <Minus className="h-4 w-4 mr-2" />
@@ -397,9 +459,15 @@ const Scrutin = () => {
                                       {voteData.profiles.full_name.charAt(0)}
                                     </AvatarFallback>
                                   </Avatar>
-                                  <span className="flex-1 font-medium">
-                                    {voteData.profiles.full_name}
-                                  </span>
+                                  <div className="flex-1">
+                                    <span className="font-medium">
+                                      {voteData.profiles.full_name}
+                                    </span>
+                                    <span className="text-muted-foreground text-sm">
+                                      {" — "}
+                                      {getRoleLabel(voteData.profiles)}
+                                    </span>
+                                  </div>
                                   <div className="flex items-center gap-2">
                                     {getVoteIcon(voteData.vote)}
                                     <span className="text-sm font-semibold">
@@ -426,4 +494,4 @@ const Scrutin = () => {
   );
 };
 
-export default Scrutin;
+export default Scrutin

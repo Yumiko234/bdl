@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link } from "react-router-dom";
-import { ChevronRight, FileText, Users, MessageCircle, AlertCircle } from "lucide-react";
+import { ChevronRight, FileText, Users, MessageCircle, AlertCircle, Vote } from "lucide-react";
 import logo from "@/assets/logo-bdl.jpeg";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -267,10 +267,10 @@ const Index = () => {
                   gradient: "gradient-institutional",
                 },
                 {
-                  title: "Actualités",
-                  description: "Suivez toute l'actualité du lycée",
-                  icon: FileText,
-                  link: "/actualites",
+                  title: "Scrutins",
+                  description: "Suivez les résultats des votes du Bureau",
+                  icon: Vote,
+                  link: "/scrutin",
                   gradient: "gradient-gold",
                 },
                 {

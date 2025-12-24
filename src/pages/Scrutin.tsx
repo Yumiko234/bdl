@@ -393,93 +393,97 @@ const Scrutin = () => {
                       )}
 
                       {/* Show results for closed scrutins */}
-                      {scrutin.status === "closed" && votes[scrutin.id] && (
-                        <div className="pt-4 border-t space-y-3">
-                          <div className="flex items-center justify-between">
-                            <h4 className="font-semibold">Résultats du vote :</h4>
-                            
-                            {/* Summary */}
-                            <div className="flex gap-4 text-sm font-medium">
-                              <span className="text-green-600">
-                                Pour:{" "}
-                                {
-                                  votes[scrutin.id].filter((v) => v.vote === "pour")
-                                    .length
-                                }
-                              </span>
-                              <span className="text-red-600">
-                                Contre:{" "}
-                                {
-                                  votes[scrutin.id].filter(
-                                    (v) => v.vote === "contre"
-                                  ).length
-                                }
-                              </span>
-                              <span className="text-blue-600">
-                                Abstention:{" "}
-                                {
-                                  votes[scrutin.id].filter(
-                                    (v) => v.vote === "abstention"
-                                  ).length
-                                }
-                              </span>
-                            </div>
-                          </div>
+{scrutin.status === "closed" && votes[scrutin.id] && (() => {
+  const currentVotes = votes[scrutin.id];
+  const pour = currentVotes.filter((v) => v.vote === "pour").length;
+  const contre = currentVotes.filter((v) => v.vote === "contre").length;
+  const abstention = currentVotes.filter((v) => v.vote === "abstention").length;
+  
+  const votants = pour + contre + abstention;
+  const exprimes = pour + contre;
+  const majoriteAbsolue = Math.floor(exprimes / 2) + 1;
+  const estAdopte = pour >= majoriteAbsolue && exprimes > 0;
 
-                          <Collapsible
-                            open={openDetails[scrutin.id]}
-                            onOpenChange={() => toggleDetails(scrutin.id)}
-                          >
-                            <CollapsibleTrigger asChild>
-                              <Button variant="outline" className="w-full">
-                                {openDetails[scrutin.id] ? (
-                                  <>
-                                    <ChevronUp className="h-4 w-4 mr-2" />
-                                    Masquer les détails
-                                  </>
-                                ) : (
-                                  <>
-                                    <ChevronDown className="h-4 w-4 mr-2" />
-                                    Voir les détails
-                                  </>
-                                )}
-                              </Button>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent className="space-y-2 mt-3">
-                              {votes[scrutin.id].map((voteData) => (
-                                <div
-                                  key={voteData.user_id}
-                                  className="flex items-center gap-3 p-3 bg-muted/30 rounded"
-                                >
-                                  <Avatar className="h-8 w-8">
-                                    <AvatarImage
-                                      src={voteData.profiles.avatar_url || undefined}
-                                    />
-                                    <AvatarFallback>
-                                      {voteData.profiles.full_name.charAt(0)}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                  <div className="flex-1">
-                                    <span className="font-medium">
-                                      {voteData.profiles.full_name}
-                                    </span>
-                                    <span className="text-muted-foreground text-sm">
-                                      {" — "}
-                                      {getRoleLabel(voteData.profiles)}
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    {getVoteIcon(voteData.vote)}
-                                    <span className="text-sm font-semibold">
-                                      {getVoteLabel(voteData.vote)}
-                                    </span>
-                                  </div>
-                                </div>
-                              ))}
-                            </CollapsibleContent>
-                          </Collapsible>
-                        </div>
-                      )}
+  return (
+    <div className="pt-4 border-t space-y-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <h4 className="font-semibold text-lg">Résultats officiels</h4>
+        
+        {exprimes > 0 ? (
+          <Badge 
+            className={`text-sm py-1 px-4 self-start md:self-center ${
+              estAdopte 
+                ? "bg-green-100 text-green-800 border-green-200 hover:bg-green-100" 
+                : "bg-red-100 text-red-800 border-red-200 hover:bg-red-100"
+            }`}
+            variant="outline"
+          >
+            {estAdopte ? "SCRUTIN ADOPTÉ" : "SCRUTIN REJETÉ"}
+          </Badge>
+        ) : (
+          <Badge variant="secondary">AUCUN SUFFRAGE EXPRIMÉ</Badge>
+        )}
+      </div>
+
+      {/* Tableau de bord des chiffres clés */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-muted/20 rounded-lg border">
+        <div className="flex flex-col">
+          <span className="text-xs text-muted-foreground uppercase font-medium">Votants</span>
+          <span className="text-xl font-bold">{votants}</span>
+        </div>
+        <div className="flex flex-col">
+          <span className="text-xs text-muted-foreground uppercase font-medium">Exprimés</span>
+          <span className="text-xl font-bold">{exprimes}</span>
+        </div>
+        <div className="flex flex-col">
+          <span className="text-xs text-muted-foreground uppercase font-medium text-blue-600">Majorité</span>
+          <span className="text-xl font-bold text-blue-600">{majoriteAbsolue}</span>
+        </div>
+        <div className="flex flex-col">
+          <span className="text-xs text-muted-foreground uppercase font-medium text-green-600">Pour</span>
+          <span className="text-xl font-bold text-green-600">{pour}</span>
+        </div>
+      </div>
+
+      {/* Collapsible pour le détail nominatif */}
+      <Collapsible
+        open={openDetails[scrutin.id]}
+        onOpenChange={() => toggleDetails(scrutin.id)}
+      >
+        <CollapsibleTrigger asChild>
+          <Button variant="ghost" size="sm" className="w-full text-muted-foreground">
+            {openDetails[scrutin.id] ? (
+              <><ChevronUp className="h-4 w-4 mr-2" /> Masquer le détail des votes</>
+            ) : (
+              <><ChevronDown className="h-4 w-4 mr-2" /> Voir le détail des votes par membre</>
+            )}
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="space-y-2 mt-3">
+          {currentVotes.map((voteData) => (
+            <div
+              key={voteData.user_id}
+              className="flex items-center gap-3 p-3 bg-background border rounded-md"
+            >
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={voteData.profiles.avatar_url || undefined} />
+                <AvatarFallback>{voteData.profiles.full_name.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <div className="text-sm font-medium">{voteData.profiles.full_name}</div>
+                <div className="text-xs text-muted-foreground">{getRoleLabel(voteData.profiles)}</div>
+              </div>
+              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-muted/50">
+                {getVoteIcon(voteData.vote)}
+                <span className="text-xs font-bold uppercase">{voteData.vote}</span>
+              </div>
+            </div>
+          ))}
+        </CollapsibleContent>
+      </Collapsible>
+    </div>
+  );
+})()}
                     </CardContent>
                   </Card>
                 ))

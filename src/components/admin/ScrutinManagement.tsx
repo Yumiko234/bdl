@@ -246,19 +246,52 @@ export const ScrutinManagement = () => {
                       </p>
                       
                       {/* Show vote counts */}
-                      {voteCounts[scrutin.id] && (
-                        <div className="flex gap-4 text-sm pt-2">
-                          <span className="text-green-600 font-medium">
-                            Pour: {voteCounts[scrutin.id].pour}
-                          </span>
-                          <span className="text-red-600 font-medium">
-                            Contre: {voteCounts[scrutin.id].contre}
-                          </span>
-                          <span className="text-gray-600 font-medium">
-                            Abstention: {voteCounts[scrutin.id].abstention}
-                          </span>
-                        </div>
-                      )}
+{/* Show vote counts */}
+{voteCounts[scrutin.id] && (() => {
+  const counts = voteCounts[scrutin.id];
+  const votants = counts.pour + counts.contre + counts.abstention;
+  const exprimes = counts.pour + counts.contre;
+  // Calcul de la majorité absolue : moitié des exprimés + 1
+  const majoriteAbsolue = Math.floor(exprimes / 2) + 1;
+  const estAdopte = counts.pour >= majoriteAbsolue;
+
+  return (
+    <div className="space-y-4 pt-4 border-t mt-4">
+      {/* Ligne des totaux institutionnels */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="flex flex-col">
+          <span className="text-xs text-muted-foreground uppercase">Votants</span>
+          <span className="font-bold text-lg">{votants}</span>
+        </div>
+        <div className="flex flex-col">
+          <span className="text-xs text-muted-foreground uppercase">Exprimés</span>
+          <span className="font-bold text-lg">{exprimes}</span>
+        </div>
+        <div className="flex flex-col">
+          <span className="text-xs text-muted-foreground uppercase">Majorité Absolue</span>
+          <span className="font-bold text-lg text-blue-600">{majoriteAbsolue}</span>
+        </div>
+      </div>
+
+      {/* Détails des votes et Résultat */}
+      <div className="flex items-center justify-between bg-background p-3 rounded-md border">
+        <div className="flex gap-4 text-sm">
+          <div className="flex flex-col">
+            <span className="text-green-600 font-semibold">Pour: {counts.pour}</span>
+            <span className="text-red-600 font-semibold">Contre: {counts.contre}</span>
+            <span className="text-gray-500 italic">Abstention: {counts.abstention}</span>
+          </div>
+        </div>
+        
+        {exprimes > 0 && (
+          <Badge className={estAdopte ? "bg-green-100 text-green-800 hover:bg-green-100" : "bg-red-100 text-red-800 hover:bg-red-100"}>
+            {estAdopte ? "ADOPTÉ" : "REJETÉ"}
+          </Badge>
+        )}
+      </div>
+    </div>
+  );
+})()}
                     </div>
 
                     <div className="flex gap-2">

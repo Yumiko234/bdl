@@ -443,6 +443,14 @@ const Scrutin = () => {
           <span className="text-xs text-muted-foreground uppercase font-medium text-green-600">Pour</span>
           <span className="text-xl font-bold text-green-600">{pour}</span>
         </div>
+        <div className="flex flex-col">
+          <span className="text-xs text-muted-foreground uppercase font-medium text-red-600">Contre</span>
+          <span className="text-xl font-bold text-red-600">{contre}</span>
+        </div>
+        <div className="flex flex-col">
+          <span className="text-xs text-muted-foreground uppercase font-medium text-black-600">Abstention</span>
+          <span className="text-xl font-bold text-black-600">{abstention}</span>
+        </div>
       </div>
 
       {/* Collapsible pour le détail nominatif */}

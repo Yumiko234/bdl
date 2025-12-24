@@ -20,6 +20,8 @@ import JOBDL from "./pages/jobdl/JOBDL";
 import JobdlArticle from "./pages/jobdl/[nor]";
 import Scrutin from "./pages/Scrutin";
 import NotFound from "./pages/NotFound";
+import BDLHistory from "./pages/BDLHistory";
+import BDLYearDetail from "./pages/BDLYearDetail";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +35,8 @@ const App = () => {
           <Route path="/" element={<Index />} />
           <Route path="/etablissement" element={<Etablissement />} />
           <Route path="/bdl" element={<BDL />} />
+          <Route path="/bdl/historique" element={<BDLHistory />} />
+          <Route path="/bdl/historique/:year" element={<BDLYearDetail />} />
           <Route path="/clubs" element={<Clubs />} />
           <Route path="/actualites" element={<Actualites />} />
           <Route path="/events" element={<Events />} />

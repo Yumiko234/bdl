@@ -22,6 +22,7 @@ import Scrutin from "./pages/Scrutin";
 import NotFound from "./pages/NotFound";
 import BDLHistory from "./pages/BDLHistory";
 import BDLYearDetail from "./pages/BDLYearDetail";
+import Sondage from "./pages/Sondage";
 
 const queryClient = new QueryClient();
 

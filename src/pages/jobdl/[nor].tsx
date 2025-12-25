@@ -25,15 +25,16 @@ interface JournalEntry {
 }
 
 // Composant pour le rendu de l'article avec modifications et pliage
+// Composant pour le rendu de l'article avec modifications et pliage hiérarchique
 const ArticleContent = ({ entry }: { entry: JournalEntry }) => {
-  const [collapsedSections, setCollapsedSections] = useState<Set<number>>(new Set());
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
 
-  const toggleSection = (index: number) => {
+  const toggleSection = (id: string) => {
     const newCollapsed = new Set(collapsedSections);
-    if (newCollapsed.has(index)) {
-      newCollapsed.delete(index);
+    if (newCollapsed.has(id)) {
+      newCollapsed.delete(id);
     } else {
-      newCollapsed.add(index);
+      newCollapsed.add(id);
     }
     setCollapsedSections(newCollapsed);
   };
@@ -51,9 +52,9 @@ const ArticleContent = ({ entry }: { entry: JournalEntry }) => {
       const regex = new RegExp(oldTextEscaped, 'g');
       
       const replacement = `<span class="modification-group">
-        <del class="text-red-600 line-through">${mod.oldText}</del>
+        <del class="text-red-600 line-through font-normal">${mod.oldText}</del>
         <ins class="text-green-700 no-underline font-semibold">${mod.newText}</ins>
-        <sup class="text-xs text-blue-600 ml-1">[Version du ${new Date(mod.date).toLocaleDateString('fr-FR')}]</sup>
+        <sup class="text-xs text-blue-600 ml-1 font-normal">[Version du ${new Date(mod.date).toLocaleDateString('fr-FR')}]</sup>
       </span>`;
       
       modifiedContent = modifiedContent.replace(regex, replacement);
@@ -67,106 +68,117 @@ const ArticleContent = ({ entry }: { entry: JournalEntry }) => {
     const doc = parser.parseFromString(content, 'text/html');
     const elements = Array.from(doc.body.childNodes);
     
-    const sections: { title: string; level: string; content: string; index: number }[] = [];
-    let currentSection: { title: string; level: string; content: string; index: number } | null = null;
-    let sectionIndex = 0;
+    interface Section {
+      id: string;
+      title: string;
+      level: number;
+      htmlContent: string;
+      children: Section[];
+    }
 
-    elements.forEach((node) => {
-      if (node instanceof HTMLElement) {
-        const tagName = node.tagName.toLowerCase();
-        
-        if (['h1', 'h2', 'h3'].includes(tagName)) {
-          if (currentSection) {
-            sections.push(currentSection);
-          }
-          currentSection = {
-            title: node.textContent || '',
-            level: tagName,
-            content: '',
-            index: sectionIndex++
-          };
-        } else if (currentSection) {
-          currentSection.content += node.outerHTML;
+    const tree: Section[] = [];
+    let currentPath: Section[] = [];
+
+    elements.forEach((node, idx) => {
+      if (node instanceof HTMLElement && ['h1', 'h2', 'h3', 'h4'].includes(node.tagName.toLowerCase())) {
+        const level = parseInt(node.tagName.substring(1));
+        const newSection: Section = {
+          id: `section-${level}-${idx}`,
+          title: node.textContent || '',
+          level: level,
+          htmlContent: '',
+          children: []
+        };
+
+        while (currentPath.length > 0 && currentPath[currentPath.length - 1].level >= level) {
+          currentPath.pop();
         }
-      } else if (currentSection && node.textContent?.trim()) {
-        currentSection.content += node.textContent;
+
+        if (currentPath.length === 0) {
+          tree.push(newSection);
+        } else {
+          currentPath[currentPath.length - 1].children.push(newSection);
+        }
+        currentPath.push(newSection);
+      } else {
+        const target = currentPath[currentPath.length - 1];
+        const html = node instanceof HTMLElement ? node.outerHTML : node.textContent || '';
+        if (target) {
+          target.htmlContent += html;
+        } else if (html.trim()) {
+          tree.push({ id: `intro-${idx}`, title: '', level: 0, htmlContent: html, children: [] });
+        }
       }
     });
 
-    if (currentSection) {
-      sections.push(currentSection);
-    }
+    const renderTree = (nodes: Section[]) => {
+      return nodes.map((section) => {
+        const isCollapsed = collapsedSections.has(section.id);
+        const isHeader = section.level > 0;
+        
+        // On définit ici les styles de bordure et de taille, SANS le gras général
+        const levelContainerStyles: Record<number, string> = {
+          1: "border-l-4 border-[#FFD700] bg-blue-50/20",
+          2: "border-l-4 border-blue-200",
+          3: "border-l-2 border-gray-300",
+          4: "border-l-2 border-gray-200",
+        };
 
-    // Si pas de sections avec titres, retourner le contenu tel quel
-    if (sections.length === 0) {
-      return <div className="journal-article" dangerouslySetInnerHTML={{ __html: content }} />;
-    }
+        // Styles spécifiques au texte du titre
+        const levelTextStyles: Record<number, string> = {
+          1: "text-2xl font-bold",
+          2: "text-xl font-bold",
+          3: "text-lg font-semibold",
+          4: "text-base font-medium italic",
+        };
 
-    return (
-      <div className="space-y-4">
-        {sections.map((section) => {
-          const isCollapsed = collapsedSections.has(section.index);
-          const levelClass = section.level === 'h1' ? 'text-2xl' : section.level === 'h2' ? 'text-xl' : 'text-lg';
-          
-          return (
-            <div key={section.index} className="border-l-4 border-[#FFD700] pl-4">
+        return (
+          <div key={section.id} className={`${isHeader ? `mt-2 ${levelContainerStyles[section.level] || ''} pl-4` : 'mb-2'}`}>
+            {isHeader && (
               <button
-                onClick={() => toggleSection(section.index)}
-                className="flex items-center gap-2 w-full text-left hover:bg-gray-50 p-2 rounded transition-colors"
+                onClick={() => toggleSection(section.id)}
+                className="flex items-center gap-2 w-full text-left hover:bg-white/50 py-1 px-2 rounded transition-all group"
               >
                 {isCollapsed ? (
-                  <ChevronRight className="h-5 w-5 text-gray-500 flex-shrink-0" />
+                  <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-[#07419e] flex-shrink-0" />
                 ) : (
-                  <ChevronDown className="h-5 w-5 text-gray-500 flex-shrink-0" />
+                  <ChevronDown className="h-5 w-5 text-gray-400 group-hover:text-[#07419e] flex-shrink-0" />
                 )}
-                <h3 className={`font-bold ${levelClass} text-[#07419e]`}>
+                <span className={`${levelTextStyles[section.level]} ${section.level <= 2 ? 'text-[#07419e]' : 'text-gray-800'}`}>
                   {section.title}
-                </h3>
+                </span>
               </button>
-              
-              {!isCollapsed && (
+            )}
+            
+            {!isCollapsed && (
+              <div className={isHeader ? "mt-1 ml-6" : ""}>
                 <div 
-                  className="mt-2 ml-7 text-justify leading-relaxed journal-article"
-                  dangerouslySetInnerHTML={{ __html: section.content }}
+                  className="text-justify font-normal journal-article prose-sm max-w-none last:[&_p]:mb-0"
+                  dangerouslySetInnerHTML={{ __html: section.htmlContent }}
                 />
-              )}
-            </div>
-          );
-        })}
-      </div>
-    );
+                {section.children.length > 0 && (
+                  <div className="mt-1 space-y-1 font-normal">
+                    {renderTree(section.children)}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      });
+    };
+
+    if (tree.length === 0) {
+      return <div className="journal-article font-normal" dangerouslySetInnerHTML={{ __html: content }} />;
+    }
+
+    return <div className="space-y-1 font-normal">{renderTree(tree)}</div>;
   };
 
   return (
-    <>
-      <article className="text-black">
-        {renderContentWithModifications(entry.content, entry.modifications)}
-      </article>
-
-      {entry.modifications && entry.modifications.length > 0 && (
-        <div className="mt-8 pt-4 border-t border-gray-300">
-          <h3 className="font-bold text-lg mb-3 text-[#07419e]">Historique des modifications</h3>
-          <div className="space-y-3">
-            {entry.modifications.map((mod, idx) => (
-              <div key={idx} className="text-sm bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <p className="font-semibold text-blue-900 mb-1">
-                  📅 {new Date(mod.date).toLocaleDateString('fr-FR', {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric'
-                  })}
-                </p>
-                <p className="text-gray-700">
-                  <span className="line-through text-red-600">{mod.oldText}</span>
-                  {' → '}
-                  <span className="text-green-700 font-semibold">{mod.newText}</span>
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </>
+    <article className="text-black font-normal">
+      {renderContentWithModifications(entry.content, entry.modifications)}
+    </article>
   );
 };
 

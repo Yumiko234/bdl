@@ -30,172 +30,144 @@ interface JournalEntry {
 
 // Composant pour le rendu de l'article avec modifications
 const ArticleRenderer = ({ entry }: { entry: JournalEntry }) => {
-  const [collapsedSections, setCollapsedSections] = useState<Set<number>>(new Set());
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
 
-  const getRoleLabel = (role: string | null): string => {
-    if (!role) return "Bureau des Lycéens";
-    const labels: Record<string, string> = {
-      president: "Le Président",
-      vice_president: "La Vice-Présidente",
-      secretary_general: "La Secrétaire Générale",
-      communication_manager: "Le Directeur de la Communauté et de la Communication",
-    };
-    return labels[role] || "Bureau des Lycéens";
-  };
-
-  const toggleSection = (index: number) => {
+  const toggleSection = (id: string) => {
     const newCollapsed = new Set(collapsedSections);
-    if (newCollapsed.has(index)) {
-      newCollapsed.delete(index);
+    if (newCollapsed.has(id)) {
+      newCollapsed.delete(id);
     } else {
-      newCollapsed.add(index);
+      newCollapsed.add(id);
     }
     setCollapsedSections(newCollapsed);
-  };
-
-  const renderContentWithModifications = (content: string, modifications?: Modification[]) => {
-    if (!modifications || modifications.length === 0) {
-      return renderCollapsibleContent(content);
-    }
-
-    let modifiedContent = content;
-    const sortedMods = [...modifications].sort((a, b) => b.position - a.position);
-
-    sortedMods.forEach(mod => {
-      const oldTextEscaped = mod.oldText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const regex = new RegExp(oldTextEscaped, 'g');
-      
-      const replacement = `<span class="modification-group">
-        <del class="text-red-600 line-through">${mod.oldText}</del>
-        <ins class="text-green-700 no-underline font-semibold">${mod.newText}</ins>
-        <sup class="text-xs text-blue-600 ml-1">[Version du ${new Date(mod.date).toLocaleDateString('fr-FR')}]</sup>
-      </span>`;
-      
-      modifiedContent = modifiedContent.replace(regex, replacement);
-    });
-
-    return renderCollapsibleContent(modifiedContent);
   };
 
   const renderCollapsibleContent = (content: string) => {
     const parser = new DOMParser();
     const doc = parser.parseFromString(content, 'text/html');
     const elements = Array.from(doc.body.childNodes);
-    
-    const sections: { title: string; level: string; content: string; index: number }[] = [];
-    let currentSection: { title: string; level: string; content: string; index: number } | null = null;
-    let sectionIndex = 0;
 
-    elements.forEach((node) => {
-      if (node instanceof HTMLElement) {
-        const tagName = node.tagName.toLowerCase();
-        
-        if (['h1', 'h2', 'h3'].includes(tagName)) {
-          if (currentSection) {
-            sections.push(currentSection);
-          }
-          currentSection = {
-            title: node.textContent || '',
-            level: tagName,
-            content: '',
-            index: sectionIndex++
-          };
-        } else if (currentSection) {
-          currentSection.content += node.outerHTML;
+    interface Section {
+      id: string;
+      title: string;
+      level: number;
+      htmlContent: string;
+      children: Section[];
+    }
+
+    const tree: Section[] = [];
+    let currentPath: Section[] = [];
+
+    // 1. Construction de l'arbre hiérarchique (H1 > H2 > H3 > H4)
+    elements.forEach((node, idx) => {
+      if (node instanceof HTMLElement && ['h1', 'h2', 'h3', 'h4'].includes(node.tagName.toLowerCase())) {
+        const level = parseInt(node.tagName.substring(1));
+        const newSection: Section = {
+          id: `section-${level}-${idx}`,
+          title: node.textContent || '',
+          level: level,
+          htmlContent: '',
+          children: []
+        };
+
+        while (currentPath.length > 0 && currentPath[currentPath.length - 1].level >= level) {
+          currentPath.pop();
         }
-      } else if (currentSection && node.textContent?.trim()) {
-        currentSection.content += node.textContent;
+
+        if (currentPath.length === 0) {
+          tree.push(newSection);
+        } else {
+          currentPath[currentPath.length - 1].children.push(newSection);
+        }
+        currentPath.push(newSection);
+      } else {
+        const target = currentPath[currentPath.length - 1];
+        const html = node instanceof HTMLElement ? node.outerHTML : node.textContent || '';
+        if (target) {
+          target.htmlContent += html;
+        } else if (html.trim()) {
+          tree.push({ id: `intro-${idx}`, title: '', level: 0, htmlContent: html, children: [] });
+        }
       }
     });
 
-    if (currentSection) {
-      sections.push(currentSection);
-    }
+    // 2. Fonction de rendu récursif
+    const renderTree = (nodes: Section[]) => {
+      return nodes.map((section) => {
+        const isCollapsed = collapsedSections.has(section.id);
+        const isHeader = section.level > 0;
+        
+        // Styles visuels selon la profondeur
+        const levelStyles: Record<number, string> = {
+          1: "text-2xl font-black border-l-4 border-[#07419e] bg-blue-50/30",
+          2: "text-xl font-bold border-l-4 border-blue-300",
+          3: "text-lg font-semibold border-l-2 border-gray-300",
+          4: "text-base font-medium border-l-2 border-gray-200 italic text-gray-600",
+        };
 
-    if (sections.length === 0) {
-      return <div dangerouslySetInnerHTML={{ __html: content }} />;
-    }
-
-    return (
-      <div className="space-y-4">
-        {sections.map((section) => {
-          const isCollapsed = collapsedSections.has(section.index);
-          const levelClass = section.level === 'h1' ? 'text-2xl' : section.level === 'h2' ? 'text-xl' : 'text-lg';
-          
-          return (
-            <div key={section.index} className="border-l-4 border-blue-200 pl-4">
+        return (
+          <div key={section.id} className={`${isHeader ? `mt-4 ${levelStyles[section.level] || ''} pl-4` : 'mb-4'}`}>
+            {isHeader && (
               <button
-                onClick={() => toggleSection(section.index)}
-                className="flex items-center gap-2 w-full text-left hover:bg-gray-50 p-2 rounded transition-colors"
+                onClick={() => toggleSection(section.id)}
+                className="flex items-center gap-2 w-full text-left hover:bg-gray-100/50 p-2 rounded transition-all group"
               >
                 {isCollapsed ? (
-                  <ChevronRight className="h-5 w-5 text-gray-500 flex-shrink-0" />
+                  <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-[#07419e]" />
                 ) : (
-                  <ChevronDown className="h-5 w-5 text-gray-500 flex-shrink-0" />
+                  <ChevronDown className="h-4 w-4 text-gray-400 group-hover:text-[#07419e]" />
                 )}
-                <h3 className={`font-bold ${levelClass} text-[#07419e]`}>
+                <span className={section.level <= 2 ? 'text-[#07419e]' : 'text-gray-800'}>
                   {section.title}
-                </h3>
+                </span>
               </button>
-              
-              {!isCollapsed && (
+            )}
+            
+            {!isCollapsed && (
+              <div className={isHeader ? "mt-2 ml-4" : ""}>
+                {/* Contenu textuel de la section */}
                 <div 
-                  className="mt-2 ml-7 text-justify leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: section.content }}
+                  className="text-justify leading-relaxed prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: section.htmlContent }} 
                 />
-              )}
-            </div>
-          );
-        })}
-      </div>
-    );
+                {/* Rendu des sous-sections enfants */}
+                {section.children.length > 0 && (
+                  <div className="mt-2 space-y-2">
+                    {renderTree(section.children)}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      });
+    };
+
+    return <div className="space-y-2">{renderTree(tree)}</div>;
   };
 
+  // Rendu de la carte d'article
   return (
-    <div className="border border-[#FFD700] rounded-2xl bg-white/95 shadow-lg p-10">
-      <h1 className="text-4xl font-bold mb-4 text-[#07419e] text-center">
+    <div className="border border-[#FFD700] rounded-2xl bg-white/95 shadow-lg p-6 md:p-10">
+      <h1 className="text-3xl md:text-4xl font-bold mb-4 text-[#07419e] text-center font-serif">
         {entry.title}
       </h1>
       <p className="text-sm text-center text-gray-600 italic mb-8">
         NOR : {entry.nor_number} — publié le{" "}
         {new Date(entry.publication_date).toLocaleDateString("fr-FR", {
-          day: "numeric",
-          month: "long",
-          year: "numeric",
+          day: "numeric", month: "long", year: "numeric",
         })}
       </p>
       
       <article className="text-black">
-        {renderContentWithModifications(entry.content, entry.modifications)}
+        {renderCollapsibleContent(entry.content)}
       </article>
-      
+
       {entry.author_name && (
         <div className="mt-8 pt-4 border-t text-right text-sm text-gray-600 italic">
-          {getRoleLabel(entry.author_role)} : {entry.author_name}
-        </div>
-      )}
-
-      {entry.modifications && entry.modifications.length > 0 && (
-        <div className="mt-8 pt-4 border-t">
-          <h3 className="font-bold text-lg mb-2">Historique des modifications</h3>
-          <div className="space-y-2">
-            {entry.modifications.map((mod, idx) => (
-              <div key={idx} className="text-sm bg-blue-50 p-3 rounded">
-                <p className="font-semibold text-blue-900">
-                  {new Date(mod.date).toLocaleDateString('fr-FR', {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric'
-                  })}
-                </p>
-                <p className="text-gray-700 mt-1">
-                  <span className="line-through text-red-600">{mod.oldText}</span>
-                  {' → '}
-                  <span className="text-green-700 font-semibold">{mod.newText}</span>
-                </p>
-              </div>
-            ))}
-          </div>
+          {entry.author_role === 'president' ? 'Le Président' : 
+           entry.author_role === 'vice_president' ? 'La Vice-Présidente' : 
+           'Bureau des Lycéens'} : {entry.author_name}
         </div>
       )}
     </div>

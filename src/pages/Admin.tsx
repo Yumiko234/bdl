@@ -23,6 +23,7 @@ import { FooterManagement } from "@/components/admin/FooterManagement";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { ScrutinManagement } from "@/components/admin/ScrutinManagement";
 import { BDLHistoryManagement } from "@/components/admin/BDLHistoryManagement";
+import {SurveyManagement} from "@/components/admin/SurveyManagement";
 
 const Admin = () => {
   const { user, loading } = useAuth();
@@ -180,6 +181,7 @@ const Admin = () => {
                 <TabsTrigger value="events">Événements</TabsTrigger>
                 <TabsTrigger value="documents">Documents</TabsTrigger>
                 <TabsTrigger value="journal">Journal</TabsTrigger>
+                <TabsTrigger value="surveys">Sondages</TabsTrigger>
                 {(isPresident || isVicePresident) && (
                   <TabsTrigger value="establishment">Établissement</TabsTrigger>
                 )}
@@ -307,6 +309,9 @@ const Admin = () => {
               {isPresident && (
                 <TabsContent value="history"><BDLHistoryManagement /></TabsContent>
               )}
+              <TabsContent value="surveys">
+  <SurveyManagement />
+</TabsContent>
             </Tabs>
           </div>
         </section>

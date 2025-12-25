@@ -165,7 +165,10 @@ const Scrutin = () => {
       toast.error("Erreur lors du vote");
     } else {
       toast.success("Vote enregistré avec succès");
-      await loadMyVote(scrutinId);
+      setMyVotes((prev) => ({
+        ...prev,
+        [scrutinId]: { vote: voteValue },
+      }) );
     }
   };
 

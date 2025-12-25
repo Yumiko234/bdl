@@ -1,24 +1,29 @@
 /* ============================================================
    Feuille institutionnelle du Journal Officiel du BDL
-   Harmonisée avec le RichTextEditor (ReactQuill)
+   Corrigée pour Structure Imbriquée et Repliable
    ============================================================ */
 
 /* ====== BASE TYPOGRAPHIQUE ====== */
 .journal-article {
   font-family: 'Times New Roman', Times, serif;
   font-size: 1.1rem;
-  line-height: 1.75;
+  line-height: 1.6; /* Interligne plus compact et lisible */
   color: #1e1e1e;
   text-align: justify;
-  padding: 1.5rem 0;
 }
 
-/* Paragraphes */
+/* Paragraphes : Marges réduites pour éviter l'effet "vide" dans l'imbrication */
 .journal-article p {
-  margin: 1rem 0;
+  margin: 0.4rem 0;
 }
 
-/* ====== TITRES ====== */
+/* Supprime la marge du dernier paragraphe pour ne pas décaler la sous-section suivante */
+.journal-article p:last-child {
+  margin-bottom: 0;
+}
+
+/* ====== TITRES (CORRECTION IMBRICATION) ====== */
+/* On neutralise les marges par défaut car le bouton du menu gère l'espacement */
 .journal-article h1,
 .journal-article h2,
 .journal-article h3,
@@ -27,146 +32,94 @@
 .journal-article h6 {
   font-family: 'Times New Roman', Times, serif;
   font-weight: bold;
-  margin-top: 1.5rem;
-  margin-bottom: 0.75rem;
-  line-height: 1.3;
+  margin: 0 !important; /* IMPORTANT : Empêche le décalage dans le menu */
+  padding: 0 !important;
+  line-height: 1.2;
   color: #000;
 }
 
-.journal-article h1 { font-size: 2rem; }
-.journal-article h2 { font-size: 1.75rem; }
-.journal-article h3 { font-size: 1.5rem; }
-.journal-article h4 { font-size: 1.3rem; }
-.journal-article h5 { font-size: 1.15rem; }
-.journal-article h6 { font-size: 1rem; font-weight: 600; }
+/* Tailles pour l'affichage interne (au cas où ils ne sont pas dans un bouton) */
+.journal-article h1 { font-size: 1.8rem; }
+.journal-article h2 { font-size: 1.6rem; }
+.journal-article h3 { font-size: 1.4rem; }
+.journal-article h4 { font-size: 1.2rem; }
 
 /* ====== LISTES ====== */
 .journal-article ul,
 .journal-article ol {
-  margin: 1rem 2rem;
-  padding-left: 1.5rem;
+  margin: 0.5rem 0 0.5rem 1.5rem;
+  padding-left: 0.5rem;
 }
 
 .journal-article li {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.2rem;
 }
 
-.journal-article ul {
-  list-style-type: disc;
-}
-
-.journal-article ol {
-  list-style-type: decimal;
-}
+.journal-article ul { list-style-type: disc; }
+.journal-article ol { list-style-type: decimal; }
 
 /* ====== CITATIONS ====== */
 .journal-article blockquote {
-  border-left: 4px solid #ccc;
-  margin: 1.5rem 0;
-  padding-left: 1rem;
+  border-left: 3px solid #FFD700; /* Rappel de la couleur Or */
+  margin: 1rem 0;
+  padding: 0.5rem 1rem;
   font-style: italic;
-  color: #555;
-  background-color: #fafafa;
+  color: #444;
+  background-color: #fcfcfc;
 }
 
-/* ====== CODE / BLOCS TECHNIQUES ====== */
-.journal-article pre {
-  background: #f6f6f6;
-  border-radius: 6px;
-  padding: 1rem;
-  font-family: "Courier New", monospace;
-  overflow-x: auto;
-  font-size: 0.95rem;
-  line-height: 1.5;
-}
+/* ====== ALIGNEMENTS & QUILL ====== */
+.journal-article .ql-align-center { text-align: center; }
+.journal-article .ql-align-right { text-align: right; }
+.journal-article .ql-align-justify { text-align: justify; }
 
-/* ====== ALIGNEMENTS QUILL ====== */
-.journal-article .ql-align-center {
-  text-align: center;
-}
-
-.journal-article .ql-align-right {
-  text-align: right;
-}
-
-.journal-article .ql-align-justify {
-  text-align: justify;
-}
-
-/* ====== INTERLIGNES PERSONNALISÉS ====== */
-.journal-article .ql-lineheight-1 {
-  line-height: 1;
-}
-
-.journal-article .ql-lineheight-1\.15 {
-  line-height: 1.15;
-}
-
-.journal-article .ql-lineheight-1\.5 {
-  line-height: 1.5;
-}
-
-.journal-article .ql-lineheight-2 {
-  line-height: 2;
-}
-
-.journal-article .ql-lineheight-2\.5 {
-  line-height: 2.5;
-}
-
-/* ====== LIENS ====== */
-.journal-article a {
-  color: #003366;
-  text-decoration: underline;
-}
-.journal-article a:hover {
-  color: #001f4d;
-}
-
-/* ====== IMAGES ====== */
-.journal-article img {
-  max-width: 100%;
-  display: block;
-  margin: 1rem auto;
-  border-radius: 4px;
-}
+/* Interlignes Quill spécifiques */
+.journal-article .ql-lineheight-1 { line-height: 1; }
+.journal-article .ql-lineheight-1\.5 { line-height: 1.5; }
+.journal-article .ql-lineheight-2 { line-height: 2; }
 
 /* ====== TABLEAUX ====== */
 .journal-article table {
   width: 100%;
   border-collapse: collapse;
-  margin: 1.5rem 0;
+  margin: 1rem 0;
+  font-size: 0.95rem;
 }
 
 .journal-article th,
 .journal-article td {
-  border: 1px solid #ccc;
-  padding: 0.5rem 0.75rem;
-  text-align: left;
+  border: 1px solid #ddd;
+  padding: 0.4rem 0.6rem;
 }
 
 .journal-article th {
-  background-color: #f2f2f2;
+  background-color: #f8f9fa;
   font-weight: bold;
+  text-align: center;
+}
+
+/* ====== LIENS & IMAGES ====== */
+.journal-article a {
+  color: #07419e;
+  text-decoration: underline;
+}
+
+.journal-article img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 1rem auto;
+  border-radius: 4px;
 }
 
 /* ====== SÉPARATEURS ====== */
 .journal-article hr {
   border: none;
-  border-top: 1px solid #ccc;
-  margin: 2rem 0;
+  border-top: 1px solid #eee;
+  margin: 1.5rem 0;
 }
 
-/* ====== POLICES QUILL PERSONNALISÉES ====== */
+/* ====== POLICES QUILL ====== */
 .ql-font-times-new-roman {
   font-family: "Times New Roman", Times, serif !important;
-}
-.ql-font-serif {
-  font-family: serif;
-}
-.ql-font-sans-serif {
-  font-family: Arial, Helvetica, sans-serif;
-}
-.ql-font-monospace {
-  font-family: "Courier New", monospace;
 }

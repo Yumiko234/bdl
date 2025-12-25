@@ -54,7 +54,7 @@ const BDLHistory = () => {
               <History className="h-20 w-20 mx-auto" />
               <h1 className="text-5xl font-bold">Historique des BDL</h1>
               <p className="text-xl">
-                Découvrez les membres qui ont fait l'histoire du Bureau des Lycéens
+                Découvrez les membres qui ont fait partie du Bureau des Lycéens au cours des années passées
               </p>
             </div>
           </div>
@@ -119,8 +119,8 @@ const BDLHistory = () => {
                     <Award className="h-16 w-16 mx-auto text-accent" />
                     <h2 className="text-3xl font-bold">Membres Honorifiques</h2>
                     <p className="text-muted-foreground text-lg">
-                      En reconnaissance de leur contribution exceptionnelle au développement 
-                      et à la structuration du Bureau des Lycéens de Saint-André
+                      En reconnaissance de leur contribution au développement 
+                      et à la restructuration du Bureau des Lycéens de Saint-André
                     </p>
                   </div>
 

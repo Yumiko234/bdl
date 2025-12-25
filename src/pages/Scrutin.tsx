@@ -273,7 +273,7 @@ const Scrutin = () => {
               <Vote className="h-20 w-20 mx-auto" />
               <h1 className="text-5xl font-bold">Scrutins BDL</h1>
               <p className="text-xl">
-                Votez sur les décisions importantes du Bureau
+                Votez sur les décisions du Bureau
               </p>
             </div>
           </div>

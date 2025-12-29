@@ -126,10 +126,10 @@ const BDLHistory = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
                     {[
-                      { name: "Alexandre Lejal", role: "Président", gradient: "gradient-institutional" },
-                      { name: "Charline Jaegle", role: "Vice-Présidente", gradient: "gradient-gold" },
-                      { name: "Saraan Vicq", role: "Secrétaire Générale", gradient: "gradient-institutional" },
-                      { name: "Majid Matari", role: "Directeur de la Communauté et de la Communication", gradient: "gradient-gold" }
+                      { name: "Alexandre Lejal", role: "Président", gradient: "gradient-institutional", years: "2023-2026" },
+                      { name: "Charline Jaegle", role: "Vice-Présidente", gradient: "gradient-gold0", years: "2025-2026" },
+                      { name: "Saraan Vicq", role: "Secrétaire Générale", gradient: "gradient-institutional", years: "2025-2026" },
+                      { name: "Majid Matari", role: "Directeur de la Communauté et de la Communication", gradient: "gradient-gold", years: "2023-2026" }
                     ].map((member) => (
                       <Card key={member.name} className="shadow-card">
                         <CardContent className="p-6 text-center space-y-3">

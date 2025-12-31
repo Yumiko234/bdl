@@ -9,6 +9,36 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Shield, Lock, UserPlus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+const [resetEmail, setResetEmail] = useState("");
+const [showResetForm, setShowResetForm] = useState(false);
+const [isResetting, setIsResetting] = useState(false);
+
+const handlePasswordReset = async (e: React.FormEvent) => {
+  e.preventDefault();
+  
+  if (!resetEmail) {
+    toast.error("Veuillez entrer votre adresse email");
+    return;
+  }
+
+  setIsResetting(true);
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+
+    if (error) throw error;
+
+    toast.success("Un email de réinitialisation a été envoyé à votre adresse");
+    setShowResetForm(false);
+    setResetEmail("");
+  } catch (error: any) {
+    console.error(error);
+    toast.error(error.message || "Erreur lors de l'envoi de l'email");
+  } finally {
+    setIsResetting(false);
+  }
+};
 
 const Auth = () => {
   const [loginCredentials, setLoginCredentials] = useState({ email: "", password: "" });
@@ -114,6 +144,59 @@ const Auth = () => {
                     </CardContent>
                   </Card>
                 </TabsContent>
+
+                <Button type="submit" className="w-full" size="lg">
+        Se connecter
+      </Button>
+    </form>
+
+    <div className="text-center">
+      <button
+        onClick={() => setShowResetForm(true)}
+        className="text-sm text-primary hover:underline"
+      >
+        Mot de passe oublié ?
+      </button>
+    </div>
+  </>
+) : (
+  <form onSubmit={handlePasswordReset} className="space-y-4">
+    <div className="space-y-2">
+      <Label htmlFor="reset-email">Adresse email</Label>
+      <Input
+        id="reset-email"
+        type="email"
+        required
+        value={resetEmail}
+        onChange={(e) => setResetEmail(e.target.value)}
+        placeholder="votre.email@exemple.com"
+      />
+      <p className="text-xs text-muted-foreground">
+        Vous recevrez un lien de réinitialisation par email
+      </p>
+    </div>
+
+    <div className="flex gap-2">
+      <Button 
+        type="submit" 
+        className="flex-1" 
+        disabled={isResetting}
+      >
+        {isResetting ? "Envoi..." : "Envoyer le lien"}
+      </Button>
+      <Button 
+        type="button" 
+        variant="outline" 
+        onClick={() => {
+          setShowResetForm(false);
+          setResetEmail("");
+        }}
+      >
+        Annuler
+      </Button>
+    </div>
+  </form>
+)}
 
                 <TabsContent value="signup">
                   <Card className="shadow-elegant">

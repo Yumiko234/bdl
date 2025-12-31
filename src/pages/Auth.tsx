@@ -9,36 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Shield, Lock, UserPlus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-const [resetEmail, setResetEmail] = useState("");
-const [showResetForm, setShowResetForm] = useState(false);
-const [isResetting, setIsResetting] = useState(false);
-
-const handlePasswordReset = async (e: React.FormEvent) => {
-  e.preventDefault();
-  
-  if (!resetEmail) {
-    toast.error("Veuillez entrer votre adresse email");
-    return;
-  }
-
-  setIsResetting(true);
-  try {
-    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-
-    if (error) throw error;
-
-    toast.success("Un email de réinitialisation a été envoyé à votre adresse");
-    setShowResetForm(false);
-    setResetEmail("");
-  } catch (error: any) {
-    console.error(error);
-    toast.error(error.message || "Erreur lors de l'envoi de l'email");
-  } finally {
-    setIsResetting(false);
-  }
-};
+import { supabase } from "@/integrations/supabase/client"; // Import direct pour le reset
+import { toast } from "sonner";
 
 const Auth = () => {
   const [loginCredentials, setLoginCredentials] = useState({ email: "", password: "" });
@@ -48,6 +20,7 @@ const Auth = () => {
     confirmPassword: "",
     fullName: ""
   });
+  
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
 
@@ -67,12 +40,30 @@ const Auth = () => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (signupCredentials.password !== signupCredentials.confirmPassword) {
+      toast.error("Les mots de passe ne correspondent pas");
+      return;
+    }
+    await signUp(signupCredentials.email, signupCredentials.password, signupCredentials.fullName);
+  };
+
+  /* ===================== NOUVELLE FONCTION RESET ===================== */
+  const handleForgotPassword = async () => {
+    if (!loginCredentials.email) {
+      toast.error("Veuillez saisir votre email dans le champ ci-dessus.");
       return;
     }
 
-    await signUp(signupCredentials.email, signupCredentials.password, signupCredentials.fullName);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(loginCredentials.email, {
+        redirectTo: 'https://bdl-saintandre.fr/reset-password',
+      });
+
+      if (error) throw error;
+      toast.success("Email de réinitialisation envoyé ! Vérifiez vos spams.");
+    } catch (error: any) {
+      toast.error(error.message || "Erreur lors de l'envoi de l'email");
+    }
   };
 
   return (
@@ -126,7 +117,17 @@ const Auth = () => {
                         </div>
 
                         <div className="space-y-2">
-                          <Label htmlFor="login-password">Mot de passe</Label>
+                          <div className="flex items-center justify-between">
+                            <Label htmlFor="login-password">Mot de passe</Label>
+                            {/* BOUTON MOT DE PASSE OUBLIÉ */}
+                            <button
+                              type="button"
+                              onClick={handleForgotPassword}
+                              className="text-xs text-primary hover:underline font-medium"
+                            >
+                              Mot de passe oublié ?
+                            </button>
+                          </div>
                           <Input
                             id="login-password"
                             type="password"
@@ -145,60 +146,8 @@ const Auth = () => {
                   </Card>
                 </TabsContent>
 
-                <Button type="submit" className="w-full" size="lg">
-        Se connecter
-      </Button>
-    </form>
-
-    <div className="text-center">
-      <button
-        onClick={() => setShowResetForm(true)}
-        className="text-sm text-primary hover:underline"
-      >
-        Mot de passe oublié ?
-      </button>
-    </div>
-  </>
-) : (
-  <form onSubmit={handlePasswordReset} className="space-y-4">
-    <div className="space-y-2">
-      <Label htmlFor="reset-email">Adresse email</Label>
-      <Input
-        id="reset-email"
-        type="email"
-        required
-        value={resetEmail}
-        onChange={(e) => setResetEmail(e.target.value)}
-        placeholder="votre.email@exemple.com"
-      />
-      <p className="text-xs text-muted-foreground">
-        Vous recevrez un lien de réinitialisation par email
-      </p>
-    </div>
-
-    <div className="flex gap-2">
-      <Button 
-        type="submit" 
-        className="flex-1" 
-        disabled={isResetting}
-      >
-        {isResetting ? "Envoi..." : "Envoyer le lien"}
-      </Button>
-      <Button 
-        type="button" 
-        variant="outline" 
-        onClick={() => {
-          setShowResetForm(false);
-          setResetEmail("");
-        }}
-      >
-        Annuler
-      </Button>
-    </div>
-  </form>
-)}
-
                 <TabsContent value="signup">
+                  {/* ... (Reste du code Inscription identique) */}
                   <Card className="shadow-elegant">
                     <CardContent className="p-8 space-y-6">
                       <div className="text-center space-y-2">

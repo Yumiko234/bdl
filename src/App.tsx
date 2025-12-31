@@ -23,6 +23,7 @@ import NotFound from "./pages/NotFound";
 import BDLHistory from "./pages/BDLHistory";
 import BDLYearDetail from "./pages/BDLYearDetail";
 import Sondage from "./pages/Sondage";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
@@ -49,6 +50,7 @@ const App = () => {
           <Route path="/intranet" element={<Intranet />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/scrutin" element={<Scrutin />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
 

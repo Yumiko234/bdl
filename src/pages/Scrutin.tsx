@@ -15,14 +15,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { 
-  PieChart, 
-  Pie, 
-  Cell, 
-  ResponsiveContainer, 
-  Legend, 
-  Tooltip 
-} from "recharts";
 
 interface Scrutin {
   id: string;
@@ -66,6 +58,7 @@ const Scrutin = () => {
 
   const checkVotingRights = async () => {
     if (!user) return;
+
     const { data } = await supabase
       .from("user_roles")
       .select("role")
@@ -86,6 +79,7 @@ const Scrutin = () => {
 
   const loadScrutins = async () => {
     setLoading(true);
+
     const { data, error } = await supabase
       .from("scrutins")
       .select("*")
@@ -99,12 +93,14 @@ const Scrutin = () => {
 
     setScrutins(data || []);
 
+    // Load votes for closed scrutins and my votes
     for (const scrutin of data || []) {
       if (scrutin.status === "closed") {
         await loadVotes(scrutin.id);
       }
       await loadMyVote(scrutin.id);
     }
+
     setLoading(false);
   };
 
@@ -126,11 +122,13 @@ const Scrutin = () => {
       console.error("Error loading votes:", error);
       return;
     }
+
     setVotes((prev) => ({ ...prev, [scrutinId]: data as any || [] }));
   };
 
   const loadMyVote = async (scrutinId: string) => {
     if (!user) return;
+
     const { data } = await supabase
       .from("scrutin_votes")
       .select("vote")
@@ -148,11 +146,14 @@ const Scrutin = () => {
       toast.error("Vous n'avez pas les droits pour voter");
       return;
     }
+
+    // Check if already voted
     if (myVotes[scrutinId]) {
       toast.error("Vous avez déjà voté sur ce scrutin");
       return;
     }
 
+    // Insert new vote
     const { error } = await supabase.from("scrutin_votes").insert({
       scrutin_id: scrutinId,
       user_id: user.id,
@@ -160,37 +161,79 @@ const Scrutin = () => {
     });
 
     if (error) {
+      console.error("Vote error:", error);
       toast.error("Erreur lors du vote");
     } else {
       toast.success("Vote enregistré avec succès");
-      setMyVotes((prev) => ({ ...prev, [scrutinId]: { vote: voteValue } }));
-      // On recharge les votes pour mettre à jour les résultats si nécessaire
-      await loadVotes(scrutinId);
+      setMyVotes((prev) => ({
+        ...prev,
+        [scrutinId]: { vote: voteValue },
+      }) );
     }
   };
 
   const toggleDetails = (scrutinId: string) => {
-    setOpenDetails(prev => ({ ...prev, [scrutinId]: !prev[scrutinId] }));
+    setOpenDetails(prev => ({
+      ...prev,
+      [scrutinId]: !prev[scrutinId]
+    }));
   };
 
   const getVoteIcon = (vote: string) => {
     switch (vote) {
-      case "pour": return <ThumbsUp className="h-4 w-4 text-green-600" />;
-      case "contre": return <ThumbsDown className="h-4 w-4 text-red-600" />;
-      case "abstention": return <Minus className="h-4 w-4 text-blue-600" />;
+      case "pour":
+        return <ThumbsUp className="h-4 w-4 text-green-600" />;
+      case "contre":
+        return <ThumbsDown className="h-4 w-4 text-red-600" />;
+      case "abstention":
+        return <Minus className="h-4 w-4 text-blue-600" />;
     }
   };
 
   const getVoteLabel = (vote: string) => {
     switch (vote) {
-      case "pour": return "Pour";
-      case "contre": return "Contre";
-      case "abstention": return "Abstention";
+      case "pour":
+        return "Pour";
+      case "contre":
+        return "Contre";
+      case "abstention":
+        return "Abstention";
+    }
+  };
+
+  const getButtonClassName = (scrutinId: string, voteValue: "pour" | "contre" | "abstention") => {
+    const hasVoted = myVotes[scrutinId];
+    const isThisVote = hasVoted?.vote === voteValue;
+    
+    if (isThisVote) {
+      switch (voteValue) {
+        case "pour":
+          return "bg-green-600 hover:bg-green-700 text-white border-green-600";
+        case "contre":
+          return "bg-red-600 hover:bg-red-700 text-white border-red-600";
+        case "abstention":
+          return "bg-blue-600 hover:bg-blue-700 text-white border-blue-600";
+      }
+    }
+    
+    // Add hover effects for non-voted buttons
+    if (hasVoted) {
+      return "opacity-50 cursor-not-allowed";
+    }
+    
+    switch (voteValue) {
+      case "pour":
+        return "hover:bg-green-100 hover:border-green-600 hover:text-green-700";
+      case "contre":
+        return "hover:bg-red-100 hover:border-red-600 hover:text-red-700";
+      case "abstention":
+        return "hover:bg-blue-100 hover:border-blue-600 hover:text-blue-700";
     }
   };
 
   const getRoleLabel = (profile: VoteData['profiles']) => {
     if (!profile?.user_roles || profile.user_roles.length === 0) return "Membre BDL";
+    
     const roleLabels: Record<string, string> = {
       president: "Président",
       vice_president: "Vice-Présidente",
@@ -198,31 +241,16 @@ const Scrutin = () => {
       communication_manager: "Directeur de la Communication",
       bdl_member: "Membre BDL",
     };
+    
+    // Get the highest priority role
     const rolePriority = ["president", "vice_president", "secretary_general", "communication_manager", "bdl_member"];
     for (const priority of rolePriority) {
       if (profile.user_roles.some(r => r.role === priority)) {
         return roleLabels[priority] || "Membre BDL";
       }
     }
+    
     return "Membre BDL";
-  };
-
-  const getButtonClassName = (scrutinId: string, voteValue: "pour" | "contre" | "abstention") => {
-    const hasVoted = myVotes[scrutinId];
-    const isThisVote = hasVoted?.vote === voteValue;
-    if (isThisVote) {
-      switch (voteValue) {
-        case "pour": return "bg-green-600 hover:bg-green-700 text-white border-green-600";
-        case "contre": return "bg-red-600 hover:bg-red-700 text-white border-red-600";
-        case "abstention": return "bg-blue-600 hover:bg-blue-700 text-white border-blue-600";
-      }
-    }
-    if (hasVoted) return "opacity-50 cursor-not-allowed";
-    switch (voteValue) {
-      case "pour": return "hover:bg-green-100 hover:border-green-600 hover:text-green-700";
-      case "contre": return "hover:bg-red-100 hover:border-red-600 hover:text-red-700";
-      case "abstention": return "hover:bg-blue-100 hover:border-blue-600 hover:text-blue-700";
-    }
   };
 
   if (authLoading || loading) {
@@ -240,13 +268,16 @@ const Scrutin = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navigation />
+
       <main className="flex-1">
         <section className="py-16 gradient-institutional text-white">
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center space-y-4">
               <Vote className="h-20 w-20 mx-auto" />
               <h1 className="text-5xl font-bold">Scrutins BDL</h1>
-              <p className="text-xl">Votez sur les décisions du Bureau</p>
+              <p className="text-xl">
+                Votez sur les décisions du Bureau
+              </p>
             </div>
           </div>
         </section>
@@ -255,161 +286,215 @@ const Scrutin = () => {
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto space-y-6">
               {!user && (
-                <Card className="border-accent bg-accent/10 p-6 text-center">
-                  <p className="text-muted-foreground">
-                    Vous devez être connecté pour voter.{" "}
-                    <a href="/auth" className="text-primary hover:underline font-semibold">Se connecter</a>
-                  </p>
+                <Card className="border-accent bg-accent/10">
+                  <CardContent className="p-6">
+                    <p className="text-center text-muted-foreground">
+                      Vous devez être connecté pour voter sur les scrutins.{" "}
+                      <a href="/auth" className="text-primary hover:underline font-semibold">
+                        Se connecter
+                      </a>
+                    </p>
+                  </CardContent>
                 </Card>
               )}
 
               {user && isPresident && (
-                <Card className="border-primary bg-primary/10 p-6 text-center font-semibold">
-                  En tant que Président, vous ne participez pas au vote (neutralité).
+                <Card className="border-primary bg-primary/10">
+                  <CardContent className="p-6">
+                    <p className="text-center font-semibold">
+                      En tant que Président, vous ne pouvez pas voter sur les scrutins (neutralité présidentielle).
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {user && !canVote && !isPresident && (
+                <Card className="border-accent bg-accent/10">
+                  <CardContent className="p-6">
+                    <p className="text-center text-muted-foreground">
+                      Vous pouvez consulter les scrutins mais vous n'avez pas les
+                      droits pour voter. Seuls les membres du BDL peuvent voter.
+                    </p>
+                  </CardContent>
                 </Card>
               )}
 
               {scrutins.length === 0 ? (
-                <Card className="p-8 text-center text-muted-foreground shadow-card">Aucun scrutin pour le moment</Card>
+                <Card className="shadow-card">
+                  <CardContent className="p-8 text-center text-muted-foreground">
+                    Aucun scrutin pour le moment
+                  </CardContent>
+                </Card>
               ) : (
                 scrutins.map((scrutin) => (
-                  <Card key={scrutin.id} className={`shadow-card ${scrutin.status === "open" ? "border-2 border-accent" : ""}`}>
+                  <Card
+                    key={scrutin.id}
+                    className={`shadow-card ${
+                      scrutin.status === "open" ? "border-2 border-accent" : ""
+                    }`}
+                  >
                     <CardContent className="p-6 space-y-4">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
                             <h3 className="text-2xl font-bold">{scrutin.title}</h3>
-                            <Badge variant={scrutin.status === "open" ? "default" : "secondary"}>
+                            <Badge
+                              variant={
+                                scrutin.status === "open" ? "default" : "secondary"
+                              }
+                            >
                               {scrutin.status === "open" ? "En cours" : "Terminé"}
                             </Badge>
                           </div>
-                          <p className="text-muted-foreground">{scrutin.description}</p>
+                          <p className="text-muted-foreground">
+                            {scrutin.description}
+                          </p>
                         </div>
                       </div>
 
-                      {/* SECTION VOTE OUVERT */}
+                      {/* Voting buttons for open scrutins */}
                       {scrutin.status === "open" && user && canVote && !isPresident && (
                         <div className="flex gap-3 pt-4 border-t">
-                          <Button onClick={() => handleVote(scrutin.id, "pour")} className={`flex-1 ${getButtonClassName(scrutin.id, "pour")}`} variant="outline" disabled={!!myVotes[scrutin.id]}>
-                            <ThumbsUp className="h-4 w-4 mr-2" /> Pour
+                          <Button
+                            onClick={() => handleVote(scrutin.id, "pour")}
+                            variant={myVotes[scrutin.id] ? "default" : "outline"}
+                            className={`flex-1 transition-all ${getButtonClassName(scrutin.id, "pour")}`}
+                            disabled={!!myVotes[scrutin.id]}
+                          >
+                            <ThumbsUp className="h-4 w-4 mr-2" />
+                            Pour
                           </Button>
-                          <Button onClick={() => handleVote(scrutin.id, "contre")} className={`flex-1 ${getButtonClassName(scrutin.id, "contre")}`} variant="outline" disabled={!!myVotes[scrutin.id]}>
-                            <ThumbsDown className="h-4 w-4 mr-2" /> Contre
+                          <Button
+                            onClick={() => handleVote(scrutin.id, "contre")}
+                            variant={myVotes[scrutin.id] ? "default" : "outline"}
+                            className={`flex-1 transition-all ${getButtonClassName(scrutin.id, "contre")}`}
+                            disabled={!!myVotes[scrutin.id]}
+                          >
+                            <ThumbsDown className="h-4 w-4 mr-2" />
+                            Contre
                           </Button>
-                          <Button onClick={() => handleVote(scrutin.id, "abstention")} className={`flex-1 ${getButtonClassName(scrutin.id, "abstention")}`} variant="outline" disabled={!!myVotes[scrutin.id]}>
-                            <Minus className="h-4 w-4 mr-2" /> Abstention
+                          <Button
+                            onClick={() => handleVote(scrutin.id, "abstention")}
+                            variant={myVotes[scrutin.id] ? "default" : "outline"}
+                            className={`flex-1 transition-all ${getButtonClassName(scrutin.id, "abstention")}`}
+                            disabled={!!myVotes[scrutin.id]}
+                          >
+                            <Minus className="h-4 w-4 mr-2" />
+                            Abstention
                           </Button>
                         </div>
                       )}
 
+                      {/* Show my vote for open scrutins */}
                       {scrutin.status === "open" && myVotes[scrutin.id] && (
                         <div className="text-sm text-muted-foreground pt-2">
-                          Votre vote : <span className="font-semibold">{getVoteLabel(myVotes[scrutin.id].vote)}</span>
+                          Votre vote a été enregistré :{" "}
+                          <span className="font-semibold">
+                            {getVoteLabel(myVotes[scrutin.id].vote)}
+                          </span>
                         </div>
                       )}
 
-                      {/* SECTION RESULTATS (CLOSED) */}
-                      {scrutin.status === "closed" && votes[scrutin.id] && (() => {
-                        const currentVotes = votes[scrutin.id];
-                        const pour = currentVotes.filter(v => v.vote === "pour").length;
-                        const contre = currentVotes.filter(v => v.vote === "contre").length;
-                        const abstention = currentVotes.filter(v => v.vote === "abstention").length;
-                        const votants = currentVotes.length;
-                        const exprimes = pour + contre;
-                        const majoriteAbsolue = Math.floor(exprimes / 2) + 1;
-                        const estAdopte = pour >= majoriteAbsolue && exprimes > 0;
+                      {/* Show results for closed scrutins */}
+{scrutin.status === "closed" && votes[scrutin.id] && (() => {
+  const currentVotes = votes[scrutin.id];
+  const pour = currentVotes.filter((v) => v.vote === "pour").length;
+  const contre = currentVotes.filter((v) => v.vote === "contre").length;
+  const abstention = currentVotes.filter((v) => v.vote === "abstention").length;
+  
+  const votants = pour + contre + abstention;
+  const exprimes = pour + contre;
+  const majoriteAbsolue = Math.floor(exprimes / 2) + 1;
+  const estAdopte = pour >= majoriteAbsolue && exprimes > 0;
 
-                        const chartData = [
-                          { name: 'Pour', value: pour, color: '#16a34a' },
-                          { name: 'Contre', value: contre, color: '#dc2626' },
-                          { name: 'Abstention', value: abstention, color: '#2563eb' }
-                        ].filter(d => d.value > 0);
+  return (
+    <div className="pt-4 border-t space-y-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <h4 className="font-semibold text-lg">Résultats officiels</h4>
+        
+        {exprimes > 0 ? (
+          <Badge 
+            className={`text-sm py-1 px-4 self-start md:self-center ${
+              estAdopte 
+                ? "bg-green-100 text-green-800 border-green-200 hover:bg-green-100" 
+                : "bg-red-100 text-red-800 border-red-200 hover:bg-red-100"
+            }`}
+            variant="outline"
+          >
+            {estAdopte ? "SCRUTIN ADOPTÉ" : "SCRUTIN REJETÉ"}
+          </Badge>
+        ) : (
+          <Badge variant="secondary">AUCUN SUFFRAGE EXPRIMÉ</Badge>
+        )}
+      </div>
 
-                        return (
-                          <div className="pt-4 border-t space-y-6">
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                              <h4 className="font-semibold text-lg">Résultats officiels</h4>
-                              {exprimes > 0 ? (
-                                <Badge className={`text-sm py-1 px-4 ${estAdopte ? "bg-green-100 text-green-800 border-green-200" : "bg-red-100 text-red-800 border-red-200"}`} variant="outline">
-                                  {estAdopte ? "SCRUTIN ADOPTÉ" : "SCRUTIN REJETÉ"}
-                                </Badge>
-                              ) : (
-                                <Badge variant="secondary">AUCUN SUFFRAGE EXPRIMÉ</Badge>
-                              )}
-                            </div>
+      {/* Tableau de bord des chiffres clés */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-muted/20 rounded-lg border">
+        <div className="flex flex-col">
+          <span className="text-xs text-muted-foreground uppercase font-medium">Votants</span>
+          <span className="text-xl font-bold">{votants}</span>
+        </div>
+        <div className="flex flex-col">
+          <span className="text-xs text-muted-foreground uppercase font-medium">Exprimés</span>
+          <span className="text-xl font-bold">{exprimes}</span>
+        </div>
+        <div className="flex flex-col">
+          <span className="text-xs text-muted-foreground uppercase font-medium text-blue-600">Majorité</span>
+          <span className="text-xl font-bold text-blue-600">{majoriteAbsolue}</span>
+        </div>
+        <div className="flex flex-col">
+          <span className="text-xs text-muted-foreground uppercase font-medium text-green-600">Pour</span>
+          <span className="text-xl font-bold text-green-600">{pour}</span>
+        </div>
+        <div className="flex flex-col">
+          <span className="text-xs text-muted-foreground uppercase font-medium text-red-600">Contre</span>
+          <span className="text-xl font-bold text-red-600">{contre}</span>
+        </div>
+        <div className="flex flex-col">
+          <span className="text-xs text-muted-foreground uppercase font-medium text-black-600">Abstention</span>
+          <span className="text-xl font-bold text-black-600">{abstention}</span>
+        </div>
+      </div>
 
-                            {/* GRAPHIQUE CAMEMBERT */}
-                            {votants > 0 && (
-                              <div className="h-[250px] w-full flex items-center justify-center bg-muted/10 rounded-lg border py-4">
-                                <ResponsiveContainer width="100%" height="100%">
-                                  <PieChart>
-                                    <Pie data={chartData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
-                                      {chartData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
-                                    </Pie>
-                                    <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-                                    <Legend verticalAlign="bottom" height={36}/>
-                                  </PieChart>
-                                </ResponsiveContainer>
-                              </div>
-                            )}
-
-                            {/* TABLEAU DE BORD CHIFFRES CLÉS */}
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 p-4 bg-muted/20 rounded-lg border">
-                              <div className="flex flex-col">
-                                <span className="text-[10px] text-muted-foreground uppercase font-bold">Votants</span>
-                                <span className="text-xl font-black">{votants}</span>
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="text-[10px] text-muted-foreground uppercase font-bold">Exprimés</span>
-                                <span className="text-xl font-black">{exprimes}</span>
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="text-[10px] text-blue-600 uppercase font-bold">Majorité</span>
-                                <span className="text-xl font-black text-blue-600">{majoriteAbsolue}</span>
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="text-[10px] text-green-600 uppercase font-bold">Pour</span>
-                                <span className="text-xl font-black text-green-600">{pour}</span>
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="text-[10px] text-red-600 uppercase font-bold">Contre</span>
-                                <span className="text-xl font-black text-red-600">{contre}</span>
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="text-[10px] text-muted-foreground uppercase font-bold">Abstention</span>
-                                <span className="text-xl font-black">{abstention}</span>
-                              </div>
-                            </div>
-
-                            {/* DETAIL NOMINATIF */}
-                            <Collapsible open={openDetails[scrutin.id]} onOpenChange={() => toggleDetails(scrutin.id)}>
-                              <CollapsibleTrigger asChild>
-                                <Button variant="ghost" size="sm" className="w-full text-muted-foreground">
-                                  {openDetails[scrutin.id] ? <><ChevronUp className="h-4 w-4 mr-2" /> Masquer le détail</> : <><ChevronDown className="h-4 w-4 mr-2" /> Voir le détail par membre</>}
-                                </Button>
-                              </CollapsibleTrigger>
-                              <CollapsibleContent className="space-y-2 mt-3">
-                                {currentVotes.map((voteData) => (
-                                  <div key={voteData.user_id} className="flex items-center gap-3 p-3 bg-background border rounded-md">
-                                    <Avatar className="h-8 w-8">
-                                      <AvatarImage src={voteData.profiles.avatar_url || undefined} />
-                                      <AvatarFallback>{voteData.profiles.full_name.charAt(0)}</AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex-1">
-                                      <div className="text-sm font-medium">{voteData.profiles.full_name}</div>
-                                      <div className="text-xs text-muted-foreground">{getRoleLabel(voteData.profiles)}</div>
-                                    </div>
-                                    <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-muted/50">
-                                      {getVoteIcon(voteData.vote)}
-                                      <span className="text-[10px] font-bold uppercase">{voteData.vote}</span>
-                                    </div>
-                                  </div>
-                                ))}
-                              </CollapsibleContent>
-                            </Collapsible>
-                          </div>
-                        );
-                      })()}
+      {/* Collapsible pour le détail nominatif */}
+      <Collapsible
+        open={openDetails[scrutin.id]}
+        onOpenChange={() => toggleDetails(scrutin.id)}
+      >
+        <CollapsibleTrigger asChild>
+          <Button variant="ghost" size="sm" className="w-full text-muted-foreground">
+            {openDetails[scrutin.id] ? (
+              <><ChevronUp className="h-4 w-4 mr-2" /> Masquer le détail des votes</>
+            ) : (
+              <><ChevronDown className="h-4 w-4 mr-2" /> Voir le détail des votes par membre</>
+            )}
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="space-y-2 mt-3">
+          {currentVotes.map((voteData) => (
+            <div
+              key={voteData.user_id}
+              className="flex items-center gap-3 p-3 bg-background border rounded-md"
+            >
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={voteData.profiles.avatar_url || undefined} />
+                <AvatarFallback>{voteData.profiles.full_name.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <div className="text-sm font-medium">{voteData.profiles.full_name}</div>
+                <div className="text-xs text-muted-foreground">{getRoleLabel(voteData.profiles)}</div>
+              </div>
+              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-muted/50">
+                {getVoteIcon(voteData.vote)}
+                <span className="text-xs font-bold uppercase">{voteData.vote}</span>
+              </div>
+            </div>
+          ))}
+        </CollapsibleContent>
+      </Collapsible>
+    </div>
+  );
+})()}
                     </CardContent>
                   </Card>
                 ))
@@ -418,9 +503,10 @@ const Scrutin = () => {
           </div>
         </section>
       </main>
+
       <Footer />
     </div>
   );
 };
 
-export default Scrutin;
+export default Scrutin

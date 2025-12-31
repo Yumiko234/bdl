@@ -24,6 +24,7 @@ import BDLHistory from "./pages/BDLHistory";
 import BDLYearDetail from "./pages/BDLYearDetail";
 import Sondage from "./pages/Sondage";
 import Profile from "./pages/Profile";
+import ResetPassword from "./pages/ResetPassword",
 
 const queryClient = new QueryClient();
 
@@ -51,6 +52,7 @@ const App = () => {
           <Route path="/admin" element={<Admin />} />
           <Route path="/scrutin" element={<Scrutin />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
 

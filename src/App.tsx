@@ -24,7 +24,7 @@ import BDLHistory from "./pages/BDLHistory";
 import BDLYearDetail from "./pages/BDLYearDetail";
 import Sondage from "./pages/Sondage";
 import Profile from "./pages/Profile";
-import ResetPassword from "./pages/ResetPassword",
+import ResetPassword from "./pages/ResetPassword";
 
 const queryClient = new QueryClient();
 

@@ -11,7 +11,7 @@ import { ProfilePhotoUpload } from "@/components/ProfilePhotoUpload";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { User, Mail, Shield } from "lucide-react";
+import { User, Mail, Shield, Trash } from "lucide-react";
 
 interface UserProfile {
   full_name: string;
@@ -23,13 +23,22 @@ interface UserProfile {
 const Profile = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
   const [formData, setFormData] = useState({
     full_name: "",
     email: ""
   });
+
+  const [passwordData, setPasswordData] = useState({
+    password: "",
+    confirmPassword: ""
+  });
+
+  /* ===================== LOAD PROFILE ===================== */
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -43,7 +52,6 @@ const Profile = () => {
     if (!user) return;
 
     try {
-      // Charger le profil
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("full_name, email, avatar_url")
@@ -52,7 +60,6 @@ const Profile = () => {
 
       if (profileError) throw profileError;
 
-      // Charger les rôles
       const { data: rolesData, error: rolesError } = await supabase
         .from("user_roles")
         .select("role")
@@ -71,12 +78,14 @@ const Profile = () => {
         email: userData.email
       });
     } catch (error) {
-      console.error("Erreur chargement profil:", error);
+      console.error(error);
       toast.error("Erreur lors du chargement du profil");
     } finally {
       setLoading(false);
     }
   };
+
+  /* ===================== SAVE PROFILE ===================== */
 
   const handleSave = async () => {
     if (!user) return;
@@ -93,15 +102,76 @@ const Profile = () => {
 
       if (error) throw error;
 
-      toast.success("Profil mis à jour avec succès");
+      toast.success("Profil mis à jour");
       loadProfile();
     } catch (error) {
-      console.error("Erreur sauvegarde:", error);
+      console.error(error);
       toast.error("Erreur lors de la sauvegarde");
     } finally {
       setSaving(false);
     }
   };
+
+  /* ===================== DELETE AVATAR ===================== */
+
+  const handleDeleteAvatar = async () => {
+    if (!user || !profile?.avatar_url) return;
+
+    try {
+      const avatarPath = profile.avatar_url.split(
+        "/storage/v1/object/public/avatars/"
+      )[1];
+
+      const { error: storageError } = await supabase.storage
+        .from("avatars")
+        .remove([avatarPath]);
+
+      if (storageError) throw storageError;
+
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({ avatar_url: null })
+        .eq("id", user.id);
+
+      if (profileError) throw profileError;
+
+      setProfile({ ...profile, avatar_url: null });
+      toast.success("Photo de profil supprimée");
+    } catch (error) {
+      console.error(error);
+      toast.error("Erreur lors de la suppression de la photo");
+    }
+  };
+
+  /* ===================== CHANGE PASSWORD ===================== */
+
+  const handlePasswordChange = async () => {
+    if (passwordData.password.length < 6) {
+      toast.error("Le mot de passe doit contenir au moins 6 caractères");
+      return;
+    }
+
+    if (passwordData.password !== passwordData.confirmPassword) {
+      toast.error("Les mots de passe ne correspondent pas");
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: passwordData.password
+      });
+
+      if (error) throw error;
+
+      toast.success("Mot de passe modifié avec succès");
+      setPasswordData({ password: "", confirmPassword: "" });
+    } catch (error) {
+      console.error(error);
+      toast.error("Erreur lors du changement de mot de passe");
+    }
+  };
+
+  /* ===================== ROLES LABEL ===================== */
 
   const getRoleLabel = (role: string): string => {
     const labels: Record<string, string> = {
@@ -115,17 +185,17 @@ const Profile = () => {
     return labels[role] || role;
   };
 
+  /* ===================== RENDER ===================== */
+
   if (authLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-lg text-muted-foreground">Chargement...</p>
+        <p className="text-lg text-muted-foreground">Chargement…</p>
       </div>
     );
   }
 
-  if (!profile || !user) {
-    return null;
-  }
+  if (!profile || !user) return null;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -133,51 +203,54 @@ const Profile = () => {
 
       <main className="flex-1">
         <section className="py-16 gradient-institutional text-white">
-          <div className="container mx-auto px-4">
-            <div className="max-w-3xl mx-auto text-center space-y-4">
-              <User className="h-20 w-20 mx-auto" />
-              <h1 className="text-5xl font-bold">Mon Profil</h1>
-              <p className="text-xl">Gérez vos informations personnelles</p>
-            </div>
+          <div className="container mx-auto px-4 text-center space-y-4">
+            <User className="h-20 w-20 mx-auto" />
+            <h1 className="text-5xl font-bold">Mon Profil</h1>
+            <p className="text-xl">Gérez vos informations personnelles</p>
           </div>
         </section>
 
         <section className="py-16">
           <div className="container mx-auto px-4">
             <div className="max-w-2xl mx-auto space-y-6">
-              {/* Photo de profil */}
+
+              {/* PHOTO */}
               <Card className="shadow-card">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <User className="h-5 w-5" />
-                    Photo de profil
-                  </CardTitle>
+                  <CardTitle>Photo de profil</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-4">
                   <ProfilePhotoUpload
                     userId={user.id}
                     currentAvatarUrl={profile.avatar_url}
                     fullName={profile.full_name}
-                    onPhotoUpdate={(newUrl) => {
-                      setProfile({ ...profile, avatar_url: newUrl });
-                    }}
+                    onPhotoUpdate={(url) =>
+                      setProfile({ ...profile, avatar_url: url })
+                    }
                   />
+
+                  {profile.avatar_url && (
+                    <Button
+                      variant="destructive"
+                      onClick={handleDeleteAvatar}
+                      className="flex gap-2"
+                    >
+                      <Trash className="h-4 w-4" />
+                      Supprimer la photo
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
 
-              {/* Informations personnelles */}
+              {/* INFOS */}
               <Card className="shadow-card">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Mail className="h-5 w-5" />
-                    Informations personnelles
-                  </CardTitle>
+                  <CardTitle>Informations personnelles</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="full_name">Nom complet</Label>
+                  <div>
+                    <Label>Nom complet</Label>
                     <Input
-                      id="full_name"
                       value={formData.full_name}
                       onChange={(e) =>
                         setFormData({ ...formData, full_name: e.target.value })
@@ -185,10 +258,9 @@ const Profile = () => {
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
+                  <div>
+                    <Label>Email</Label>
                     <Input
-                      id="email"
                       type="email"
                       value={formData.email}
                       onChange={(e) =>
@@ -198,29 +270,65 @@ const Profile = () => {
                   </div>
 
                   <Button onClick={handleSave} disabled={saving}>
-                    {saving ? "Enregistrement..." : "Enregistrer les modifications"}
+                    {saving ? "Enregistrement…" : "Enregistrer"}
                   </Button>
                 </CardContent>
               </Card>
 
-              {/* Rôles */}
+              {/* SÉCURITÉ */}
               <Card className="shadow-card">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Shield className="h-5 w-5" />
-                    Mes rôles
-                  </CardTitle>
+                  <CardTitle>Sécurité</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-2">
-                    {profile.roles.map((role) => (
-                      <Badge key={role} variant="secondary">
-                        {getRoleLabel(role)}
-                      </Badge>
-                    ))}
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label>Nouveau mot de passe</Label>
+                    <Input
+                      type="password"
+                      value={passwordData.password}
+                      onChange={(e) =>
+                        setPasswordData({
+                          ...passwordData,
+                          password: e.target.value
+                        })
+                      }
+                    />
                   </div>
+
+                  <div>
+                    <Label>Confirmer le mot de passe</Label>
+                    <Input
+                      type="password"
+                      value={passwordData.confirmPassword}
+                      onChange={(e) =>
+                        setPasswordData({
+                          ...passwordData,
+                          confirmPassword: e.target.value
+                        })
+                      }
+                    />
+                  </div>
+
+                  <Button onClick={handlePasswordChange}>
+                    Modifier le mot de passe
+                  </Button>
                 </CardContent>
               </Card>
+
+              {/* RÔLES */}
+              <Card className="shadow-card">
+                <CardHeader>
+                  <CardTitle>Mes rôles</CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-wrap gap-2">
+                  {profile.roles.map(role => (
+                    <Badge key={role} variant="secondary">
+                      {getRoleLabel(role)}
+                    </Badge>
+                  ))}
+                </CardContent>
+              </Card>
+
             </div>
           </div>
         </section>

@@ -51,6 +51,7 @@ const App = () => {
           <Route path="/intranet" element={<Intranet />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/scrutin" element={<Scrutin />} />
+          <Route path="/sondage" element={<Sondage />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="*" element={<NotFound />} />

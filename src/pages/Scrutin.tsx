@@ -15,6 +15,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 
 interface Scrutin {
   id: string;
@@ -407,6 +408,28 @@ const Scrutin = () => {
   const majoriteAbsolue = Math.floor(exprimes / 2) + 1;
   const estAdopte = pour >= majoriteAbsolue && exprimes > 0;
 
+  // Données pour le graphique camembert
+  const pieData = [
+    { name: "Pour", value: pour, color: "#16a34a" },
+    { name: "Contre", value: contre, color: "#dc2626" },
+    { name: "Abstention", value: abstention, color: "#6b7280" }
+  ].filter(item => item.value > 0);
+
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white p-3 border rounded-lg shadow-lg">
+          <p className="font-semibold">{payload[0].name}</p>
+          <p className="text-sm">
+            {payload[0].value} vote{payload[0].value > 1 ? 's' : ''} 
+            ({((payload[0].value / votants) * 100).toFixed(1)}%)
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="pt-4 border-t space-y-4">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -428,31 +451,64 @@ const Scrutin = () => {
         )}
       </div>
 
-      {/* Tableau de bord des chiffres clés */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-muted/20 rounded-lg border">
-        <div className="flex flex-col">
-          <span className="text-xs text-muted-foreground uppercase font-medium">Votants</span>
-          <span className="text-xl font-bold">{votants}</span>
-        </div>
-        <div className="flex flex-col">
-          <span className="text-xs text-muted-foreground uppercase font-medium">Exprimés</span>
-          <span className="text-xl font-bold">{exprimes}</span>
-        </div>
-        <div className="flex flex-col">
-          <span className="text-xs text-muted-foreground uppercase font-medium text-blue-600">Majorité</span>
-          <span className="text-xl font-bold text-blue-600">{majoriteAbsolue}</span>
-        </div>
-        <div className="flex flex-col">
-          <span className="text-xs text-muted-foreground uppercase font-medium text-green-600">Pour</span>
-          <span className="text-xl font-bold text-green-600">{pour}</span>
-        </div>
-        <div className="flex flex-col">
-          <span className="text-xs text-muted-foreground uppercase font-medium text-red-600">Contre</span>
-          <span className="text-xl font-bold text-red-600">{contre}</span>
-        </div>
-        <div className="flex flex-col">
-          <span className="text-xs text-muted-foreground uppercase font-medium text-black-600">Abstention</span>
-          <span className="text-xl font-bold text-black-600">{abstention}</span>
+      {/* Graphique camembert et chiffres clés */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Graphique camembert */}
+        {votants > 0 && (
+          <div className="flex items-center justify-center bg-muted/10 rounded-lg border p-4">
+            <ResponsiveContainer width="100%" height={280}>
+              <PieChart>
+                <Pie
+                  data={pieData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={90}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {pieData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip content={<CustomTooltip />} />
+                <Legend 
+                  verticalAlign="bottom" 
+                  height={36}
+                  formatter={(value) => <span className="text-sm font-medium">{value}</span>}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
+        {/* Tableau de bord des chiffres clés */}
+        <div className="grid grid-cols-2 gap-4 p-4 bg-muted/20 rounded-lg border content-start">
+          <div className="flex flex-col">
+            <span className="text-xs text-muted-foreground uppercase font-medium">Votants</span>
+            <span className="text-2xl font-bold">{votants}</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-xs text-muted-foreground uppercase font-medium">Exprimés</span>
+            <span className="text-2xl font-bold">{exprimes}</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-xs text-muted-foreground uppercase font-medium text-blue-600">Majorité</span>
+            <span className="text-2xl font-bold text-blue-600">{majoriteAbsolue}</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-xs text-muted-foreground uppercase font-medium text-green-600">Pour</span>
+            <span className="text-2xl font-bold text-green-600">{pour}</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-xs text-muted-foreground uppercase font-medium text-red-600">Contre</span>
+            <span className="text-2xl font-bold text-red-600">{contre}</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-xs text-muted-foreground uppercase font-medium">Abstention</span>
+            <span className="text-2xl font-bold text-gray-600">{abstention}</span>
+          </div>
         </div>
       </div>
 
@@ -509,4 +565,4 @@ const Scrutin = () => {
   );
 };
 
-export default Scrutin
+export default Scrutin;

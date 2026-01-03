@@ -130,6 +130,7 @@ const BDLHistory = () => {
                       { name: "Charline Jaegle", role: "Vice-Présidente", gradient: "gradient-gold" },
                       { name: "Saraan Vicq", role: "Secrétaire Générale", gradient: "gradient-institutional" },
                       { name: "Majid Matari", role: "Directeur de la Communauté et de la Communication", gradient: "gradient-gold" }
+      { name: "Eva Beck", role: "Directrice adjt. Photographe", gradient: "gradient-gold" }
                     ].map((member) => (
                       <Card key={member.name} className="shadow-card">
                         <CardContent className="p-6 text-center space-y-3">

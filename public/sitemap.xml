@@ -9,7 +9,9 @@
 <url><loc>https://bdl-saintandre.fr/contact</loc><changefreq>monthly</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/documents</loc><changefreq>daily</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/events</loc><changefreq>daily</changefreq></url>
+<url><loc>https://bdl-saintandre.fr/scrutins</loc><changefreq>daily</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/intranet</loc><changefreq>monthly</changefreq></url>
+<url><loc>https://bdl-saintandre.fr/profile</loc><changefreq>daily</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/jo/</loc><changefreq>daily</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/jo/BDL25DE0001A</loc><changefreq>daily</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/jo/PBDL25DC0001A</loc><changefreq>daily</changefreq></url>
@@ -19,9 +21,12 @@
 <url><loc>https://bdl-saintandre.fr/jo/PBDL25CM0001A</loc><changefreq>daily</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/jo/PBDL25DC0002A</loc><changefreq>daily</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/jo/RCBDL25DC0003B</loc><changefreq>daily</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/jo/PBDL25CI0001A</loc><changefreq>daily</changefreq></url>
+<url><loc>https://bdl-saintandre.fr/jo/RI</loc><changefreq>daily</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/jo/PBDL25DC004A</loc><changefreq>daily</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/jo/PBDL25PV002A</loc><changefreq>daily</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/jo/PBDL25AR0002A</loc><changefreq>daily</changefreq></url>
+<url><loc>https://bdl-saintandre.fr/jo/PBDL25CM0002A</loc><changefreq>daily</changefreq></url>
+<url><loc>https://bdl-saintandre.fr/jo/PBDL26AR0001A</loc><changefreq>daily</changefreq></url>
+  <url><loc>https://bdl-saintandre.fr/jo/RCBDL26CM0001A</loc><changefreq>daily</changefreq></url>
 
   </urlset>

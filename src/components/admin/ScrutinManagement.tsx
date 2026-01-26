@@ -5,9 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Vote, Plus, Trash2, Lock, Unlock } from "lucide-react";
+import { Vote, Plus, Trash2, Lock, Unlock, EyeOff } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +26,7 @@ interface Scrutin {
   title: string;
   description: string;
   status: "open" | "closed";
+  is_secret: boolean;
   created_at: string;
   opened_at: string | null;
   closed_at: string | null;
@@ -41,6 +43,7 @@ export const ScrutinManagement = () => {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
+    is_secret: true, // Secret par défaut
   });
   const [loading, setLoading] = useState(false);
   const [voteCounts, setVoteCounts] = useState<Record<string, VoteCount>>({});
@@ -62,7 +65,6 @@ export const ScrutinManagement = () => {
 
     setScrutins(data || []);
     
-    // Load vote counts for all scrutins
     if (data) {
       for (const scrutin of data) {
         await loadVoteCount(scrutin.id);
@@ -106,6 +108,7 @@ export const ScrutinManagement = () => {
     const { error } = await supabase.from("scrutins").insert({
       title: formData.title,
       description: formData.description,
+      is_secret: formData.is_secret,
       created_by: user?.id,
       status: "closed",
     });
@@ -114,7 +117,7 @@ export const ScrutinManagement = () => {
       toast.error("Erreur lors de la création");
     } else {
       toast.success("Scrutin créé avec succès");
-      setFormData({ title: "", description: "" });
+      setFormData({ title: "", description: "", is_secret: true });
       loadScrutins();
     }
 
@@ -133,7 +136,7 @@ export const ScrutinManagement = () => {
     if (error) {
       toast.error("Erreur lors de l'ouverture");
     } else {
-      toast.success("Scrutin ouvert - Les votes sont maintenant possibles");
+      toast.success("Scrutin ouvert");
       loadScrutins();
     }
   };
@@ -150,9 +153,27 @@ export const ScrutinManagement = () => {
     if (error) {
       toast.error("Erreur lors de la clôture");
     } else {
-      toast.success("Scrutin clos - Les résultats sont maintenant visibles");
+      toast.success("Scrutin clos");
       loadScrutins();
       loadVoteCount(id);
+    }
+  };
+
+  const handleToggleSecret = async (id: string, currentSecret: boolean) => {
+    const { error } = await supabase
+      .from("scrutins")
+      .update({ is_secret: !currentSecret })
+      .eq("id", id);
+
+    if (error) {
+      toast.error("Erreur lors de la modification");
+    } else {
+      toast.success(
+        !currentSecret 
+          ? "Scrutin secret - Noms masqués" 
+          : "Scrutin public - Noms visibles"
+      );
+      loadScrutins();
     }
   };
 
@@ -179,7 +200,6 @@ export const ScrutinManagement = () => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Form for creating new scrutin */}
         <div className="border rounded-lg p-6 space-y-4 bg-muted/30">
           <div className="flex items-center gap-2">
             <Plus className="h-5 w-5" />
@@ -212,6 +232,25 @@ export const ScrutinManagement = () => {
               />
             </div>
 
+            <div className="flex items-center space-x-2 p-4 border rounded-lg bg-background">
+              <Switch
+                id="is_secret"
+                checked={formData.is_secret}
+                onCheckedChange={(checked) =>
+                  setFormData({ ...formData, is_secret: checked })
+                }
+              />
+              <div className="flex-1">
+                <Label htmlFor="is_secret" className="cursor-pointer flex items-center gap-2">
+                  <EyeOff className="h-4 w-4" />
+                  Scrutin secret (recommandé)
+                </Label>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Les noms des votants seront masqués dans les résultats
+                </p>
+              </div>
+            </div>
+
             <Button onClick={handleCreate} disabled={loading}>
               <Plus className="h-4 w-4 mr-2" />
               Créer le scrutin
@@ -219,7 +258,6 @@ export const ScrutinManagement = () => {
           </div>
         </div>
 
-        {/* List of scrutins */}
         <div className="space-y-4">
           <h3 className="font-semibold">Scrutins existants</h3>
 
@@ -233,77 +271,85 @@ export const ScrutinManagement = () => {
                 <CardContent className="p-6 space-y-4">
                   <div className="flex items-start justify-between">
                     <div className="flex-1 space-y-2">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <h4 className="font-bold text-lg">{scrutin.title}</h4>
                         <Badge
                           variant={scrutin.status === "open" ? "default" : "secondary"}
                         >
                           {scrutin.status === "open" ? "Ouvert" : "Fermé"}
                         </Badge>
+                        {scrutin.is_secret && (
+                          <Badge variant="outline" className="gap-1">
+                            <EyeOff className="h-3 w-3" />
+                            Secret
+                          </Badge>
+                        )}
                       </div>
                       <p className="text-sm text-muted-foreground">
                         {scrutin.description}
                       </p>
                       
-                      {/* Show vote counts */}
-{/* Show vote counts */}
-{voteCounts[scrutin.id] && (() => {
-  const counts = voteCounts[scrutin.id];
-  const votants = counts.pour + counts.contre + counts.abstention;
-  const exprimes = counts.pour + counts.contre;
-  // Calcul de la majorité absolue : moitié des exprimés + 1
-  const majoriteAbsolue = Math.floor(exprimes / 2) + 1;
-  const estAdopte = counts.pour >= majoriteAbsolue;
+                      {voteCounts[scrutin.id] && (() => {
+                        const counts = voteCounts[scrutin.id];
+                        const votants = counts.pour + counts.contre + counts.abstention;
+                        const exprimes = counts.pour + counts.contre;
+                        const majoriteAbsolue = Math.floor(exprimes / 2) + 1;
+                        const estAdopte = counts.pour >= majoriteAbsolue;
 
-  return (
-    <div className="space-y-4 pt-4 border-t mt-4">
-      {/* Ligne des totaux institutionnels */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <div className="flex flex-col">
-          <span className="text-xs text-muted-foreground uppercase">Votants</span>
-          <span className="font-bold text-lg">{votants}</span>
-        </div>
-        <div className="flex flex-col">
-          <span className="text-xs text-muted-foreground uppercase">Exprimés</span>
-          <span className="font-bold text-lg">{exprimes}</span>
-        </div>
-        <div className="flex flex-col">
-          <span className="text-xs text-muted-foreground uppercase">Majorité Absolue</span>
-          <span className="font-bold text-lg text-blue-600">{majoriteAbsolue}</span>
-        </div>
-      </div>
+                        return (
+                          <div className="space-y-4 pt-4 border-t mt-4">
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                              <div className="flex flex-col">
+                                <span className="text-xs text-muted-foreground uppercase">Votants</span>
+                                <span className="font-bold text-lg">{votants}</span>
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-xs text-muted-foreground uppercase">Exprimés</span>
+                                <span className="font-bold text-lg">{exprimes}</span>
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-xs text-muted-foreground uppercase">Majorité</span>
+                                <span className="font-bold text-lg text-blue-600">{majoriteAbsolue}</span>
+                              </div>
+                            </div>
 
-      {/* Détails des votes et Résultat */}
-      <div className="flex items-center justify-between bg-background p-3 rounded-md border">
-        <div className="flex gap-4 text-sm">
-          <div className="flex flex-col">
-            <span className="text-green-600 font-semibold">Pour: {counts.pour}</span>
-            <span className="text-red-600 font-semibold">Contre: {counts.contre}</span>
-            <span className="text-gray-500 italic">Abstention: {counts.abstention}</span>
-          </div>
-        </div>
-        
-        {exprimes > 0 && (
-          <Badge className={estAdopte ? "bg-green-100 text-green-800 hover:bg-green-100" : "bg-red-100 text-red-800 hover:bg-red-100"}>
-            {estAdopte ? "ADOPTÉ" : "REJETÉ"}
-          </Badge>
-        )}
-      </div>
-    </div>
-  );
-})()}
+                            <div className="flex items-center justify-between bg-background p-3 rounded-md border">
+                              <div className="flex gap-4 text-sm">
+                                <span className="text-green-600 font-semibold">Pour: {counts.pour}</span>
+                                <span className="text-red-600 font-semibold">Contre: {counts.contre}</span>
+                                <span className="text-gray-500 italic">Abstention: {counts.abstention}</span>
+                              </div>
+                              
+                              {exprimes > 0 && (
+                                <Badge className={estAdopte ? "bg-green-100 text-green-800 hover:bg-green-100" : "bg-red-100 text-red-800 hover:bg-red-100"}>
+                                  {estAdopte ? "ADOPTÉ" : "REJETÉ"}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
 
                     <div className="flex gap-2">
                       {scrutin.status === "closed" ? (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleOpen(scrutin.id)}
-                        >
-                          <Unlock className="h-4 w-4 mr-2" />
-                          Ouvrir
-                        </Button>
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleOpen(scrutin.id)}
+                          >
+                            <Unlock className="h-4 w-4 mr-2" />
+                            Ouvrir
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleToggleSecret(scrutin.id, scrutin.is_secret)}
+                          >
+                            <EyeOff className="h-4 w-4" />
+                          </Button>
+                        </>
                       ) : (
                         <Button
                           size="sm"
@@ -327,9 +373,7 @@ export const ScrutinManagement = () => {
                               Confirmer la suppression
                             </AlertDialogTitle>
                             <AlertDialogDescription>
-                              Êtes-vous sûr de vouloir supprimer ce scrutin ?
-                              Cette action est irréversible et supprimera également
-                              tous les votes associés.
+                              Supprimer ce scrutin et tous ses votes ?
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>

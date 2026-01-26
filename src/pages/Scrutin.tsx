@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Vote, ThumbsUp, ThumbsDown, Minus, ChevronDown, ChevronUp } from "lucide-react";
+import { Vote, ThumbsUp, ThumbsDown, Minus, ChevronDown, ChevronUp, EyeOff } from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
@@ -21,6 +21,7 @@ interface Scrutin {
   title: string;
   description: string;
   status: "open" | "closed";
+  is_secret: boolean;
   created_at: string;
 }
 
@@ -93,7 +94,6 @@ const Scrutin = () => {
 
     setScrutins(data || []);
 
-    // Load votes for closed scrutins and my votes
     for (const scrutin of data || []) {
       if (scrutin.status === "closed") {
         await loadVotes(scrutin.id);
@@ -147,13 +147,11 @@ const Scrutin = () => {
       return;
     }
 
-    // Check if already voted
     if (myVotes[scrutinId]) {
       toast.error("Vous avez déjà voté sur ce scrutin");
       return;
     }
 
-    // Insert new vote
     const { error } = await supabase.from("scrutin_votes").insert({
       scrutin_id: scrutinId,
       user_id: user.id,
@@ -168,7 +166,7 @@ const Scrutin = () => {
       setMyVotes((prev) => ({
         ...prev,
         [scrutinId]: { vote: voteValue },
-      }) );
+      }));
     }
   };
 
@@ -216,7 +214,6 @@ const Scrutin = () => {
       }
     }
     
-    // Add hover effects for non-voted buttons
     if (hasVoted) {
       return "opacity-50 cursor-not-allowed";
     }
@@ -242,7 +239,6 @@ const Scrutin = () => {
       bdl_member: "Membre BDL",
     };
     
-    // Get the highest priority role
     const rolePriority = ["president", "vice_president", "secretary_general", "communication_manager", "bdl_member"];
     for (const priority of rolePriority) {
       if (profile.user_roles.some(r => r.role === priority)) {
@@ -302,7 +298,7 @@ const Scrutin = () => {
                 <Card className="border-primary bg-primary/10">
                   <CardContent className="p-6">
                     <p className="text-center font-semibold">
-                      En tant que Président, vous ne pouvez pas voter sur les scrutins (neutralité présidentielle).
+                      En tant que Président, vous ne pouvez pas voter (neutralité présidentielle).
                     </p>
                   </CardContent>
                 </Card>
@@ -312,8 +308,7 @@ const Scrutin = () => {
                 <Card className="border-accent bg-accent/10">
                   <CardContent className="p-6">
                     <p className="text-center text-muted-foreground">
-                      Vous pouvez consulter les scrutins mais vous n'avez pas les
-                      droits pour voter. Seuls les membres du BDL peuvent voter.
+                      Seuls les membres du BDL peuvent voter.
                     </p>
                   </CardContent>
                 </Card>
@@ -336,7 +331,7 @@ const Scrutin = () => {
                     <CardContent className="p-6 space-y-4">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
+                          <div className="flex items-center gap-2 mb-2 flex-wrap">
                             <h3 className="text-2xl font-bold">{scrutin.title}</h3>
                             <Badge
                               variant={
@@ -345,6 +340,12 @@ const Scrutin = () => {
                             >
                               {scrutin.status === "open" ? "En cours" : "Terminé"}
                             </Badge>
+                            {scrutin.is_secret && (
+                              <Badge variant="outline" className="gap-1">
+                                <EyeOff className="h-3 w-3" />
+                                Secret
+                              </Badge>
+                            )}
                           </div>
                           <p className="text-muted-foreground">
                             {scrutin.description}
@@ -352,7 +353,6 @@ const Scrutin = () => {
                         </div>
                       </div>
 
-                      {/* Voting buttons for open scrutins */}
                       {scrutin.status === "open" && user && canVote && !isPresident && (
                         <div className="flex gap-3 pt-4 border-t">
                           <Button
@@ -385,116 +385,118 @@ const Scrutin = () => {
                         </div>
                       )}
 
-                      {/* Show my vote for open scrutins */}
                       {scrutin.status === "open" && myVotes[scrutin.id] && (
                         <div className="text-sm text-muted-foreground pt-2">
-                          Votre vote a été enregistré :{" "}
-                          <span className="font-semibold">
-                            {getVoteLabel(myVotes[scrutin.id].vote)}
-                          </span>
+                          Votre vote : <span className="font-semibold">{getVoteLabel(myVotes[scrutin.id].vote)}</span>
                         </div>
                       )}
 
-                      {/* Show results for closed scrutins */}
-{scrutin.status === "closed" && votes[scrutin.id] && (() => {
-  const currentVotes = votes[scrutin.id];
-  const pour = currentVotes.filter((v) => v.vote === "pour").length;
-  const contre = currentVotes.filter((v) => v.vote === "contre").length;
-  const abstention = currentVotes.filter((v) => v.vote === "abstention").length;
-  
-  const votants = pour + contre + abstention;
-  const exprimes = pour + contre;
-  const majoriteAbsolue = Math.floor(exprimes / 2) + 1;
-  const estAdopte = pour >= majoriteAbsolue && exprimes > 0;
+                      {scrutin.status === "closed" && votes[scrutin.id] && (() => {
+                        const currentVotes = votes[scrutin.id];
+                        const pour = currentVotes.filter((v) => v.vote === "pour").length;
+                        const contre = currentVotes.filter((v) => v.vote === "contre").length;
+                        const abstention = currentVotes.filter((v) => v.vote === "abstention").length;
+                        
+                        const votants = pour + contre + abstention;
+                        const exprimes = pour + contre;
+                        const majoriteAbsolue = Math.floor(exprimes / 2) + 1;
+                        const estAdopte = pour >= majoriteAbsolue && exprimes > 0;
 
-  return (
-    <div className="pt-4 border-t space-y-4">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <h4 className="font-semibold text-lg">Résultats officiels</h4>
-        
-        {exprimes > 0 ? (
-          <Badge 
-            className={`text-sm py-1 px-4 self-start md:self-center ${
-              estAdopte 
-                ? "bg-green-100 text-green-800 border-green-200 hover:bg-green-100" 
-                : "bg-red-100 text-red-800 border-red-200 hover:bg-red-100"
-            }`}
-            variant="outline"
-          >
-            {estAdopte ? "SCRUTIN ADOPTÉ" : "SCRUTIN REJETÉ"}
-          </Badge>
-        ) : (
-          <Badge variant="secondary">AUCUN SUFFRAGE EXPRIMÉ</Badge>
-        )}
-      </div>
+                        return (
+                          <div className="pt-4 border-t space-y-4">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                              <h4 className="font-semibold text-lg">Résultats officiels</h4>
+                              
+                              {exprimes > 0 ? (
+                                <Badge 
+                                  className={`text-sm py-1 px-4 self-start md:self-center ${
+                                    estAdopte 
+                                      ? "bg-green-100 text-green-800 border-green-200 hover:bg-green-100" 
+                                      : "bg-red-100 text-red-800 border-red-200 hover:bg-red-100"
+                                  }`}
+                                  variant="outline"
+                                >
+                                  {estAdopte ? "SCRUTIN ADOPTÉ" : "SCRUTIN REJETÉ"}
+                                </Badge>
+                              ) : (
+                                <Badge variant="secondary">AUCUN SUFFRAGE EXPRIMÉ</Badge>
+                              )}
+                            </div>
 
-      {/* Tableau de bord des chiffres clés */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-muted/20 rounded-lg border">
-        <div className="flex flex-col">
-          <span className="text-xs text-muted-foreground uppercase font-medium">Votants</span>
-          <span className="text-xl font-bold">{votants}</span>
-        </div>
-        <div className="flex flex-col">
-          <span className="text-xs text-muted-foreground uppercase font-medium">Exprimés</span>
-          <span className="text-xl font-bold">{exprimes}</span>
-        </div>
-        <div className="flex flex-col">
-          <span className="text-xs text-muted-foreground uppercase font-medium text-blue-600">Majorité</span>
-          <span className="text-xl font-bold text-blue-600">{majoriteAbsolue}</span>
-        </div>
-        <div className="flex flex-col">
-          <span className="text-xs text-muted-foreground uppercase font-medium text-green-600">Pour</span>
-          <span className="text-xl font-bold text-green-600">{pour}</span>
-        </div>
-        <div className="flex flex-col">
-          <span className="text-xs text-muted-foreground uppercase font-medium text-red-600">Contre</span>
-          <span className="text-xl font-bold text-red-600">{contre}</span>
-        </div>
-        <div className="flex flex-col">
-          <span className="text-xs text-muted-foreground uppercase font-medium text-black-600">Abstention</span>
-          <span className="text-xl font-bold text-black-600">{abstention}</span>
-        </div>
-      </div>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-muted/20 rounded-lg border">
+                              <div className="flex flex-col">
+                                <span className="text-xs text-muted-foreground uppercase font-medium">Votants</span>
+                                <span className="text-xl font-bold">{votants}</span>
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-xs text-muted-foreground uppercase font-medium">Exprimés</span>
+                                <span className="text-xl font-bold">{exprimes}</span>
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-xs text-muted-foreground uppercase font-medium text-blue-600">Majorité</span>
+                                <span className="text-xl font-bold text-blue-600">{majoriteAbsolue}</span>
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-xs text-muted-foreground uppercase font-medium text-green-600">Pour</span>
+                                <span className="text-xl font-bold text-green-600">{pour}</span>
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-xs text-muted-foreground uppercase font-medium text-red-600">Contre</span>
+                                <span className="text-xl font-bold text-red-600">{contre}</span>
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-xs text-muted-foreground uppercase font-medium">Abstention</span>
+                                <span className="text-xl font-bold">{abstention}</span>
+                              </div>
+                            </div>
 
-      {/* Collapsible pour le détail nominatif */}
-      <Collapsible
-        open={openDetails[scrutin.id]}
-        onOpenChange={() => toggleDetails(scrutin.id)}
-      >
-        <CollapsibleTrigger asChild>
-          <Button variant="ghost" size="sm" className="w-full text-muted-foreground">
-            {openDetails[scrutin.id] ? (
-              <><ChevronUp className="h-4 w-4 mr-2" /> Masquer le détail des votes</>
-            ) : (
-              <><ChevronDown className="h-4 w-4 mr-2" /> Voir le détail des votes par membre</>
-            )}
-          </Button>
-        </CollapsibleTrigger>
-        <CollapsibleContent className="space-y-2 mt-3">
-          {currentVotes.map((voteData) => (
-            <div
-              key={voteData.user_id}
-              className="flex items-center gap-3 p-3 bg-background border rounded-md"
-            >
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={voteData.profiles.avatar_url || undefined} />
-                <AvatarFallback>{voteData.profiles.full_name.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <div className="text-sm font-medium">{voteData.profiles.full_name}</div>
-                <div className="text-xs text-muted-foreground">{getRoleLabel(voteData.profiles)}</div>
-              </div>
-              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-muted/50">
-                {getVoteIcon(voteData.vote)}
-                <span className="text-xs font-bold uppercase">{voteData.vote}</span>
-              </div>
-            </div>
-          ))}
-        </CollapsibleContent>
-      </Collapsible>
-    </div>
-  );
-})()}
+                            {!scrutin.is_secret && (
+                              <Collapsible
+                                open={openDetails[scrutin.id]}
+                                onOpenChange={() => toggleDetails(scrutin.id)}
+                              >
+                                <CollapsibleTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="w-full text-muted-foreground">
+                                    {openDetails[scrutin.id] ? (
+                                      <><ChevronUp className="h-4 w-4 mr-2" /> Masquer le détail des votes</>
+                                    ) : (
+                                      <><ChevronDown className="h-4 w-4 mr-2" /> Voir le détail des votes par membre</>
+                                    )}
+                                  </Button>
+                                </CollapsibleTrigger>
+                                <CollapsibleContent className="space-y-2 mt-3">
+                                  {currentVotes.map((voteData) => (
+                                    <div
+                                      key={voteData.user_id}
+                                      className="flex items-center gap-3 p-3 bg-background border rounded-md"
+                                    >
+                                      <Avatar className="h-8 w-8">
+                                        <AvatarImage src={voteData.profiles.avatar_url || undefined} />
+                                        <AvatarFallback>{voteData.profiles.full_name.charAt(0)}</AvatarFallback>
+                                      </Avatar>
+                                      <div className="flex-1">
+                                        <div className="text-sm font-medium">{voteData.profiles.full_name}</div>
+                                        <div className="text-xs text-muted-foreground">{getRoleLabel(voteData.profiles)}</div>
+                                      </div>
+                                      <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-muted/50">
+                                        {getVoteIcon(voteData.vote)}
+                                        <span className="text-xs font-bold uppercase">{voteData.vote}</span>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </CollapsibleContent>
+                              </Collapsible>
+                            )}
+
+                            {scrutin.is_secret && (
+                              <div className="text-center text-sm text-muted-foreground italic p-3 bg-muted/20 rounded-md border">
+                                <EyeOff className="h-4 w-4 inline mr-2" />
+                                Scrutin secret : le détail nominatif des votes est masqué
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </CardContent>
                   </Card>
                 ))
@@ -509,4 +511,4 @@ const Scrutin = () => {
   );
 };
 
-export default Scrutin
+export default Scrutin;

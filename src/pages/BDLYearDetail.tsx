@@ -1,6 +1,6 @@
 // src/pages/BDLYearDetail.tsx
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom"; // Import Link conservé (Étape 3.D)
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -100,43 +100,56 @@ const BDLYearDetail = () => {
     return "gradient-institutional";
   };
 
+  // Fonction utilitaire ajoutée (Étape 3.D)
+  const generateMemberSlug = (fullName: string): string => {
+    return fullName
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9\s-]/g, "")
+      .trim()
+      .replace(/\s+/g, "_");
+  };
+
   const renderMemberCard = (member: Member) => {
     const gradient = getRoleGradient(member.role);
+    const slug = generateMemberSlug(member.full_name); // Ajout (Étape 3.D)
 
     return (
-      <Card
-        key={member.id}
-        className="group hover:shadow-elegant transition-all duration-300 hover:-translate-y-2"
-      >
-        <CardContent className="p-6 space-y-4">
-          <div className="flex flex-col items-center space-y-4">
-            {member.avatar_url ? (
-              <img
-                src={member.avatar_url}
-                alt={member.full_name}
-                className="w-24 h-24 rounded-full ring-4 ring-background group-hover:scale-110 transition-transform duration-300 object-cover"
-              />
-            ) : (
-              <div
-                className={`w-24 h-24 rounded-full ${gradient} flex items-center justify-center text-white text-2xl font-bold shadow-elegant ring-4 ring-background group-hover:scale-110 transition-transform duration-300`}
-              >
-                {getInitials(member.full_name)}
-              </div>
-            )}
-            <div className="text-center space-y-2">
-              <h3 className="text-xl font-bold">{member.full_name}</h3>
-              <Badge variant="secondary" className="text-xs font-medium">
-                {getRoleLabel(member.role)}
-              </Badge>
-              {member.is_honorary && (
-                <Badge className="text-xs font-medium bg-accent text-secondary mt-2">
-                  Membre Honorifique
-                </Badge>
+      <Link to={`/bdl/${slug}`} key={member.id}> {/* Modification (Étape 3.D) */}
+        <Card
+          className="group hover:shadow-elegant transition-all duration-300 hover:-translate-y-2 cursor-pointer"
+        >
+          <CardContent className="p-6 space-y-4">
+            <div className="flex flex-col items-center space-y-4">
+              {member.avatar_url ? (
+                <img
+                  src={member.avatar_url}
+                  alt={member.full_name}
+                  className="w-24 h-24 rounded-full ring-4 ring-background group-hover:scale-110 transition-transform duration-300 object-cover"
+                />
+              ) : (
+                <div
+                  className={`w-24 h-24 rounded-full ${gradient} flex items-center justify-center text-white text-2xl font-bold shadow-elegant ring-4 ring-background group-hover:scale-110 transition-transform duration-300`}
+                >
+                  {getInitials(member.full_name)}
+                </div>
               )}
+              <div className="text-center space-y-2">
+                <h3 className="text-xl font-bold">{member.full_name}</h3>
+                <Badge variant="secondary" className="text-xs font-medium">
+                  {getRoleLabel(member.role)}
+                </Badge>
+                {member.is_honorary && (
+                  <Badge className="text-xs font-medium bg-accent text-secondary mt-2">
+                    Membre Honorifique
+                  </Badge>
+                )}
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </Link>
     );
   };
 

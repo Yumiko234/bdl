@@ -7,8 +7,13 @@ import { Analytics } from "@vercel/analytics/react";
 
 import Index from "./pages/Index";
 import Etablissement from "./pages/Etablissement";
+
 import BDL from "./pages/BDL";
 import Clubs from "./pages/Clubs";
+import BDLHistory from "./pages/BDLHistory";
+import BDLYearDetail from "./pages/BDLYearDetail";
+import BDLMemberProfile from "./pages/BDLMemberProfile";
+
 import Actualites from "./pages/Actualites";
 import Documents from "./pages/Documents";
 import Events from "./pages/Events";
@@ -20,8 +25,6 @@ import JOBDL from "./pages/jobdl/JOBDL";
 import JobdlArticle from "./pages/jobdl/[nor]";
 import Scrutin from "./pages/Scrutin";
 import NotFound from "./pages/NotFound";
-import BDLHistory from "./pages/BDLHistory";
-import BDLYearDetail from "./pages/BDLYearDetail";
 import Sondage from "./pages/Sondage";
 import Profile from "./pages/Profile";
 import ResetPassword from "./pages/ResetPassword";
@@ -40,6 +43,7 @@ const App = () => {
           <Route path="/bdl" element={<BDL />} />
           <Route path="/bdl/historique" element={<BDLHistory />} />
           <Route path="/bdl/historique/:year" element={<BDLYearDetail />} />
+          <Route path="/bdl/:slug" element={<BDLMemberProfile />} />
           <Route path="/clubs" element={<Clubs />} />
           <Route path="/actualites" element={<Actualites />} />
           <Route path="/events" element={<Events />} />

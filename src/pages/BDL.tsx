@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom"; // Modification Étape 3.C
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -41,7 +42,6 @@ const BDL = () => {
 
   const loadMembers = async () => {
     try {
-      // First, load BDL members with their profiles
       const { data: bdlMembersData, error: membersError } = await supabase
         .from('bdl_members')
         .select(`
@@ -64,17 +64,14 @@ const BDL = () => {
         return;
       }
 
-      // Then, load roles for these users
       const { data: roles, error: rolesError } = await supabase
         .from('user_roles')
         .select('user_id, role');
 
       if (rolesError) {
         console.error("Erreur chargement rôles:", rolesError);
-        // Don't block if roles fail, just continue without them
       }
 
-      // Map the data
       const members = (bdlMembersData || []).map((m: any) => {
         const profile = m.profiles;
         return {
@@ -127,38 +124,51 @@ const BDL = () => {
     return roles[0] || 'bdl_member';
   };
 
+  // Fonction utilitaire ajoutée (Étape 3.C)
+  const generateMemberSlug = (fullName: string): string => {
+    return fullName
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9\s-]/g, "")
+      .trim()
+      .replace(/\s+/g, "_");
+  };
+
   const renderMemberCard = (member: Member) => {
     const primaryRole = getPrimaryRole(member.roles);
     const gradient = getRoleGradient(member.roles);
+    const slug = generateMemberSlug(member.full_name); // Ajout (Étape 3.C)
 
     return (
-      <Card 
-        key={member.id} 
-        className="group hover:shadow-elegant transition-all duration-300 hover:-translate-y-2"
-      >
-        <CardContent className="p-6 space-y-4">
-          <div className="flex flex-col items-center space-y-4">
-            {member.avatar_url ? (
-              <Avatar className="w-24 h-24 ring-4 ring-background group-hover:scale-110 transition-transform duration-300">
-                <AvatarImage src={member.avatar_url} alt={member.full_name} />
-                <AvatarFallback className={`${gradient} text-white text-2xl font-bold`}>
+      <Link to={`/bdl/${slug}`} key={member.id}> {/* Modification (Étape 3.C) */}
+        <Card 
+          className="group hover:shadow-elegant transition-all duration-300 hover:-translate-y-2 cursor-pointer"
+        >
+          <CardContent className="p-6 space-y-4">
+            <div className="flex flex-col items-center space-y-4">
+              {member.avatar_url ? (
+                <Avatar className="w-24 h-24 ring-4 ring-background group-hover:scale-110 transition-transform duration-300">
+                  <AvatarImage src={member.avatar_url} alt={member.full_name} />
+                  <AvatarFallback className={`${gradient} text-white text-2xl font-bold`}>
+                    {getInitials(member.full_name)}
+                  </AvatarFallback>
+                </Avatar>
+              ) : (
+                <div className={`w-24 h-24 rounded-full ${gradient} flex items-center justify-center text-white text-2xl font-bold shadow-elegant ring-4 ring-background group-hover:scale-110 transition-transform duration-300`}>
                   {getInitials(member.full_name)}
-                </AvatarFallback>
-              </Avatar>
-            ) : (
-              <div className={`w-24 h-24 rounded-full ${gradient} flex items-center justify-center text-white text-2xl font-bold shadow-elegant ring-4 ring-background group-hover:scale-110 transition-transform duration-300`}>
-                {getInitials(member.full_name)}
+                </div>
+              )}
+              <div className="text-center space-y-2">
+                <h3 className="text-xl font-bold">{member.full_name}</h3>
+                <Badge variant="secondary" className="text-xs font-medium">
+                  {getRoleLabel(primaryRole)}
+                </Badge>
               </div>
-            )}
-            <div className="text-center space-y-2">
-              <h3 className="text-xl font-bold">{member.full_name}</h3>
-              <Badge variant="secondary" className="text-xs font-medium">
-                {getRoleLabel(primaryRole)}
-              </Badge>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </Link>
     );
   };
 
@@ -228,7 +238,7 @@ const BDL = () => {
                   },
                   {
                     title: "Organisation d'événements",
-                    description: "Planifier et coordonner des événements culturels, sportifs et festifs tout au long de l'année."
+                    description: "Planifier et coordonner des événements culturels, sportifs et festifs..."
                   },
                   {
                     title: "Gestion des clubs",
@@ -236,7 +246,7 @@ const BDL = () => {
                   },
                   {
                     title: "Médiation et écoute",
-                    description: "Être à l'écoute des préoccupations des élèves et faciliter le dialogue au sein de l'établissement."
+                    description: "Être à l'écoute des préoccupations des élèves et faciliter le dialogue."
                   }
                 ].map((item, index) => (
                   <Card key={index} className="shadow-card">

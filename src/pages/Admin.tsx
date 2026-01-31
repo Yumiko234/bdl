@@ -15,6 +15,7 @@ import { NewsManagement } from "@/components/admin/NewsManagement";
 import { DocumentManagement } from "@/components/admin/DocumentManagement";
 import { EventManagement } from "@/components/admin/EventManagement";
 import { BDLMembersManagement } from "@/components/admin/BDLMembersManagement";
+import { BDLProfileManagement } from "@/components/admin/BDLProfileManagement";
 import { OfficialJournalManagement } from "@/components/admin/OfficialJournalManagement";
 import { EstablishmentManagement } from "@/components/admin/EstablishmentManagement";
 import { ContactManagement } from "@/components/admin/ContactManagement";
@@ -23,7 +24,7 @@ import { FooterManagement } from "@/components/admin/FooterManagement";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { ScrutinManagement } from "@/components/admin/ScrutinManagement";
 import { BDLHistoryManagement } from "@/components/admin/BDLHistoryManagement";
-import {SurveyManagement} from "@/components/admin/SurveyManagement";
+import { SurveyManagement } from "@/components/admin/SurveyManagement";
 
 const Admin = () => {
   const { user, loading } = useAuth();
@@ -31,6 +32,7 @@ const Admin = () => {
   const [isPresident, setIsPresident] = useState(false);
   const [isVicePresident, setIsVicePresident] = useState(false);
   const [isBDLStaff, setIsBDLStaff] = useState(false);
+  const [isExecutive, setIsExecutive] = useState(false);
   const [presidentMessage, setPresidentMessage] = useState("");
   const [audienceRequests, setAudienceRequests] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
@@ -61,8 +63,11 @@ const Admin = () => {
       const roles = data.map(r => r.role);
       setIsPresident(roles.includes('president' as any));
       setIsVicePresident(roles.includes('vice_president' as any));
-      setIsBDLStaff(roles.some((r: any) => 
+      setIsBDLStaff(roles.some((r: any) =>
         ['president', 'vice_president', 'secretary_general', 'communication_manager', 'bdl_member'].includes(r)
+      ));
+      setIsExecutive(roles.some((r: any) =>
+        ['president', 'vice_president', 'secretary_general', 'communication_manager'].includes(r)
       ));
     }
   };
@@ -92,9 +97,9 @@ const Admin = () => {
   const handleSaveMessage = async () => {
     if (!isPresident) return;
     setSaving(true);
-    
+
     const { data: currentMessage } = await supabase.from('president_message').select('id').single();
-    
+
     const { error } = await supabase
       .from('president_message')
       .update({ content: presidentMessage, updated_by: user?.id })
@@ -113,8 +118,8 @@ const Admin = () => {
 
     const { error } = await supabase
       .from('audience_requests')
-      .update({ 
-        status, 
+      .update({
+        status,
         review_message: reviewMessage,
         reviewed_by: user?.id,
         reviewed_at: new Date().toISOString()
@@ -156,7 +161,7 @@ const Admin = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navigation />
-      
+
       <main className="flex-1">
         <section className="py-16 gradient-institutional text-white">
           <div className="container mx-auto px-4">
@@ -171,11 +176,13 @@ const Admin = () => {
         <section className="py-16">
           <div className="container mx-auto px-4 max-w-6xl">
             <Tabs defaultValue="audience" className="space-y-8">
-              {/* FIXED: Moved History inside TabsList and improved grid responsiveness */}
               <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-12 h-auto gap-1 bg-muted p-1">
                 <TabsTrigger value="audience">Demandes</TabsTrigger>
                 {isPresident && <TabsTrigger value="message">Message</TabsTrigger>}
                 <TabsTrigger value="members">Membres</TabsTrigger>
+                {isExecutive && (
+                  <TabsTrigger value="member-profiles">PM</TabsTrigger>
+                )}
                 <TabsTrigger value="users">Utilisateurs</TabsTrigger>
                 <TabsTrigger value="news">Articles</TabsTrigger>
                 <TabsTrigger value="events">Événements</TabsTrigger>
@@ -220,13 +227,13 @@ const Admin = () => {
                                 <div className="flex items-center gap-2">
                                   <h3 className="font-bold text-lg">{request.subject}</h3>
                                   <Badge variant={
-                                    request.status === 'pending' ? 'default' : 
-                                    request.status === 'approved' ? 'secondary' : 
-                                    'destructive'
+                                    request.status === 'pending' ? 'default' :
+                                      request.status === 'approved' ? 'secondary' :
+                                        'destructive'
                                   }>
-                                    {request.status === 'pending' ? 'En attente' : 
-                                     request.status === 'approved' ? 'Approuvée' : 
-                                     'Refusée'}
+                                    {request.status === 'pending' ? 'En attente' :
+                                      request.status === 'approved' ? 'Approuvée' :
+                                        'Refusée'}
                                   </Badge>
                                 </div>
                                 <p className="text-sm text-muted-foreground">
@@ -241,7 +248,7 @@ const Admin = () => {
                               </div>
                             </div>
                             <p className="text-sm">{request.message}</p>
-                            
+
                             {isPresident && request.status === 'pending' && (
                               <div className="flex gap-2 pt-2">
                                 <Button size="sm" onClick={() => handleUpdateRequestStatus(request.id, 'approved')}>
@@ -291,6 +298,14 @@ const Admin = () => {
               )}
 
               <TabsContent value="members"><BDLMembersManagement /></TabsContent>
+
+              {/* INSERTION DU NOUVEAU COMPOSANT ICI */}
+              {isExecutive && (
+                <TabsContent value="member-profiles">
+                  <BDLProfileManagement />
+                </TabsContent>
+              )}
+
               <TabsContent value="users"><UserManagement /></TabsContent>
               <TabsContent value="news"><NewsManagement isPresident={isPresident} /></TabsContent>
               <TabsContent value="events"><EventManagement isPresident={isPresident} /></TabsContent>
@@ -299,7 +314,7 @@ const Admin = () => {
               <TabsContent value="establishment"><EstablishmentManagement /></TabsContent>
               <TabsContent value="contact"><ContactManagement /></TabsContent>
               <TabsContent value="bdl-content"><BDLContentManagement /></TabsContent>
-              
+
               {(isPresident || isVicePresident) && (
                 <TabsContent value="footer"><FooterManagement /></TabsContent>
               )}
@@ -310,8 +325,8 @@ const Admin = () => {
                 <TabsContent value="history"><BDLHistoryManagement /></TabsContent>
               )}
               <TabsContent value="surveys">
-  <SurveyManagement />
-</TabsContent>
+                <SurveyManagement />
+              </TabsContent>
             </Tabs>
           </div>
         </section>

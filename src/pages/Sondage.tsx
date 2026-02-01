@@ -18,6 +18,7 @@ import {
   Lock,
   Eye,
   EyeOff,
+  Info,
 } from "lucide-react";
 import {
   PieChart,
@@ -44,7 +45,7 @@ interface Survey {
 interface Question {
   id: string;
   question_text: string;
-  question_type: "qcm" | "text";
+  question_type: "qcm" | "text" | "info";
   display_order: number;
   is_required: boolean;
   options: Option[];
@@ -254,6 +255,7 @@ const Sondage = () => {
     }
 
     for (const q of questions) {
+      if (q.question_type === "info") continue; // info blocks are decorative
       if (!q.is_required) continue;
       const ans = answers.find((a) => a.questionId === q.id);
       if (!ans) return `La question « ${q.question_text} » est obligatoire.`;
@@ -305,6 +307,7 @@ const Sondage = () => {
 
     // also insert rows for non-required unanswered questions (null answer)
     questions.forEach((q) => {
+      if (q.question_type === "info") return; // info blocks have no answers
       if (!answers.find((a) => a.questionId === q.id)) {
         answerRows.push({
           response_id: response.id,
@@ -522,72 +525,93 @@ const Sondage = () => {
                             )}
                           </div>
 
-                          {/* Questions */}
-                          {questions.map((question, idx) => {
-                            const currentAnswer = answers.find(
-                              (a) => a.questionId === question.id
-                            );
-                            return (
-                              <div
-                                key={question.id}
-                                className="border rounded-lg p-4 space-y-3"
-                              >
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <h4 className="font-semibold">
-                                    {idx + 1}. {question.question_text}
-                                  </h4>
-                                  {question.is_required && (
-                                    <span className="text-red-500 text-sm font-bold">
-                                      *
-                                    </span>
+                          {/* Questions & info blocs */}
+                          {(() => {
+                            let qNum = 0;
+                            return questions.map((question) => {
+                              // ── info block ──
+                              if (question.question_type === "info") {
+                                return (
+                                  <div
+                                    key={question.id}
+                                    className="flex items-start gap-3 border border-blue-200 rounded-lg p-4 bg-blue-50/50"
+                                  >
+                                    <Info className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                                    <p className="text-sm text-blue-800">
+                                      {question.question_text}
+                                    </p>
+                                  </div>
+                                );
+                              }
+
+                              // ── real question ──
+                              qNum++;
+                              const currentAnswer = answers.find(
+                                (a) => a.questionId === question.id
+                              );
+
+                              return (
+                                <div
+                                  key={question.id}
+                                  className="border rounded-lg p-4 space-y-3"
+                                >
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <h4 className="font-semibold">
+                                      {qNum}. {question.question_text}
+                                    </h4>
+                                    {question.is_required && (
+                                      <span className="text-red-500 text-sm font-bold">
+                                        *
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {question.question_type === "qcm" &&
+                                  question.options.length > 0 ? (
+                                    <RadioGroup
+                                      value={currentAnswer?.optionId || ""}
+                                      onValueChange={(value) =>
+                                        handleAnswerChange(question.id, value)
+                                      }
+                                    >
+                                      {question.options.map((option) => (
+                                        <div
+                                          key={option.id}
+                                          className="flex items-center space-x-2"
+                                        >
+                                          <RadioGroupItem
+                                            value={option.id}
+                                            id={option.id}
+                                          />
+                                          <Label
+                                            htmlFor={option.id}
+                                            className="cursor-pointer"
+                                          >
+                                            {option.option_text}
+                                          </Label>
+                                        </div>
+                                      ))}
+                                    </RadioGroup>
+                                  ) : (
+                                    <Textarea
+                                      rows={3}
+                                      placeholder="Votre réponse..."
+                                      value={
+                                        currentAnswer?.textAnswer || ""
+                                      }
+                                      onChange={(e) =>
+                                        handleAnswerChange(
+                                          question.id,
+                                          undefined,
+                                          e.target.value
+                                        )
+                                      }
+                                    />
                                   )}
                                 </div>
-
-                                {question.question_type === "qcm" &&
-                                question.options.length > 0 ? (
-                                  <RadioGroup
-                                    value={currentAnswer?.optionId || ""}
-                                    onValueChange={(value) =>
-                                      handleAnswerChange(question.id, value)
-                                    }
-                                  >
-                                    {question.options.map((option) => (
-                                      <div
-                                        key={option.id}
-                                        className="flex items-center space-x-2"
-                                      >
-                                        <RadioGroupItem
-                                          value={option.id}
-                                          id={option.id}
-                                        />
-                                        <Label
-                                          htmlFor={option.id}
-                                          className="cursor-pointer"
-                                        >
-                                          {option.option_text}
-                                        </Label>
-                                      </div>
-                                    ))}
-                                  </RadioGroup>
-                                ) : (
-                                  <Textarea
-                                    rows={3}
-                                    placeholder="Votre réponse..."
-                                    value={
-                                      currentAnswer?.textAnswer || ""
-                                    }
-                                    onChange={(e) =>
-                                      handleAnswerChange(
-                                        question.id,
-                                        undefined,
-                                        e.target.value
-                                      )
-                                    }
-                                  />
-                                )}
-                              </div>
-                            );
-                          })}
+                              );
+                            });
+                          })()}
 
                           <Button
                             onClick={handleSubmit}
@@ -639,136 +663,157 @@ const Sondage = () => {
                               Résultats
                             </h3>
 
-                            {questions.map((question, idx) => {
-                              const qResult = results[question.id];
-                              return (
-                                <div
-                                  key={question.id}
-                                  className="border rounded-lg p-4 space-y-4"
-                                >
-                                  <h4 className="font-semibold text-lg">
-                                    {idx + 1}. {question.question_text}
-                                  </h4>
+                            {(() => {
+                              let qNum = 0;
+                              return questions.map((question) => {
+                                // ── info block inside results ──
+                                if (question.question_type === "info") {
+                                  return (
+                                    <div
+                                      key={question.id}
+                                      className="flex items-start gap-3 border border-blue-200 rounded-lg p-4 bg-blue-50/50"
+                                    >
+                                      <Info className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                                      <p className="text-sm text-blue-800">
+                                        {question.question_text}
+                                      </p>
+                                    </div>
+                                  );
+                                }
 
-                                  {qResult?.type === "qcm" ? (
-                                    <>
-                                      {/* Pie chart */}
-                                      <div className="h-72">
-                                        <ResponsiveContainer
-                                          width="100%"
-                                          height="100%"
-                                        >
-                                          <PieChart>
-                                            <Pie
-                                              data={qResult.options}
-                                              cx="50%"
-                                              cy="50%"
-                                              labelLine={false}
-                                              label={renderCustomLabel}
-                                              outerRadius={90}
-                                              dataKey="value"
-                                              stroke="none"
-                                            >
-                                              {qResult.options.map(
-                                                (_, index) => (
-                                                  <Cell
-                                                    key={`cell-${index}`}
-                                                    fill={
-                                                      COLORS[
-                                                        index % COLORS.length
-                                                      ]
-                                                    }
-                                                  />
-                                                )
-                                              )}
-                                            </Pie>
-                                            <Tooltip
-                                              formatter={(value: number) => [
-                                                `${value} réponse${value !== 1 ? "s" : ""}`,
-                                                "Total",
-                                              ]}
-                                            />
-                                            <Legend />
-                                          </PieChart>
-                                        </ResponsiveContainer>
-                                      </div>
+                                // ── real question result ──
+                                qNum++;
+                                const qResult = results[question.id];
 
-                                      {/* Summary table below chart */}
-                                      <div className="space-y-2 mt-2">
-                                        {(() => {
-                                          const total = qResult.options.reduce(
-                                            (sum, o) => sum + o.value,
-                                            0
-                                          );
-                                          return qResult.options.map(
-                                            (opt, i) => {
-                                              const pct =
-                                                total > 0
-                                                  ? (opt.value / total) * 100
-                                                  : 0;
-                                              return (
-                                                <div
-                                                  key={i}
-                                                  className="flex items-center gap-3"
-                                                >
-                                                  <div
-                                                    className="w-3 h-3 rounded-full flex-shrink-0"
-                                                    style={{
-                                                      backgroundColor:
+                                return (
+                                  <div
+                                    key={question.id}
+                                    className="border rounded-lg p-4 space-y-4"
+                                  >
+                                    <h4 className="font-semibold text-lg">
+                                      {qNum}. {question.question_text}
+                                    </h4>
+
+                                    {qResult?.type === "qcm" ? (
+                                      <>
+                                        {/* Pie chart */}
+                                        <div className="h-72">
+                                          <ResponsiveContainer
+                                            width="100%"
+                                            height="100%"
+                                          >
+                                            <PieChart>
+                                              <Pie
+                                                data={qResult.options}
+                                                cx="50%"
+                                                cy="50%"
+                                                labelLine={false}
+                                                label={renderCustomLabel}
+                                                outerRadius={90}
+                                                dataKey="value"
+                                                stroke="none"
+                                              >
+                                                {qResult.options.map(
+                                                  (_, index) => (
+                                                    <Cell
+                                                      key={`cell-${index}`}
+                                                      fill={
                                                         COLORS[
-                                                          i % COLORS.length
-                                                        ],
-                                                    }}
-                                                  />
-                                                  <span className="text-sm flex-1 truncate">
-                                                    {opt.name}
-                                                  </span>
-                                                  <span className="text-sm text-muted-foreground w-16 text-right">
-                                                    {opt.value}
-                                                  </span>
-                                                  <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                                                          index % COLORS.length
+                                                        ]
+                                                      }
+                                                    />
+                                                  )
+                                                )}
+                                              </Pie>
+                                              <Tooltip
+                                                formatter={(value: number) => [
+                                                  `${value} réponse${value !== 1 ? "s" : ""}`,
+                                                  "Total",
+                                                ]}
+                                              />
+                                              <Legend />
+                                            </PieChart>
+                                          </ResponsiveContainer>
+                                        </div>
+
+                                        {/* Summary table below chart */}
+                                        <div className="space-y-2 mt-2">
+                                          {(() => {
+                                            const total = qResult.options.reduce(
+                                              (sum, o) => sum + o.value,
+                                              0
+                                            );
+                                            return qResult.options.map(
+                                              (opt, i) => {
+                                                const pct =
+                                                  total > 0
+                                                    ? (opt.value / total) * 100
+                                                    : 0;
+                                                return (
+                                                  <div
+                                                    key={i}
+                                                    className="flex items-center gap-3"
+                                                  >
                                                     <div
-                                                      className="h-full rounded-full"
+                                                      className="w-3 h-3 rounded-full flex-shrink-0"
                                                       style={{
-                                                        width: `${pct}%`,
                                                         backgroundColor:
                                                           COLORS[
                                                             i % COLORS.length
                                                           ],
                                                       }}
                                                     />
+                                                    <span className="text-sm flex-1 truncate">
+                                                      {opt.name}
+                                                    </span>
+                                                    <span className="text-sm text-muted-foreground w-16 text-right">
+                                                      {opt.value}
+                                                    </span>
+                                                    <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                                                      <div
+                                                        className="h-full rounded-full"
+                                                        style={{
+                                                          width: `${pct}%`,
+                                                          backgroundColor:
+                                                            COLORS[
+                                                              i % COLORS.length
+                                                            ],
+                                                        }}
+                                                      />
+                                                    </div>
+                                                    <span className="text-xs text-muted-foreground w-12 text-right">
+                                                      {pct.toFixed(0)}%
+                                                    </span>
                                                   </div>
-                                                  <span className="text-xs text-muted-foreground w-12 text-right">
-                                                    {pct.toFixed(0)}%
-                                                  </span>
-                                                </div>
-                                              );
-                                            }
-                                          );
-                                        })()}
+                                                );
+                                              }
+                                            );
+                                          })()}
+                                        </div>
+                                      </>
+                                    ) : qResult?.type === "text" ? (
+                                      <div className="space-y-2">
+                                        {qResult.answers.length === 0 ? (
+                                          <p className="text-sm text-muted-foreground italic">
+                                            Aucune réponse.
+                                          </p>
+                                        ) : (
+                                          qResult.answers.map((ans, i) => (
+                                            <div
+                                              key={i}
+                                              className="p-3 bg-muted/50 rounded text-sm border-l-2 border-accent"
+                                            >
+                                              "{ans}"
+                                            </div>
+                                          ))
+                                        )}
                                       </div>
-                                    </>
-                                  ) : qResult?.type === "text" ? (
-                                    <div className="space-y-2">
-                                      {qResult.answers.length === 0 ? (
-                                        <p className="text-sm text-muted-foreground italic">
-                                          Aucune réponse.
-                                        </p>
-                                      ) : (
-                                        qResult.answers.map((ans, i) => (
-                                          <div
-                                            key={i}
-                                            className="p-3 bg-muted/50 rounded text-sm border-l-2 border-accent"
-                                          >
-                                            "{ans}"
-                                          </div>
-                                        ))
-                                      )}
-                                    </div>
-                                  ) : null}
-                                </div>
-                              );
-                            })}
+                                    ) : null}
+                                  </div>
+                                );
+                              });
+                            })()}
                           </>
                         )}
                     </CardContent>

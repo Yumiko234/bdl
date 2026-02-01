@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ChevronLeft, Mail, MessageCircle, Calendar, GraduationCap, Lightbulb } from "lucide-react";
+import { ChevronLeft, Mail, MessageCircle, Calendar, GraduationCap, Lightbulb, Award } from "lucide-react";
 
 interface MemberProfile {
   id: string;
@@ -15,6 +15,7 @@ interface MemberProfile {
   slug: string;
   photo_url: string | null;
   age: number | null;
+  role: string | null;
   class: string | null;
   contact_method: string | null;
   biography: string | null;
@@ -133,6 +134,12 @@ const BDLMemberProfile = () => {
 
               {/* Badges d'informations */}
               <div className="flex flex-wrap justify-center gap-2">
+                {profile.role && (
+                  <Badge className="bg-white/20 text-white border-white/30 text-base py-1 px-3">
+                    <Award className="h-4 w-4 mr-1" />
+                    {profile.role}
+                  </Badge>
+                )}
                 {profile.age && (
                   <Badge className="bg-white/20 text-white border-white/30 text-base py-1 px-3">
                     <Calendar className="h-4 w-4 mr-1" />

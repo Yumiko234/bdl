@@ -126,28 +126,29 @@ const BDLHistory = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
                     {[
-                      { name: "Alexandre Lejal", role: "Président", gradient: "gradient-institutional" },
-                      { name: "Charline Jaegle", role: "Vice-Présidente", gradient: "gradient-gold" },
-                      { name: "Saraan Vicq", role: "Secrétaire Générale", gradient: "gradient-institutional" },
-                      { name: "Majid Matari", role: "Directeur de la Communauté et de la Communication", gradient: "gradient-gold" }
-    
+                      { name: "Alexandre Lejal", role: "Président", gradient: "gradient-institutional", slug: "alexandre_lejal", years: "2023-2026" },
+                      { name: "Charline Jaegle", role: "Vice-Présidente", gradient: "gradient-gold", slug: "charline_jaegle", years: "2025-2026" },
+                      { name: "Saraan Vicq", role: "Secrétaire Générale", gradient: "gradient-institutional", slug: "saraan_vicq", years: "2025-2026" },
+                      { name: "Majid Matari", role: "Directeur de la Communauté et de la Communication", gradient: "gradient-gold", slug: "majid_matari", years: "2023-2026" }
                     ].map((member) => (
-                      <Card key={member.name} className="shadow-card">
-                        <CardContent className="p-6 text-center space-y-3">
-                          <div className={`w-20 h-20 mx-auto rounded-full ${member.gradient} flex items-center justify-center text-white text-2xl font-bold shadow-elegant`}>
-                            {member.name.split(' ').map(n => n[0]).join('')}
-                          </div>
-                          <div>
-                            <h3 className="text-xl font-bold">{member.name}</h3>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              {member.role}
-                            </p>
-                            <Badge variant="secondary" className="mt-2">
-                              2025-2026
-                            </Badge>
-                          </div>
-                        </CardContent>
-                      </Card>
+                      <Link key={member.name} to={`/bdl/${member.slug}`}>
+                        <Card className="group shadow-card hover:shadow-elegant transition-all duration-300 hover:-translate-y-2 cursor-pointer h-full">
+                          <CardContent className="p-6 text-center space-y-3">
+                            <div className={`w-20 h-20 mx-auto rounded-full ${member.gradient} flex items-center justify-center text-white text-2xl font-bold shadow-elegant group-hover:scale-105 transition-transform`}>
+                              {member.name.split(' ').map(n => n[0]).join('')}
+                            </div>
+                            <div>
+                              <h3 className="text-xl font-bold">{member.name}</h3>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                {member.role}
+                              </p>
+                              <Badge variant="secondary" className="mt-2">
+                                {member.years}
+                              </Badge>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </Link>
                     ))}
                   </div>
                 </CardContent>

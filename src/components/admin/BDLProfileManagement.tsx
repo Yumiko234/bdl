@@ -28,6 +28,7 @@ interface MemberProfile {
   slug: string;
   photo_url: string | null;
   age: number | null;
+  role: string | null;
   class: string | null;
   contact_method: string | null;
   biography: string | null;
@@ -46,6 +47,7 @@ export const BDLProfileManagement = () => {
     slug: "",
     photo_url: "",
     age: "",
+    role: "",
     class: "",
     contact_method: "",
     biography: "",
@@ -157,6 +159,7 @@ export const BDLProfileManagement = () => {
         slug: formData.slug,
         photo_url: formData.photo_url || null,
         age: formData.age ? parseInt(formData.age) : null,
+        role: formData.role || null,
         class: formData.class || null,
         contact_method: formData.contact_method || null,
         biography: formData.biography || null,
@@ -206,6 +209,7 @@ export const BDLProfileManagement = () => {
       slug: profile.slug,
       photo_url: profile.photo_url || "",
       age: profile.age?.toString() || "",
+      role: profile.role || "",
       class: profile.class || "",
       contact_method: profile.contact_method || "",
       biography: profile.biography || "",
@@ -239,6 +243,7 @@ export const BDLProfileManagement = () => {
       slug: "",
       photo_url: "",
       age: "",
+      role: "",
       class: "",
       contact_method: "",
       biography: "",
@@ -300,7 +305,17 @@ export const BDLProfileManagement = () => {
                 type="number"
                 value={formData.age}
                 onChange={(e) => setFormData({ ...formData, age: e.target.value })}
-                placeholder="17"
+                placeholder="18"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="role">Rôle</Label>
+              <Input
+                id="role"
+                value={formData.role}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                placeholder="Président, Secrétaire général…"
               />
             </div>
 
@@ -310,7 +325,7 @@ export const BDLProfileManagement = () => {
                 id="class"
                 value={formData.class}
                 onChange={(e) => setFormData({ ...formData, class: e.target.value })}
-                placeholder="Terminale 6"
+                placeholder="Terminale A"
               />
             </div>
 
@@ -449,6 +464,11 @@ export const BDLProfileManagement = () => {
                         <p className="text-sm text-muted-foreground">
                           URL: /bdl/{profile.slug}
                         </p>
+                        {profile.role && (
+                          <p className="text-sm text-muted-foreground">
+                            Rôle: {profile.role}
+                          </p>
+                        )}
                         {profile.class && (
                           <p className="text-sm text-muted-foreground">
                             Classe: {profile.class}

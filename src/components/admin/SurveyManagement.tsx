@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,8 @@ import {
   PieChart as PieChartIcon,
   User,
   Clock,
+  GripVertical,
+  Info,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -35,7 +37,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -51,11 +52,14 @@ interface Survey {
   created_at: string;
 }
 
+// question_type can be "qcm" | "text" | "info"
+// "info" rows are purely decorative blocks; they have no options and are
+// never submitted as answers.
 interface Question {
   id: string;
   survey_id: string;
   question_text: string;
-  question_type: "qcm" | "text";
+  question_type: "qcm" | "text" | "info";
   display_order: number;
   is_required: boolean;
   options: Option[];
@@ -88,12 +92,13 @@ interface SurveyAnswer {
 
 const StatusBadge = ({ status }: { status: string }) => {
   if (status === "draft") return <Badge variant="secondary">Brouillon</Badge>;
-  if (status === "open") return <Badge className="bg-green-600 text-white">Ouvert</Badge>;
+  if (status === "open")
+    return <Badge className="bg-green-600 text-white">Ouvert</Badge>;
   if (status === "closed") return <Badge variant="destructive">Fermé</Badge>;
   return null;
 };
 
-// ─── Sub-view: Responses for one survey ──────────────────────────────────────
+// ─── Sub-view: Responses ──────────────────────────────────────────────────────
 
 const ResponsesView = ({
   survey,
@@ -109,6 +114,9 @@ const ResponsesView = ({
   const [loading, setLoading] = useState(true);
   const [expandedResponse, setExpandedResponse] = useState<string | null>(null);
 
+  // only real questions (not info blocks) are shown in response detail
+  const realQuestions = questions.filter((q) => q.question_type !== "info");
+
   const load = useCallback(async () => {
     setLoading(true);
     const { data } = await supabase
@@ -119,7 +127,6 @@ const ResponsesView = ({
 
     setResponses(data || []);
 
-    // bulk-load all answers for this survey's responses
     if (data && data.length > 0) {
       const responseIds = data.map((r: SurveyResponse) => r.id);
       const { data: allAnswers } = await supabase
@@ -149,15 +156,10 @@ const ResponsesView = ({
     return optionId;
   };
 
-  const getQuestionText = (questionId: string): string => {
-    const q = questions.find((q) => q.id === questionId);
-    return q?.question_text || questionId;
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16 text-muted-foreground">
-        Chargement des réponses...
+        Chargement des réponses…
       </div>
     );
   }
@@ -198,7 +200,6 @@ const ResponsesView = ({
 
             return (
               <Card key={resp.id} className="bg-muted/20 overflow-hidden">
-                {/* Header row – always visible */}
                 <button
                   className="w-full text-left"
                   onClick={() =>
@@ -230,10 +231,9 @@ const ResponsesView = ({
                   </div>
                 </button>
 
-                {/* Expanded answers */}
                 {isOpen && (
-                  <div className="px-5 pb-4 border-t border-muted/50 mt-0 pt-4 space-y-3">
-                    {questions.map((q, idx) => {
+                  <div className="px-5 pb-4 border-t border-muted/50 pt-4 space-y-3">
+                    {realQuestions.map((q, idx) => {
                       const ans = respAnswers.find(
                         (a) => a.question_id === q.id
                       );
@@ -266,7 +266,7 @@ const ResponsesView = ({
 // ─── Main component ──────────────────────────────────────────────────────────
 
 export const SurveyManagement = () => {
-  // ── state ─────────────────────────────────────────────────────────────────
+  // ── state ───────────────────────────────────────────────────────────────────
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -285,7 +285,7 @@ export const SurveyManagement = () => {
   const [editingSurveyId, setEditingSurveyId] = useState<string | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
 
-  // new question form (per survey)
+  // new-item form state
   const [newQuestionText, setNewQuestionText] = useState("");
   const [newQuestionType, setNewQuestionType] = useState<"qcm" | "text">("qcm");
   const [newQuestionRequired, setNewQuestionRequired] = useState(false);
@@ -295,7 +295,10 @@ export const SurveyManagement = () => {
   const [viewingResponses, setViewingResponses] = useState<Survey | null>(null);
   const [viewingQuestions, setViewingQuestions] = useState<Question[]>([]);
 
-  // ── load ──────────────────────────────────────────────────────────────────
+  // drag state – we only need a ref for the index being dragged
+  const dragIndexRef = useRef<number | null>(null);
+
+  // ── load ────────────────────────────────────────────────────────────────────
   useEffect(() => {
     loadSurveys();
   }, []);
@@ -322,12 +325,15 @@ export const SurveyManagement = () => {
 
     const result: Question[] = await Promise.all(
       (qData || []).map(async (q: any) => {
-        const { data: opts } = await supabase
-          .from("survey_options")
-          .select("*")
-          .eq("question_id", q.id)
-          .order("display_order");
-        return { ...q, options: opts || [] };
+        if (q.question_type === "qcm") {
+          const { data: opts } = await supabase
+            .from("survey_options")
+            .select("*")
+            .eq("question_id", q.id)
+            .order("display_order");
+          return { ...q, options: opts || [] };
+        }
+        return { ...q, options: [] };
       })
     );
 
@@ -335,14 +341,16 @@ export const SurveyManagement = () => {
     return result;
   };
 
-  // ── create survey ─────────────────────────────────────────────────────────
+  // ── create survey ───────────────────────────────────────────────────────────
   const handleCreateSurvey = async () => {
     if (!formData.title.trim()) {
       toast.error("Le titre est requis");
       return;
     }
     setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     const { data, error } = await supabase
       .from("surveys")
@@ -373,18 +381,14 @@ export const SurveyManagement = () => {
         allow_anonymous: true,
         is_form: false,
       });
-      // auto-open the new survey for editing
       setEditingSurveyId(data.id);
       await loadQuestions(data.id);
     }
     setLoading(false);
   };
 
-  // ── update survey fields ──────────────────────────────────────────────────
-  const patchSurvey = async (
-    surveyId: string,
-    patch: Partial<Survey>
-  ) => {
+  // ── patch survey ────────────────────────────────────────────────────────────
+  const patchSurvey = async (surveyId: string, patch: Partial<Survey>) => {
     const { error } = await supabase
       .from("surveys")
       .update(patch)
@@ -399,9 +403,12 @@ export const SurveyManagement = () => {
     }
   };
 
-  // ── delete survey ─────────────────────────────────────────────────────────
+  // ── delete survey ───────────────────────────────────────────────────────────
   const handleDeleteSurvey = async (surveyId: string) => {
-    const { error } = await supabase.from("surveys").delete().eq("id", surveyId);
+    const { error } = await supabase
+      .from("surveys")
+      .delete()
+      .eq("id", surveyId);
     if (error) {
       toast.error("Erreur lors de la suppression");
     } else {
@@ -411,7 +418,7 @@ export const SurveyManagement = () => {
     }
   };
 
-  // ── add question ──────────────────────────────────────────────────────────
+  // ── add question or info block ──────────────────────────────────────────────
   const handleAddQuestion = async (surveyId: string) => {
     if (!newQuestionText.trim()) {
       toast.error("Le texte de la question est requis");
@@ -436,12 +443,11 @@ export const SurveyManagement = () => {
       .single();
 
     if (error) {
-      toast.error("Erreur lors de l'ajout de la question");
+      toast.error("Erreur lors de l'ajout");
       setLoading(false);
       return;
     }
 
-    // insert options if QCM
     if (newQuestionType === "qcm") {
       const optionRows = newOptions
         .filter(Boolean)
@@ -455,16 +461,37 @@ export const SurveyManagement = () => {
 
     toast.success("Question ajoutée");
     await loadQuestions(surveyId);
+    resetNewQuestionForm();
+    setLoading(false);
+  };
 
-    // reset form
+  const handleAddInfoBlock = async (surveyId: string) => {
+    setLoading(true);
+    const { error } = await supabase.from("survey_questions").insert({
+      survey_id: surveyId,
+      question_text: "Bloc d'information – modifiez ce texte",
+      question_type: "info",
+      display_order: questions.length,
+      is_required: false,
+    });
+
+    if (error) {
+      toast.error("Erreur lors de l'ajout du bloc");
+    } else {
+      toast.success("Bloc d'information ajouté");
+      await loadQuestions(surveyId);
+    }
+    setLoading(false);
+  };
+
+  const resetNewQuestionForm = () => {
     setNewQuestionText("");
     setNewQuestionType("qcm");
     setNewQuestionRequired(false);
     setNewOptions(["Option 1", "Option 2"]);
-    setLoading(false);
   };
 
-  // ── delete question ───────────────────────────────────────────────────────
+  // ── delete question / info block ────────────────────────────────────────────
   const handleDeleteQuestion = async (questionId: string, surveyId: string) => {
     const { error } = await supabase
       .from("survey_questions")
@@ -474,12 +501,20 @@ export const SurveyManagement = () => {
     if (error) {
       toast.error("Erreur lors de la suppression");
     } else {
-      toast.success("Question supprimée");
+      toast.success("Élément supprimé");
       await loadQuestions(surveyId);
     }
   };
 
-  // ── update option text inline ─────────────────────────────────────────────
+  // ── update info block text inline ───────────────────────────────────────────
+  const handleUpdateInfoText = async (questionId: string, newText: string) => {
+    await supabase
+      .from("survey_questions")
+      .update({ question_text: newText })
+      .eq("id", questionId);
+  };
+
+  // ── option CRUD ─────────────────────────────────────────────────────────────
   const handleUpdateOption = async (optionId: string, newText: string) => {
     await supabase
       .from("survey_options")
@@ -487,7 +522,6 @@ export const SurveyManagement = () => {
       .eq("id", optionId);
   };
 
-  // ── add option to existing question ───────────────────────────────────────
   const handleAddOption = async (questionId: string, surveyId: string) => {
     const q = questions.find((q) => q.id === questionId);
     const nextOrder = q ? q.options.length : 0;
@@ -499,25 +533,78 @@ export const SurveyManagement = () => {
     await loadQuestions(surveyId);
   };
 
-  // ── delete option ─────────────────────────────────────────────────────────
-  const handleDeleteOption = async (
-    optionId: string,
-    surveyId: string
-  ) => {
+  const handleDeleteOption = async (optionId: string, surveyId: string) => {
     await supabase.from("survey_options").delete().eq("id", optionId);
     await loadQuestions(surveyId);
   };
 
-  // ── open responses view ───────────────────────────────────────────────────
+  // ── responses view ──────────────────────────────────────────────────────────
   const openResponses = async (survey: Survey) => {
     const qs = await loadQuestions(survey.id);
     setViewingQuestions(qs);
     setViewingResponses(survey);
   };
 
-  // ── render ────────────────────────────────────────────────────────────────
+  // ── drag & drop ─────────────────────────────────────────────────────────────
+  // Pure client-side reorder; persists to DB only on drop.
 
-  // If viewing responses for a survey, show that sub-view
+  const handleDragStart = (
+    e: React.DragEvent<HTMLDivElement>,
+    index: number
+  ) => {
+    dragIndexRef.current = index;
+    e.dataTransfer.effectAllowed = "move";
+    // Chrome needs this to actually show the ghost
+    e.dataTransfer.setData("text/plain", String(index));
+  };
+
+  const handleDragOver = (
+    e: React.DragEvent<HTMLDivElement>,
+    index: number
+  ) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+
+    const from = dragIndexRef.current;
+    if (from === null || from === index) return;
+
+    // optimistic reorder in local state
+    setQuestions((prev) => {
+      const updated = [...prev];
+      const [moved] = updated.splice(from, 1);
+      updated.splice(index, 0, moved);
+      dragIndexRef.current = index; // track new position
+      return updated;
+    });
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    dragIndexRef.current = null;
+
+    // persist the current visual order to the DB
+    await persistOrder();
+  };
+
+  const handleDragEnd = () => {
+    // safety net: reset ref even if drop didn't fire (e.g. dropped outside)
+    dragIndexRef.current = null;
+  };
+
+  const persistOrder = async () => {
+    // fire individual updates – Supabase has no bulk-update shortcut
+    for (let i = 0; i < questions.length; i++) {
+      if (questions[i].display_order !== i) {
+        await supabase
+          .from("survey_questions")
+          .update({ display_order: i })
+          .eq("id", questions[i].id);
+      }
+    }
+  };
+
+  // ── render ──────────────────────────────────────────────────────────────────
+
   if (viewingResponses) {
     return (
       <Card className="shadow-card">
@@ -548,7 +635,7 @@ export const SurveyManagement = () => {
       </CardHeader>
 
       <CardContent className="space-y-6">
-        {/* ── Create button / form toggle ── */}
+        {/* ── Create button / form ── */}
         {!showCreateForm ? (
           <Button
             variant="outline"
@@ -592,7 +679,7 @@ export const SurveyManagement = () => {
                   setFormData({ ...formData, description: e.target.value })
                 }
                 rows={2}
-                placeholder="Description optionnelle..."
+                placeholder="Description optionnelle…"
               />
             </div>
 
@@ -619,7 +706,6 @@ export const SurveyManagement = () => {
               </div>
             </div>
 
-            {/* Toggles row */}
             <div className="flex flex-wrap gap-6 pt-2">
               <div className="flex items-center gap-3">
                 <Switch
@@ -665,8 +751,8 @@ export const SurveyManagement = () => {
 
             return (
               <Card key={survey.id} className="bg-muted/20 overflow-hidden">
-                {/* ── Survey header ── */}
                 <CardContent className="p-5">
+                  {/* header row */}
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -702,15 +788,16 @@ export const SurveyManagement = () => {
                       </p>
                     </div>
 
-                    {/* Action buttons */}
+                    {/* action buttons */}
                     <div className="flex gap-1 flex-shrink-0">
-                      {/* Open / Close */}
                       {survey.status === "draft" && (
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => patchSurvey(survey.id, { status: "open" })}
-                          title="Ouvrir le sondage"
+                          onClick={() =>
+                            patchSurvey(survey.id, { status: "open" })
+                          }
+                          title="Ouvrir"
                         >
                           <Unlock className="h-4 w-4 mr-1" /> Ouvrir
                         </Button>
@@ -719,14 +806,15 @@ export const SurveyManagement = () => {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => patchSurvey(survey.id, { status: "closed" })}
-                          title="Clôturer le sondage"
+                          onClick={() =>
+                            patchSurvey(survey.id, { status: "closed" })
+                          }
+                          title="Fermer"
                         >
                           <Lock className="h-4 w-4 mr-1" /> Fermer
                         </Button>
                       )}
 
-                      {/* View responses */}
                       <Button
                         size="sm"
                         variant="outline"
@@ -736,7 +824,6 @@ export const SurveyManagement = () => {
                         <Eye className="h-4 w-4" />
                       </Button>
 
-                      {/* Edit toggle */}
                       <Button
                         size="sm"
                         variant={isEditing ? "default" : "outline"}
@@ -753,18 +840,25 @@ export const SurveyManagement = () => {
                         <Edit2 className="h-4 w-4" />
                       </Button>
 
-                      {/* Delete */}
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button size="sm" variant="destructive" title="Supprimer">
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            title="Supprimer"
+                          >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Supprimer « {survey.title} » ?</AlertDialogTitle>
+                            <AlertDialogTitle>
+                              Supprimer « {survey.title} » ?
+                            </AlertDialogTitle>
                             <AlertDialogDescription>
-                              Cette action est irréversible. Le sondage, ses questions et toutes les réponses seront définitivement supprimés.
+                              Cette action est irréversible. Le sondage, ses
+                              questions et toutes les réponses seront
+                              définitivement supprimés.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
@@ -780,10 +874,12 @@ export const SurveyManagement = () => {
                     </div>
                   </div>
 
-                  {/* ── Editing panel ── */}
+                  {/* ════════════════════════════════════════════════════════
+                      EDITING PANEL
+                      ════════════════════════════════════════════════════════ */}
                   {isEditing && (
                     <div className="mt-5 border-t pt-5 space-y-5">
-                      {/* Inline toggles for allow_anonymous & is_form */}
+                      {/* toggles */}
                       <div className="flex flex-wrap gap-6">
                         <div className="flex items-center gap-3">
                           <Switch
@@ -803,101 +899,190 @@ export const SurveyManagement = () => {
                               patchSurvey(survey.id, { is_form: v })
                             }
                           />
-                          <Label className="select-none">
-                            Mode formulaire
-                          </Label>
+                          <Label className="select-none">Mode formulaire</Label>
                         </div>
                       </div>
 
-                      {/* Existing questions */}
-                      <div className="space-y-3">
-                        <h5 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
-                          Questions
-                        </h5>
+                      {/* ── draggable item list ── */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <h5 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
+                            Questions & blocs
+                          </h5>
+                          {questions.length > 1 && (
+                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                              <GripVertical className="h-3 w-3" /> Glissez pour réordonner
+                            </span>
+                          )}
+                        </div>
+
                         {questions.length === 0 && (
-                          <p className="text-sm text-muted-foreground italic">
-                            Aucune question pour le moment.
+                          <p className="text-sm text-muted-foreground italic py-2">
+                            Aucun élément pour le moment.
                           </p>
                         )}
+
                         {questions.map((q, idx) => (
                           <div
                             key={q.id}
-                            className="border rounded-lg p-4 bg-background space-y-3"
+                            draggable
+                            onDragStart={(e) => handleDragStart(e, idx)}
+                            onDragOver={(e) => handleDragOver(e, idx)}
+                            onDrop={handleDrop}
+                            onDragEnd={handleDragEnd}
+                            className={`
+                              border rounded-lg
+                              transition-shadow duration-150
+                              ${q.question_type === "info"
+                                ? "border-blue-300 bg-blue-50/40"
+                                : "bg-background"}
+                            `}
                           >
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="text-xs font-bold text-muted-foreground">
-                                    {idx + 1}.
-                                  </span>
-                                  <p className="font-medium text-sm">
-                                    {q.question_text}
-                                  </p>
-                                  <Badge variant="outline" className="text-xs">
-                                    {q.question_type === "qcm"
-                                      ? "QCM"
-                                      : "Texte libre"}
-                                  </Badge>
-                                  {q.is_required && (
-                                    <Badge className="text-xs bg-orange-100 text-orange-700 border-orange-300">
-                                      Obligatoire
-                                    </Badge>
-                                  )}
-                                </div>
-                              </div>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() =>
-                                  handleDeleteQuestion(q.id, survey.id)
-                                }
-                                className="text-destructive hover:text-destructive"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
+                            {/* ── INFO BLOCK ── */}
+                            {q.question_type === "info" && (
+                              <div className="p-3 space-y-2">
+                                <div className="flex items-start gap-2">
+                                  {/* grip */}
+                                  <GripVertical className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0 cursor-grab active:cursor-grabbing" />
 
-                            {/* Options for QCM */}
-                            {q.question_type === "qcm" && (
-                              <div className="space-y-2 pl-4">
-                                {q.options.map((opt) => (
-                                  <div
-                                    key={opt.id}
-                                    className="flex items-center gap-2"
+                                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                                    <Info className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                                    <Badge
+                                      variant="outline"
+                                      className="text-xs border-blue-400 text-blue-600 flex-shrink-0"
+                                    >
+                                      Info
+                                    </Badge>
+                                  </div>
+
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() =>
+                                      handleDeleteQuestion(q.id, survey.id)
+                                    }
+                                    className="h-7 w-7 p-0 text-destructive hover:text-destructive flex-shrink-0"
                                   >
-                                    <span className="text-muted-foreground text-xs">•</span>
-                                    <Input
-                                      className="h-7 text-sm flex-1"
-                                      value={opt.option_text}
-                                      onChange={(e) =>
-                                        handleUpdateOption(opt.id, e.target.value)
-                                      }
-                                      onBlur={() =>
-                                        handleUpdateOption(opt.id, opt.option_text)
-                                      }
-                                    />
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </Button>
+                                </div>
+
+                                {/* editable text area */}
+                                <Textarea
+                                  className="ml-6 text-sm bg-white border-blue-200 focus:ring-blue-300"
+                                  rows={2}
+                                  value={q.question_text}
+                                  onChange={(e) => {
+                                    // optimistic local update
+                                    setQuestions((prev) =>
+                                      prev.map((item) =>
+                                        item.id === q.id
+                                          ? { ...item, question_text: e.target.value }
+                                          : item
+                                      )
+                                    );
+                                  }}
+                                  onBlur={() =>
+                                    handleUpdateInfoText(q.id, q.question_text)
+                                  }
+                                  placeholder="Texte du bloc d'information…"
+                                />
+                              </div>
+                            )}
+
+                            {/* ── QUESTION (qcm | text) ── */}
+                            {q.question_type !== "info" && (
+                              <div className="p-3 space-y-3">
+                                {/* header */}
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                                    {/* grip */}
+                                    <GripVertical className="h-4 w-4 text-muted-foreground flex-shrink-0 cursor-grab active:cursor-grabbing" />
+
+                                    <span className="text-xs font-bold text-muted-foreground flex-shrink-0">
+                                      {idx + 1}.
+                                    </span>
+                                    <p className="font-medium text-sm truncate">
+                                      {q.question_text}
+                                    </p>
+                                    <Badge variant="outline" className="text-xs flex-shrink-0">
+                                      {q.question_type === "qcm"
+                                        ? "QCM"
+                                        : "Texte libre"}
+                                    </Badge>
+                                    {q.is_required && (
+                                      <Badge className="text-xs bg-orange-100 text-orange-700 border-orange-300 flex-shrink-0">
+                                        Obligatoire
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() =>
+                                      handleDeleteQuestion(q.id, survey.id)
+                                    }
+                                    className="h-7 w-7 p-0 text-destructive hover:text-destructive flex-shrink-0"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </Button>
+                                </div>
+
+                                {/* QCM options */}
+                                {q.question_type === "qcm" && (
+                                  <div className="space-y-1.5 pl-6">
+                                    {q.options.map((opt) => (
+                                      <div
+                                        key={opt.id}
+                                        className="flex items-center gap-2"
+                                      >
+                                        <span className="text-muted-foreground text-xs">
+                                          •
+                                        </span>
+                                        <Input
+                                          className="h-7 text-sm flex-1"
+                                          value={opt.option_text}
+                                          onChange={(e) =>
+                                            handleUpdateOption(
+                                              opt.id,
+                                              e.target.value
+                                            )
+                                          }
+                                          onBlur={() =>
+                                            handleUpdateOption(
+                                              opt.id,
+                                              opt.option_text
+                                            )
+                                          }
+                                        />
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          onClick={() =>
+                                            handleDeleteOption(
+                                              opt.id,
+                                              survey.id
+                                            )
+                                          }
+                                          className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                                        >
+                                          <Trash2 className="h-3.5 w-3.5" />
+                                        </Button>
+                                      </div>
+                                    ))}
                                     <Button
                                       size="sm"
                                       variant="ghost"
                                       onClick={() =>
-                                        handleDeleteOption(opt.id, survey.id)
+                                        handleAddOption(q.id, survey.id)
                                       }
-                                      className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                                      className="h-7 text-xs text-muted-foreground hover:text-accent"
                                     >
-                                      <Trash2 className="h-3.5 w-3.5" />
+                                      <Plus className="h-3 w-3 mr-1" /> Ajouter
+                                      une option
                                     </Button>
                                   </div>
-                                ))}
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() =>
-                                    handleAddOption(q.id, survey.id)
-                                  }
-                                  className="h-7 text-xs text-muted-foreground hover:text-accent"
-                                >
-                                  <Plus className="h-3 w-3 mr-1" /> Ajouter une option
-                                </Button>
+                                )}
                               </div>
                             )}
                           </div>
@@ -906,17 +1091,19 @@ export const SurveyManagement = () => {
 
                       {/* ── Add question form ── */}
                       <div className="border rounded-lg p-4 bg-muted/20 space-y-3">
-                        <h5 className="font-semibold text-sm">Ajouter une question</h5>
-
-                        <div className="space-y-2">
-                          <Input
-                            value={newQuestionText}
-                            onChange={(e) => setNewQuestionText(e.target.value)}
-                            placeholder="Texte de la question..."
-                          />
+                        <div className="flex items-center justify-between">
+                          <h5 className="font-semibold text-sm">
+                            Ajouter un élément
+                          </h5>
                         </div>
 
-                        {/* Type selector */}
+                        <Input
+                          value={newQuestionText}
+                          onChange={(e) => setNewQuestionText(e.target.value)}
+                          placeholder="Texte de la question…"
+                        />
+
+                        {/* type selector */}
                         <div className="flex gap-2">
                           <Button
                             size="sm"
@@ -938,7 +1125,7 @@ export const SurveyManagement = () => {
                           </Button>
                         </div>
 
-                        {/* Options input for QCM */}
+                        {/* QCM options */}
                         {newQuestionType === "qcm" && (
                           <div className="space-y-2 pl-3 border-l-2 border-muted ml-1">
                             <Label className="text-xs text-muted-foreground">
@@ -986,12 +1173,13 @@ export const SurveyManagement = () => {
                               }
                               className="h-7 text-xs text-muted-foreground hover:text-accent"
                             >
-                              <Plus className="h-3 w-3 mr-1" /> Ajouter une option
+                              <Plus className="h-3 w-3 mr-1" /> Ajouter une
+                              option
                             </Button>
                           </div>
                         )}
 
-                        {/* Required toggle */}
+                        {/* required toggle */}
                         <div className="flex items-center gap-3 pt-1">
                           <Switch
                             checked={newQuestionRequired}
@@ -1002,14 +1190,28 @@ export const SurveyManagement = () => {
                           </Label>
                         </div>
 
-                        <Button
-                          size="sm"
-                          onClick={() => handleAddQuestion(survey.id)}
-                          disabled={loading}
-                        >
-                          <Plus className="h-4 w-4 mr-1" />
-                          Ajouter la question
-                        </Button>
+                        {/* action row: add question + add info block */}
+                        <div className="flex gap-2 pt-1 flex-wrap">
+                          <Button
+                            size="sm"
+                            onClick={() => handleAddQuestion(survey.id)}
+                            disabled={loading}
+                          >
+                            <Plus className="h-4 w-4 mr-1" />
+                            Ajouter la question
+                          </Button>
+
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleAddInfoBlock(survey.id)}
+                            disabled={loading}
+                            className="border-blue-300 text-blue-600 hover:bg-blue-50"
+                          >
+                            <Info className="h-4 w-4 mr-1" />
+                            Ajouter un bloc d'info
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   )}

@@ -105,7 +105,7 @@ const Footer = () => {
         <div className="border-t border-border mt-8 pt-8 text-center text-sm text-muted-foreground">
           <p 
             dangerouslySetInnerHTML={{ 
-              __html: `&copy; ${new Date().getFullYear()} ${content.copyright || 'Bureau des Lycéens - Lycée Saint-André. Tous droits réservés. | Site géré par Alexandre Lejal.'}` 
+              __html: `&copy; ${new Date().getFullYear()} ${content.copyright || 'Bureau des Lycéens - Lycée Saint-André. Tous droits réservés. - Site géré par Alexandre Lejal.'}` 
             }}
           />
         </div>

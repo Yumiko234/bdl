@@ -63,6 +63,7 @@ const Footer = () => {
               <li><Link to="/events" className="hover:text-accent transition-colors">Évènements</Link></li>
               <li><Link to="/jo" className="hover:text-accent transition-colors">JoBDL</Link></li>
               <li><Link to="/scrutin" className="hover:text-accent transition-colors">Scrutins</Link></li>
+              <li><Link to="/sondage" className="hover:text-accent transition-colors">Sondages</Link></li>
             </ul>
           </div>
 
@@ -104,7 +105,7 @@ const Footer = () => {
         <div className="border-t border-border mt-8 pt-8 text-center text-sm text-muted-foreground">
           <p 
             dangerouslySetInnerHTML={{ 
-              __html: `&copy; ${new Date().getFullYear()} ${content.copyright || 'Bureau des Lycéens - Lycée Saint-André. Tous droits réservés.'}` 
+              __html: `&copy; ${new Date().getFullYear()} ${content.copyright || 'Bureau des Lycéens - Lycée Saint-André. Tous droits réservés. | Site géré par Alexandre Lejal.'}` 
             }}
           />
         </div>

@@ -25,6 +25,7 @@ import { RichTextEditor } from "@/components/RichTextEditor";
 import { ScrutinManagement } from "@/components/admin/ScrutinManagement";
 import { BDLHistoryManagement } from "@/components/admin/BDLHistoryManagement";
 import { SurveyManagement } from "@/components/admin/SurveyManagement";
+import { CalendarManagement } from "@/components/admin/CalendarManagement";
 
 const Admin = () => {
   const { user, loading } = useAuth();
@@ -186,6 +187,9 @@ const Admin = () => {
                 <TabsTrigger value="users">Utilisateurs</TabsTrigger>
                 <TabsTrigger value="news">Articles</TabsTrigger>
                 <TabsTrigger value="events">Événements</TabsTrigger>
+                {isExecutive && (
+                  <TabsTrigger value="calendar">Calendrier</TabsTrigger>
+                )}
                 <TabsTrigger value="documents">Documents</TabsTrigger>
                 <TabsTrigger value="journal">Journal</TabsTrigger>
                 <TabsTrigger value="surveys">Sondages</TabsTrigger>
@@ -299,7 +303,6 @@ const Admin = () => {
 
               <TabsContent value="members"><BDLMembersManagement /></TabsContent>
 
-              {/* INSERTION DU NOUVEAU COMPOSANT ICI */}
               {isExecutive && (
                 <TabsContent value="member-profiles">
                   <BDLProfileManagement />
@@ -309,6 +312,14 @@ const Admin = () => {
               <TabsContent value="users"><UserManagement /></TabsContent>
               <TabsContent value="news"><NewsManagement isPresident={isPresident} /></TabsContent>
               <TabsContent value="events"><EventManagement isPresident={isPresident} /></TabsContent>
+
+              {/* ---- Calendrier (Exécutif uniquement) ---- */}
+              {isExecutive && (
+                <TabsContent value="calendar">
+                  <CalendarManagement />
+                </TabsContent>
+              )}
+
               <TabsContent value="documents"><DocumentManagement /></TabsContent>
               <TabsContent value="journal"><OfficialJournalManagement /></TabsContent>
               <TabsContent value="establishment"><EstablishmentManagement /></TabsContent>

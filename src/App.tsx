@@ -17,6 +17,7 @@ import BDLMemberProfile from "./pages/BDLMemberProfile";
 import Actualites from "./pages/Actualites";
 import Documents from "./pages/Documents";
 import Events from "./pages/Events";
+import Calendrier from "./pages/Calendrier";
 import Contact from "./pages/Contact";
 import Intranet from "./pages/Intranet";
 import Auth from "./pages/Auth";
@@ -47,6 +48,7 @@ const App = () => {
           <Route path="/clubs" element={<Clubs />} />
           <Route path="/actualites" element={<Actualites />} />
           <Route path="/events" element={<Events />} />
+          <Route path="/calendrier" element={<Calendrier />} />
           <Route path="/documents" element={<Documents />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/jo" element={<JOBDL />} />

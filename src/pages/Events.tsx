@@ -4,7 +4,9 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, Pin } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar, Clock, Pin, CalendarDays } from "lucide-react";
+import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { toast } from "sonner";
@@ -82,8 +84,16 @@ export default function Events() {
         <section className="py-16">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto space-y-6">
-              {/* Sous-titre ajouté ici, comme dans la page Actualités */}
-              <h2 className="text-3xl font-bold">Évènements</h2>
+              {/* Header avec bouton calendrier */}
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <h2 className="text-3xl font-bold">Évènements</h2>
+                <Link to="/calendrier">
+                  <Button variant="outline" className="gap-2">
+                    <CalendarDays className="h-4 w-4" />
+                    Voir le calendrier
+                  </Button>
+                </Link>
+              </div>
 
               {loading ? (
                 <p className="text-center text-muted-foreground py-8">

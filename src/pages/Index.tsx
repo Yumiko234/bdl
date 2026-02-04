@@ -5,15 +5,37 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Link } from "react-router-dom";
-import { ChevronRight, FileText, Users, MessageCircle, AlertCircle, Vote } from "lucide-react";
+import { ChevronRight, FileText, Users, MessageCircle, AlertCircle, Vote, X } from "lucide-react";
 import logo from "@/assets/logo-bdl.jpeg";
 import { supabase } from "@/integrations/supabase/client";
+
+// Fonction pour traduire les rôles
+const translateRole = (role: string): string => {
+  const roleTranslations: { [key: string]: string } = {
+    president: "Président",
+    vice_president: "Vice-Présidente",
+    secretary_general: "Secrétaire Générale",
+    community_manager: "Directeur de la Communauté et de la Communication",
+  };
+
+  return roleTranslations[role] || "Membre du BDL";
+};
 
 const Index = () => {
   const [presidentMessage, setPresidentMessage] = useState("");
   const [latestNews, setLatestNews] = useState<any[]>([]);
   const [latestEvents, setLatestEvents] = useState<any[]>([]);
+  
+  // Modal state
+  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     loadPresidentMessage();
@@ -44,6 +66,16 @@ const Index = () => {
 
     if (news) setLatestNews(news);
     if (events) setLatestEvents(events);
+  };
+
+  const openModal = (item: any, type: 'news' | 'event') => {
+    setSelectedItem({ ...item, type });
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setTimeout(() => setSelectedItem(null), 200); // Reset after animation
   };
 
   return (
@@ -97,7 +129,7 @@ const Index = () => {
               <AlertCircle className="h-5 w-5 text-accent flex-shrink-0" />
               <p className="text-center">
                 <span className="font-semibold">
-                  Site d’information accessible à tous.
+                  Site d'information accessible à tous.
                 </span>{" "}
                 Une connexion est requise pour consulter certains contenus.
               </p>
@@ -157,7 +189,8 @@ const Index = () => {
                     {latestNews.map((article) => (
                       <Card
                         key={article.id}
-                        className="shadow-card hover:shadow-elegant transition-all"
+                        className="shadow-card hover:shadow-elegant transition-all cursor-pointer"
+                        onClick={() => openModal(article, 'news')}
                       >
                         <CardContent className="p-6 space-y-3">
                           <div className="flex items-center justify-between">
@@ -199,7 +232,8 @@ const Index = () => {
                         {latestEvents.map((event) => (
                           <Card
                             key={event.id}
-                            className="shadow-card hover:shadow-elegant transition-all border-primary/20"
+                            className="shadow-card hover:shadow-elegant transition-all border-primary/20 cursor-pointer"
+                            onClick={() => openModal(event, 'event')}
                           >
                             <CardContent className="p-6 space-y-3">
                               <div className="flex items-center justify-between">
@@ -312,6 +346,93 @@ const Index = () => {
       </main>
 
       <Footer />
+
+      {/* Modal pour afficher le contenu complet */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          {selectedItem && (
+            <>
+              <DialogHeader>
+                <div className="flex items-start justify-between gap-4">
+                  <DialogTitle className="text-2xl font-bold pr-8">
+                    {selectedItem.title}
+                  </DialogTitle>
+                </div>
+                <div className="flex items-center gap-3 pt-2">
+                  <Badge variant={selectedItem.type === 'news' ? 'default' : 'secondary'}>
+                    {selectedItem.type === 'news' ? selectedItem.category : 'Événement'}
+                  </Badge>
+                  <span className="text-sm text-muted-foreground">
+                    {selectedItem.type === 'news' 
+                      ? new Date(selectedItem.published_at).toLocaleDateString("fr-FR", { 
+                          day: "2-digit", 
+                          month: "long", 
+                          year: "numeric" 
+                        })
+                      : new Date(selectedItem.start_date).toLocaleDateString("fr-FR", { 
+                          day: "2-digit", 
+                          month: "long", 
+                          year: "numeric" 
+                        })
+                    }
+                  </span>
+                </div>
+              </DialogHeader>
+
+              <div className="space-y-4 pt-4">
+                {/* Contenu */}
+                <div
+                  className="prose prose-sm max-w-none dark:prose-invert"
+                  dangerouslySetInnerHTML={{ 
+                    __html: selectedItem.type === 'news' 
+                      ? selectedItem.content 
+                      : selectedItem.description 
+                  }}
+                />
+
+                {/* Auteur */}
+                {selectedItem.author_name && (
+                  <div className="flex items-center gap-3 pt-4 border-t">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={selectedItem.author_avatar} />
+                      <AvatarFallback>
+                        {selectedItem.author_name.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-sm font-medium">
+                        {selectedItem.author_name}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {translateRole(selectedItem.author_role)}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Info supplémentaire pour les événements */}
+                {selectedItem.type === 'event' && selectedItem.end_date && selectedItem.start_date !== selectedItem.end_date && (
+                  <div className="bg-muted/50 rounded-lg p-4">
+                    <p className="text-sm text-muted-foreground">
+                      <span className="font-semibold">Période :</span> Du{" "}
+                      {new Date(selectedItem.start_date).toLocaleDateString("fr-FR", { 
+                        day: "2-digit", 
+                        month: "long" 
+                      })}
+                      {" "}au{" "}
+                      {new Date(selectedItem.end_date).toLocaleDateString("fr-FR", { 
+                        day: "2-digit", 
+                        month: "long", 
+                        year: "numeric" 
+                      })}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

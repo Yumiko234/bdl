@@ -34,6 +34,13 @@ interface CalendarEvent {
   end_time: string | null;
 }
 
+interface EventBar {
+  event: CalendarEvent;
+  startCol: number;
+  span: number;
+  row: number;
+}
+
 // ---------------------------------------------------------------------------
 // Helper pour formater une date en YYYY-MM-DD sans conversion UTC
 // ---------------------------------------------------------------------------
@@ -137,10 +144,6 @@ const downloadIcs = (events: CalendarEvent[]) => {
  * Fallback: open Google Calendar import page so the user can upload the file manually.
  */
 const openGoogleCalendar = () => {
-  // Google Calendar can subscribe to a public .ics URL via webcal://.
-  // Since we don't host the file publicly, we redirect to the Google Calendar
-  // import page and the user downloads + uploads it themselves.
-  // This is the most reliable cross-platform approach.
   window.open("https://calendar.google.com/calendar/r/settings/addcalendar", "_blank", "noopener,noreferrer");
 };
 
@@ -162,7 +165,6 @@ export default function Calendrier() {
 
   // ---- popover (selected day) ----
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
-  const [popoverPos, setPopoverPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
 
   // -----------------------------------------------------------------------
   // Fetch
@@ -207,7 +209,69 @@ export default function Calendrier() {
   }, [currentMonth]);
 
   // -----------------------------------------------------------------------
-  // Events for a given day
+  // Calculate event bars for the calendar grid
+  // -----------------------------------------------------------------------
+  const eventBars = useMemo(() => {
+    const bars: EventBar[] = [];
+    const weeksCount = Math.ceil(calendarDays.length / 7);
+
+    events.forEach((event) => {
+      const eventStart = new Date(event.start_date + "T00:00:00");
+      const eventEnd = new Date(event.end_date + "T00:00:00");
+
+      // Find all weeks this event appears in
+      for (let week = 0; week < weeksCount; week++) {
+        const weekStart = calendarDays[week * 7];
+        const weekEnd = calendarDays[Math.min(week * 7 + 6, calendarDays.length - 1)];
+
+        // Check if event overlaps with this week
+        if (eventEnd >= weekStart && eventStart <= weekEnd) {
+          // Calculate start column (0-6) for this week
+          let startCol = 0;
+          for (let i = 0; i < 7; i++) {
+            const dayIndex = week * 7 + i;
+            if (dayIndex >= calendarDays.length) break;
+            const day = calendarDays[dayIndex];
+            if (formatLocalDate(day) === event.start_date || (formatLocalDate(day) > event.start_date && i === 0)) {
+              startCol = i;
+              break;
+            }
+            if (formatLocalDate(day) >= event.start_date) {
+              startCol = i;
+              break;
+            }
+          }
+
+          // Calculate span (how many days in this week)
+          let span = 1;
+          for (let i = startCol; i < 7; i++) {
+            const dayIndex = week * 7 + i;
+            if (dayIndex >= calendarDays.length) break;
+            const day = calendarDays[dayIndex];
+            const dayStr = formatLocalDate(day);
+            if (dayStr >= event.start_date && dayStr <= event.end_date) {
+              if (i === startCol) continue; // Already counted
+              span++;
+            } else if (dayStr > event.end_date) {
+              break;
+            }
+          }
+
+          bars.push({
+            event,
+            startCol,
+            span,
+            row: week,
+          });
+        }
+      }
+    });
+
+    return bars;
+  }, [events, calendarDays]);
+
+  // -----------------------------------------------------------------------
+  // Events for a given day (for click handling)
   // -----------------------------------------------------------------------
   const eventsForDay = (day: Date): CalendarEvent[] => {
     const dayStr = formatLocalDate(day);
@@ -229,11 +293,10 @@ export default function Calendrier() {
   // -----------------------------------------------------------------------
   // Day click → show popover with events
   // -----------------------------------------------------------------------
-  const handleDayClick = (day: Date, e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleDayClick = (day: Date) => {
     const dayEvents = eventsForDay(day);
-    if (dayEvents.length === 0) return; // nothing to show
+    if (dayEvents.length === 0) return;
 
-    // If clicking the same day again, close
     if (selectedDay && isSameDay(selectedDay, day)) {
       setSelectedDay(null);
       return;
@@ -246,17 +309,17 @@ export default function Calendrier() {
   // Render
   // -----------------------------------------------------------------------
   const monthLabel = currentMonth.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
-  // Capitalise first letter
   const monthTitle = monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1);
 
   const selectedDayEvents = selectedDay ? eventsForDay(selectedDay) : [];
+  const weeksCount = Math.ceil(calendarDays.length / 7);
 
   return (
     <div className="min-h-screen flex flex-col">
       <Navigation />
 
       <main className="flex-1">
-        {/* ---- Hero (same pattern as Events / Actualités) ---- */}
+        {/* ---- Hero ---- */}
         <section className="py-16 gradient-institutional text-white">
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center space-y-4">
@@ -301,7 +364,7 @@ export default function Calendrier() {
         {/* ---- Calendar ---- */}
         <section className="py-12">
           <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-5xl mx-auto">
               {/* Month navigation */}
               <div className="flex items-center justify-between mb-6">
                 <Button variant="outline" size="icon" onClick={prevMonth} aria-label="Mois précédent">
@@ -329,67 +392,95 @@ export default function Calendrier() {
                     ))}
                   </div>
 
-                  {/* Day grid */}
-                  <div className="grid grid-cols-7">
-                    {calendarDays.map((day, idx) => {
-                      const dayEvents = eventsForDay(day);
-                      const inMonth = isSameMonth(day, currentMonth);
-                      const today = isToday(day);
-                      const selected = selectedDay && isSameDay(selectedDay, day);
+                  {/* Calendar grid with weeks */}
+                  <div className="relative">
+                    {Array.from({ length: weeksCount }).map((_, weekIndex) => (
+                      <div key={weekIndex} className="relative">
+                        {/* Days row */}
+                        <div className="grid grid-cols-7">
+                          {Array.from({ length: 7 }).map((_, dayInWeek) => {
+                            const dayIndex = weekIndex * 7 + dayInWeek;
+                            if (dayIndex >= calendarDays.length) return null;
 
-                      return (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={(e) => handleDayClick(day, e)}
-                          className={[
-                            "relative border-b border-r border-border min-h-[80px] sm:min-h-[100px] p-1 text-left transition-colors",
-                            inMonth ? "bg-background hover:bg-muted/30" : "bg-muted/10 text-muted-foreground",
-                            selected ? "ring-2 ring-inset ring-primary" : "",
-                            dayEvents.length > 0 ? "cursor-pointer" : "cursor-default",
-                          ].join(" ")}
-                        >
-                          {/* day number */}
-                          <span
-                            className={[
-                              "inline-flex items-center justify-center w-6 h-6 text-sm font-medium rounded-full",
-                              today ? "bg-primary text-primary-foreground" : "",
-                              !inMonth ? "text-muted-foreground" : "",
-                            ].join(" ")}
-                          >
-                            {day.getDate()}
-                          </span>
+                            const day = calendarDays[dayIndex];
+                            const dayEvents = eventsForDay(day);
+                            const inMonth = isSameMonth(day, currentMonth);
+                            const today = isToday(day);
+                            const selected = selectedDay && isSameDay(selectedDay, day);
 
-                          {/* event pills */}
-                          <div className="mt-0.5 space-y-0.5 max-h-[40px] overflow-hidden">
-                            {dayEvents.slice(0, 2).map((evt) => (
-                              <div
-                                key={evt.id}
-                                className="text-[10px] sm:text-xs leading-tight truncate bg-primary/15 text-primary font-medium rounded px-1 py-0.5"
+                            return (
+                              <button
+                                key={dayIndex}
+                                type="button"
+                                onClick={() => handleDayClick(day)}
+                                className={[
+                                  "relative border-b border-r border-border min-h-[120px] p-2 text-left transition-colors",
+                                  inMonth ? "bg-background hover:bg-muted/30" : "bg-muted/10 text-muted-foreground",
+                                  selected ? "ring-2 ring-inset ring-primary" : "",
+                                  dayEvents.length > 0 ? "cursor-pointer" : "cursor-default",
+                                ].join(" ")}
+                                style={{ paddingTop: "4rem" }}
                               >
-                                {evt.title}
+                                {/* day number */}
+                                <span
+                                  className={[
+                                    "absolute bottom-2 left-2 inline-flex items-center justify-center w-6 h-6 text-sm font-medium rounded-full z-10",
+                                    today ? "bg-primary text-primary-foreground" : "",
+                                    !inMonth ? "text-muted-foreground" : "",
+                                  ].join(" ")}
+                                >
+                                  {day.getDate()}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {/* Event bars for this week */}
+                        <div className="absolute top-0 left-0 right-0 pointer-events-none" style={{ height: "60px" }}>
+                          {eventBars
+                            .filter((bar) => bar.row === weekIndex)
+                            .map((bar, barIndex) => (
+                              <div
+                                key={`${bar.event.id}-${weekIndex}-${barIndex}`}
+                                className="absolute pointer-events-auto cursor-pointer"
+                                style={{
+                                  left: `${(bar.startCol / 7) * 100}%`,
+                                  width: `${(bar.span / 7) * 100}%`,
+                                  top: `${4 + barIndex * 22}px`,
+                                  height: "18px",
+                                }}
+                                onClick={() => {
+                                  const eventDay = calendarDays[weekIndex * 7 + bar.startCol];
+                                  handleDayClick(eventDay);
+                                }}
+                              >
+                                <div className="mx-1 h-full bg-primary/20 border border-primary/40 rounded px-2 flex items-center overflow-hidden">
+                                  <span className="text-xs font-medium text-primary truncate">
+                                    {bar.event.title}
+                                  </span>
+                                </div>
                               </div>
                             ))}
-                            {dayEvents.length > 2 && (
-                              <div className="text-[10px] text-muted-foreground px-1">
-                                +{dayEvents.length - 2} de plus
-                              </div>
-                            )}
-                          </div>
-                        </button>
-                      );
-                    })}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </Card>
               )}
 
-              {/* ---- Selected-day event popover (rendered below the grid) ---- */}
+              {/* ---- Selected-day event popover ---- */}
               {selectedDay && selectedDayEvents.length > 0 && (
                 <Card className="mt-4 shadow-card border-primary/30">
                   <CardContent className="p-5">
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="font-bold text-lg">
-                        {selectedDay.toLocaleDateString("fr-FR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" }).replace(/^./, (c) => c.toUpperCase())}
+                        {selectedDay.toLocaleDateString("fr-FR", { 
+                          weekday: "long", 
+                          day: "2-digit", 
+                          month: "long", 
+                          year: "numeric" 
+                        }).replace(/^./, (c) => c.toUpperCase())}
                       </h3>
                       <Button variant="ghost" size="icon" onClick={() => setSelectedDay(null)}>
                         <X className="h-4 w-4" />
@@ -414,9 +505,16 @@ export default function Calendrier() {
                           {evt.start_date !== evt.end_date && (
                             <p className="text-xs text-muted-foreground">
                               Du{" "}
-                              {new Date(evt.start_date + "T00:00:00").toLocaleDateString("fr-FR", { day: "2-digit", month: "long" })}
+                              {new Date(evt.start_date + "T00:00:00").toLocaleDateString("fr-FR", { 
+                                day: "2-digit", 
+                                month: "long" 
+                              })}
                               {" "}au{" "}
-                              {new Date(evt.end_date + "T00:00:00").toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}
+                              {new Date(evt.end_date + "T00:00:00").toLocaleDateString("fr-FR", { 
+                                day: "2-digit", 
+                                month: "long", 
+                                year: "numeric" 
+                              })}
                             </p>
                           )}
 
@@ -434,7 +532,7 @@ export default function Calendrier() {
                 </Card>
               )}
 
-              {/* ---- Upcoming events list (below calendar) ---- */}
+              {/* ---- Upcoming events list ---- */}
               <div className="mt-10">
                 <h3 className="text-xl font-bold mb-4">Événements à venir</h3>
                 {events.length === 0 ? (
@@ -450,9 +548,17 @@ export default function Calendrier() {
                             <div className="space-y-1 flex-1 min-w-0">
                               <h4 className="font-semibold">{evt.title}</h4>
                               <p className="text-sm text-muted-foreground">
-                                {new Date(evt.start_date + "T00:00:00").toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}
+                                {new Date(evt.start_date + "T00:00:00").toLocaleDateString("fr-FR", { 
+                                  day: "2-digit", 
+                                  month: "long", 
+                                  year: "numeric" 
+                                })}
                                 {evt.start_date !== evt.end_date &&
-                                  ` – ${new Date(evt.end_date + "T00:00:00").toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}`}
+                                  ` – ${new Date(evt.end_date + "T00:00:00").toLocaleDateString("fr-FR", { 
+                                    day: "2-digit", 
+                                    month: "long", 
+                                    year: "numeric" 
+                                  })}`}
                                 {evt.start_time && ` · ${evt.start_time}`}
                                 {evt.end_time && ` – ${evt.end_time}`}
                               </p>

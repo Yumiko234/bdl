@@ -160,7 +160,12 @@ const Scrutin = () => {
   };
 
   const loadMyVote = async (scrutinId: string) => {
-    if (!user) return;
+    if (!user) {
+      console.log(`⚠️ Cannot load vote for ${scrutinId}: no user`);
+      return;
+    }
+
+    console.log(`🔍 Loading vote for scrutin ${scrutinId} with user ${user.id}`);
 
     const { data, error } = await supabase
       .from("scrutin_votes")
@@ -169,11 +174,26 @@ const Scrutin = () => {
       .eq("user_id", user.id)
       .maybeSingle();
 
-    console.log(`🔍 Loading vote for scrutin ${scrutinId}:`, { data, error, userId: user.id });
+    console.log(`📦 Response for scrutin ${scrutinId}:`, { 
+      data, 
+      error,
+      hasData: !!data,
+      voteValue: data?.vote,
+      scrutinId,
+      userId: user.id
+    });
+
+    if (error) {
+      console.error(`❌ Error loading vote for ${scrutinId}:`, error);
+    }
 
     if (data) {
       console.log(`✅ Vote found for scrutin ${scrutinId}:`, data.vote);
-      setMyVotes((prev) => ({ ...prev, [scrutinId]: data }));
+      setMyVotes((prev) => {
+        const newVotes = { ...prev, [scrutinId]: data };
+        console.log(`📝 Updated myVotes:`, newVotes);
+        return newVotes;
+      });
     } else {
       console.log(`❌ No vote found for scrutin ${scrutinId}`);
     }
@@ -233,6 +253,13 @@ const Scrutin = () => {
       vote: voteValue,
     });
 
+    console.log(`💾 Vote insert attempt:`, {
+      scrutinId,
+      userId: user.id,
+      voteValue,
+      error: error?.message || 'none'
+    });
+
     if (error) {
       console.error("Vote error:", error);
       
@@ -244,11 +271,16 @@ const Scrutin = () => {
         toast.error("Erreur lors du vote : " + (error.message || "Erreur inconnue"));
       }
     } else {
+      console.log(`✅ Vote inserted successfully for scrutin ${scrutinId}`);
       toast.success("Vote enregistré avec succès");
-      setMyVotes((prev) => ({
-        ...prev,
-        [scrutinId]: { vote: voteValue },
-      }));
+      setMyVotes((prev) => {
+        const newVotes = {
+          ...prev,
+          [scrutinId]: { vote: voteValue },
+        };
+        console.log(`📝 myVotes after vote:`, newVotes);
+        return newVotes;
+      });
     }
     
     closeConfirmDialog();

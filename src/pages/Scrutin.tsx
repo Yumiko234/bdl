@@ -126,11 +126,12 @@ const Scrutin = () => {
     });
     setOpenDetails(initialOpenDetails);
 
+    // Charger tous les votes pour tous les scrutins
     for (const scrutin of data || []) {
+      await loadMyVote(scrutin.id);
       if (scrutin.status === "closed") {
         await loadVotes(scrutin.id);
       }
-      await loadMyVote(scrutin.id);
     }
 
     setLoading(false);
@@ -503,7 +504,7 @@ const Scrutin = () => {
                             <div className="flex gap-3 pt-4 border-t">
                               <Button
                                 onClick={() => openConfirmDialog(scrutin.id, "pour", scrutin.title)}
-                                variant={myVotes[scrutin.id] ? "default" : "outline"}
+                                variant="outline"
                                 className={`flex-1 transition-all ${getButtonClassName(scrutin.id, "pour")}`}
                                 disabled={!!myVotes[scrutin.id]}
                               >
@@ -512,7 +513,7 @@ const Scrutin = () => {
                               </Button>
                               <Button
                                 onClick={() => openConfirmDialog(scrutin.id, "contre", scrutin.title)}
-                                variant={myVotes[scrutin.id] ? "default" : "outline"}
+                                variant="outline"
                                 className={`flex-1 transition-all ${getButtonClassName(scrutin.id, "contre")}`}
                                 disabled={!!myVotes[scrutin.id]}
                               >
@@ -521,7 +522,7 @@ const Scrutin = () => {
                               </Button>
                               <Button
                                 onClick={() => openConfirmDialog(scrutin.id, "abstention", scrutin.title)}
-                                variant={myVotes[scrutin.id] ? "default" : "outline"}
+                                variant="outline"
                                 className={`flex-1 transition-all ${getButtonClassName(scrutin.id, "abstention")}`}
                                 disabled={!!myVotes[scrutin.id]}
                               >

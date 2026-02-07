@@ -119,6 +119,13 @@ const Scrutin = () => {
 
     setScrutins(data || []);
 
+    // Initialiser openDetails pour tous les scrutins
+    const initialOpenDetails: Record<string, boolean> = {};
+    (data || []).forEach((scrutin) => {
+      initialOpenDetails[scrutin.id] = false;
+    });
+    setOpenDetails(initialOpenDetails);
+
     for (const scrutin of data || []) {
       if (scrutin.status === "closed") {
         await loadVotes(scrutin.id);
@@ -187,11 +194,30 @@ const Scrutin = () => {
   const handleVote = async (scrutinId: string, voteValue: "pour" | "contre" | "abstention") => {
     if (!user || !canVote) {
       toast.error("Vous n'avez pas les droits pour voter");
+      closeConfirmDialog();
       return;
     }
 
+    // Vérifier si l'utilisateur a déjà voté
     if (myVotes[scrutinId]) {
       toast.error("Vous avez déjà voté sur ce scrutin");
+      closeConfirmDialog();
+      return;
+    }
+
+    // Vérifier une dernière fois dans la base de données
+    const { data: existingVote } = await supabase
+      .from("scrutin_votes")
+      .select("id")
+      .eq("scrutin_id", scrutinId)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (existingVote) {
+      toast.error("Vous avez déjà voté sur ce scrutin");
+      // Mettre à jour l'état local
+      await loadMyVote(scrutinId);
+      closeConfirmDialog();
       return;
     }
 
@@ -203,7 +229,14 @@ const Scrutin = () => {
 
     if (error) {
       console.error("Vote error:", error);
-      toast.error("Erreur lors du vote");
+      
+      // Gestion spécifique de l'erreur 409 (conflit/duplicate)
+      if (error.code === "23505" || error.message.includes("duplicate")) {
+        toast.error("Vous avez déjà voté sur ce scrutin");
+        await loadMyVote(scrutinId);
+      } else {
+        toast.error("Erreur lors du vote : " + (error.message || "Erreur inconnue"));
+      }
     } else {
       toast.success("Vote enregistré avec succès");
       setMyVotes((prev) => ({
@@ -565,7 +598,7 @@ const Scrutin = () => {
 
                                 {!scrutin.is_secret && (
                                   <Collapsible
-                                    open={openDetails[scrutin.id]}
+                                    open={openDetails[scrutin.id] || false}
                                     onOpenChange={() => toggleDetails(scrutin.id)}
                                   >
                                     <CollapsibleTrigger asChild>

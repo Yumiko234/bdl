@@ -5,11 +5,14 @@
 <url><loc>https://bdl-saintandre.fr/admin</loc><changefreq>monthly</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/auth</loc><changefreq>monthly</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/bdl</loc><changefreq>daily</changefreq></url>
+<url><loc>https://bdl-saintandre.fr/bdl/historique</loc><changefreq>daily</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/clubs</loc><changefreq>monthly</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/contact</loc><changefreq>monthly</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/documents</loc><changefreq>daily</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/events</loc><changefreq>daily</changefreq></url>
+<url><loc>https://bdl-saintandre.fr/calendrier</loc><changefreq>daily</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/scrutins</loc><changefreq>daily</changefreq></url>
+<url><loc>https://bdl-saintandre.fr/sondages</loc><changefreq>daily</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/intranet</loc><changefreq>monthly</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/profile</loc><changefreq>daily</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/jo/</loc><changefreq>daily</changefreq></url>
@@ -27,6 +30,7 @@
 <url><loc>https://bdl-saintandre.fr/jo/PBDL25AR0002A</loc><changefreq>daily</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/jo/PBDL25CM0002A</loc><changefreq>daily</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/jo/PBDL26AR0001A</loc><changefreq>daily</changefreq></url>
-  <url><loc>https://bdl-saintandre.fr/jo/RCBDL26CM0001A</loc><changefreq>daily</changefreq></url>
+<url><loc>https://bdl-saintandre.fr/jo/RCBDL26CM0001A</loc><changefreq>daily</changefreq></url>
+<url><loc>https://bdl-saintandre.fr/jo/PBDL26DC0001A</loc><changefreq>daily</changefreq></url>
 
   </urlset>

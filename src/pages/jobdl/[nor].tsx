@@ -42,52 +42,6 @@ interface JournalEntry {
  * On empile les modifications : la version finale visible est le texte
  * reconstruit avec toutes les marques visibles.
  */
-const buildAnnotatedHTML = (modifications: Modification[]): string => {
-  if (!modifications || modifications.length === 0) return "";
-
-  // On reconstruit un HTML annoté pour chaque modification,
-  // en les concaténant toutes dans un seul flux de texte.
-  // Les modifications sont affichées dans l'ordre chronologique.
-  return modifications
-    .map((mod) => {
-      const dateStr = new Date(mod.date).toLocaleDateString("fr-FR");
-      const hasChanges = mod.diff.some((p) => p.added || p.removed);
-      if (!hasChanges) return null;
-
-      // Groupe les parties consécutives changed pour attacher la date une seule fois
-      let html = "";
-      let inChangeBlock = false;
-      let changeBlock = "";
-
-      mod.diff.forEach((part, idx) => {
-        if (part.removed) {
-          changeBlock += `<del class="diff-removed">${escapeHTML(part.value)}</del>`;
-          inChangeBlock = true;
-        } else if (part.added) {
-          changeBlock += `<ins class="diff-added">${escapeHTML(part.value)}</ins>`;
-          inChangeBlock = true;
-        } else {
-          // Partie inchangée : on ferme le bloc de changement si besoin
-          if (inChangeBlock) {
-            html += `<span class="diff-block">${changeBlock}<sup class="diff-date">[${dateStr}]</sup></span>`;
-            changeBlock = "";
-            inChangeBlock = false;
-          }
-          html += escapeHTML(part.value);
-        }
-
-        // Dernier élément
-        if (idx === mod.diff.length - 1 && inChangeBlock) {
-          html += `<span class="diff-block">${changeBlock}<sup class="diff-date">[${dateStr}]</sup></span>`;
-        }
-      });
-
-      return html;
-    })
-    .filter(Boolean)
-    .join("");
-};
-
 const escapeHTML = (str: string): string =>
   str
     .replace(/&/g, "&amp;")
@@ -95,15 +49,15 @@ const escapeHTML = (str: string): string =>
     .replace(/>/g, "&gt;");
 
 /**
- * Injecte le HTML annoté (diff) dans le HTML de l'article.
+ * Injecte le diff mot par mot dans le HTML en préservant toute la structure.
  *
- * Stratégie : le diff opère sur le texte brut de l'article.
- * On reconstruit le HTML en remplaçant le contenu textuel des blocs
- * (p, li, td…) par le diff annoté, en préservant la structure des titres.
+ * Stratégie :
+ * - On aplatit le diff en tokens (removed/added/unchanged)
+ * - On parcourt récursivement TOUS les nœuds texte feuilles du DOM
+ * - Pour chaque nœud texte, on consomme les tokens qui correspondent à son contenu
+ * - On remplace chaque nœud texte par un <span> avec le HTML annoté
  *
- * Pour garder la structure du RichTextEditor (headings + paragraphes),
- * on utilise un DOMParser, on identifie le texte brut de chaque nœud feuille,
- * et on remplace le texte par le diff correspondant.
+ * Ainsi les <p>, <br>, <strong> etc. sont entièrement préservés.
  */
 const injectDiffIntoContent = (
   htmlContent: string,
@@ -111,66 +65,101 @@ const injectDiffIntoContent = (
 ): string => {
   if (!modifications || modifications.length === 0) return htmlContent;
 
-  // Filtre les modifications au nouveau format uniquement (avec diff[])
-  // Les anciennes entrées { oldText, newText, position } sont ignorées silencieusement
   const validMods = modifications.filter(
     (m) => Array.isArray((m as any).diff) && (m as any).diff.length > 0
   );
   if (validMods.length === 0) return htmlContent;
 
   const lastMod = validMods[validMods.length - 1];
-
-  let diffHTML = "";
   const dateStr = new Date(lastMod.date).toLocaleDateString("fr-FR");
 
-  lastMod.diff.forEach((part) => {
-    if (part.removed) {
-      diffHTML += `<del class="diff-removed">${escapeHTML(part.value)}</del>`;
-    } else if (part.added) {
-      diffHTML += `<ins class="diff-added">${escapeHTML(part.value)}</ins><sup class="diff-date">[${dateStr}]</sup>`;
-    } else {
-      diffHTML += escapeHTML(part.value);
-    }
-  });
+  // ── Aplatir le diff en tokens ─────────────────────────────────────────────
+  interface Token { value: string; type: "unchanged" | "added" | "removed" }
+  const tokens: Token[] = lastMod.diff.map((p) => ({
+    value: p.value,
+    type: (p.added ? "added" : p.removed ? "removed" : "unchanged") as Token["type"],
+  }));
 
-  // On parse le HTML original, on identifie les blocs de texte non-heading
-  // et on remplace leur contenu par le diffHTML (une seule injection dans
-  // le premier bloc de texte trouvé — le diff couvre tout le texte brut)
+  let tokenIdx = 0;
+  let tokenOffset = 0;
+
+  // ── Parcourir récursivement les nœuds texte feuilles ─────────────────────
   const parser = new DOMParser();
   const doc = parser.parseFromString(htmlContent, "text/html");
-  const headingTags = new Set(["h1", "h2", "h3", "h4", "h5", "h6"]);
 
-  let injected = false;
-  const result: string[] = [];
+  const collectTextNodes = (node: Node): Text[] => {
+    if (node.nodeType === Node.TEXT_NODE) return [node as Text];
+    if (node.nodeType !== Node.ELEMENT_NODE) return [];
+    const tag = (node as HTMLElement).tagName.toLowerCase();
+    if (["script", "style"].includes(tag)) return [];
+    return Array.from(node.childNodes).flatMap(collectTextNodes);
+  };
 
-  doc.body.childNodes.forEach((node) => {
-    if (!(node instanceof HTMLElement)) {
-      if (!injected && node.textContent?.trim()) {
-        injected = true;
-        result.push(diffHTML);
+  const processTextNode = (textNode: Text): void => {
+    const originalText = textNode.textContent || "";
+    if (!originalText) return;
+
+    let remaining = originalText;
+    let annotatedHTML = "";
+
+    while (remaining.length > 0 && tokenIdx < tokens.length) {
+      const token = tokens[tokenIdx];
+
+      // Les tokens "removed" ne consomment pas de texte du DOM :
+      // on les émet directement comme <del> et on avance
+      if (token.type === "removed") {
+        annotatedHTML += `<del class="diff-removed">${escapeHTML(token.value)}</del>`;
+        tokenIdx++;
+        continue;
       }
-      return;
+
+      const tokenRemaining = token.value.slice(tokenOffset);
+
+      if (remaining.length <= tokenRemaining.length) {
+        // Tout le texte restant du nœud est dans ce token
+        const chunk = remaining;
+        tokenOffset += chunk.length;
+        if (tokenOffset >= token.value.length) { tokenOffset = 0; tokenIdx++; }
+        annotatedHTML += token.type === "added"
+          ? `<ins class="diff-added">${escapeHTML(chunk)}</ins>`
+          : escapeHTML(chunk);
+        remaining = "";
+      } else {
+        // Ce token se termine avant la fin du nœud
+        const chunk = tokenRemaining;
+        remaining = remaining.slice(chunk.length);
+        tokenOffset = 0;
+        tokenIdx++;
+        annotatedHTML += token.type === "added"
+          ? `<ins class="diff-added">${escapeHTML(chunk)}</ins>`
+          : escapeHTML(chunk);
+      }
     }
 
-    const tag = node.tagName.toLowerCase();
+    // Texte non couvert (sécurité)
+    if (remaining.length > 0) annotatedHTML += escapeHTML(remaining);
 
-    if (headingTags.has(tag)) {
-      // Titres : on préserve intact
-      result.push(node.outerHTML);
-    } else if (!injected) {
-      // Premier bloc de texte : on y place tout le diff
-      injected = true;
-      // Préserver les attributs du nœud (class, style…)
-      const attrs = Array.from(node.attributes)
-        .map((a) => `${a.name}="${a.value}"`)
-        .join(" ");
-      result.push(`<${tag}${attrs ? " " + attrs : ""}>${diffHTML}</${tag}>`);
-    }
-    // Les blocs suivants sont ignorés : leur contenu est déjà dans le diff
-  });
+    // Remplace le nœud texte par un span avec le HTML annoté
+    const span = doc.createElement("span");
+    span.innerHTML = annotatedHTML;
+    textNode.parentNode?.replaceChild(span, textNode);
+  };
 
-  return result.join("\n");
+  collectTextNodes(doc.body).forEach(processTextNode);
+
+  // Ajoute la date après le dernier <ins>
+  const allIns = doc.body.querySelectorAll("ins.diff-added");
+  if (allIns.length > 0) {
+    const lastIns = allIns[allIns.length - 1];
+    const sup = doc.createElement("sup");
+    sup.className = "diff-date";
+    sup.textContent = `[${dateStr}]`;
+    lastIns.insertAdjacentElement("afterend", sup);
+  }
+
+  return doc.body.innerHTML;
 };
+
 
 // ─── Composant ArticleContent ─────────────────────────────────────────────────
 

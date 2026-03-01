@@ -123,3 +123,37 @@
 .ql-font-times-new-roman {
   font-family: "Times New Roman", Times, serif !important;
 }
+
+/* ── Diff inline — suivi de modifications style JO ──────────────────────────── */
+
+/* Texte supprimé : rouge barré */
+del.diff-removed {
+  color: #dc2626;
+  text-decoration: line-through;
+  background-color: #fef2f2;
+  border-radius: 2px;
+  padding: 0 2px;
+  font-style: normal;
+  font-weight: inherit;
+}
+
+/* Texte ajouté : vert */
+ins.diff-added {
+  color: #15803d;
+  text-decoration: none;
+  background-color: #f0fdf4;
+  border-radius: 2px;
+  padding: 0 2px;
+  font-style: normal;
+  font-weight: inherit;
+}
+
+/* Date de la modification en exposant */
+sup.diff-date {
+  font-size: 0.6em;
+  color: #2563eb;
+  margin-left: 2px;
+  font-style: italic;
+  font-weight: normal;
+  vertical-align: super;
+}

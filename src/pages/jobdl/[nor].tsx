@@ -1,16 +1,20 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import Navigation from "@/components/Navigation";
-import Footer from "@/components/Footer";
+import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronDown, ChevronRight } from "lucide-react";
-import "@/styles/journal.css";
+import { ChevronDown, ChevronRight, ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface DiffPart {
+  value: string;
+  added?: boolean;
+  removed?: boolean;
+}
 
 interface Modification {
   date: string;
-  oldText: string;
-  newText: string;
-  position: number;
+  diff: DiffPart[];
 }
 
 interface JournalEntry {
@@ -24,50 +28,144 @@ interface JournalEntry {
   modifications?: Modification[];
 }
 
-// Composant pour le rendu de l'article avec modifications et pliage
-// Composant pour le rendu de l'article avec modifications et pliage hiérarchique
-const ArticleContent = ({ entry }: { entry: JournalEntry }) => {
-  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+const formatDate = (iso: string) =>
+  new Date(iso).toLocaleDateString("fr-FR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+/**
+ * Reconstruit le texte final (version en vigueur) depuis la liste de diff.
+ * On garde les parties "ajoutées" et "inchangées", on retire les "supprimées".
+ */
+const buildCurrentText = (diff: DiffPart[]): string =>
+  diff
+    .filter((p) => !p.removed)
+    .map((p) => p.value)
+    .join("");
+
+// ─── Composant : rendu inline du diff (style suivi de modifications) ──────────
+
+/**
+ * Affiche le texte avec :
+ *   - texte supprimé  : rouge, barré
+ *   - texte ajouté    : vert, souligné
+ *   - texte inchangé  : normal
+ */
+const DiffInline = ({ diff }: { diff: DiffPart[] }) => (
+  <span>
+    {diff.map((part, idx) => {
+      if (part.removed)
+        return (
+          <span
+            key={idx}
+            className="line-through text-red-600 bg-red-50 px-0.5 rounded"
+            title="Texte supprimé"
+          >
+            {part.value}
+          </span>
+        );
+      if (part.added)
+        return (
+          <span
+            key={idx}
+            className="underline text-green-700 bg-green-50 px-0.5 rounded"
+            title="Texte ajouté"
+          >
+            {part.value}
+          </span>
+        );
+      return <span key={idx}>{part.value}</span>;
+    })}
+  </span>
+);
+
+// ─── Composant : section de l'historique des modifications ───────────────────
+
+const ModificationsHistory = ({
+  modifications,
+}: {
+  modifications: Modification[];
+}) => {
+  const [open, setOpen] = useState(false);
+
+  if (!modifications || modifications.length === 0) return null;
+
+  return (
+    <section className="mt-10 border-t pt-6">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-2 text-sm font-semibold text-amber-700 hover:text-amber-900 transition-colors"
+      >
+        {open ? (
+          <ChevronDown className="h-4 w-4" />
+        ) : (
+          <ChevronRight className="h-4 w-4" />
+        )}
+        {modifications.length} modification{modifications.length > 1 ? "s" : ""}{" "}
+        apportée{modifications.length > 1 ? "s" : ""} à cet article
+      </button>
+
+      {open && (
+        <div className="mt-4 space-y-6">
+          {modifications.map((mod, idx) => (
+            <div
+              key={idx}
+              className="border border-amber-200 rounded-xl bg-amber-50/40 p-5"
+            >
+              <p className="text-xs text-amber-700 font-semibold mb-3">
+                Modification n°{idx + 1} — publiée le{" "}
+                {formatDate(mod.date)}
+              </p>
+
+              {/* Légende */}
+              <div className="flex gap-4 text-xs mb-4 text-gray-600">
+                <span className="flex items-center gap-1">
+                  <span className="inline-block w-3 h-3 rounded bg-red-100 border border-red-300" />
+                  Texte supprimé
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="inline-block w-3 h-3 rounded bg-green-100 border border-green-300" />
+                  Texte ajouté
+                </span>
+              </div>
+
+              {/* Diff inline */}
+              <div className="text-sm leading-relaxed font-serif text-gray-800 text-justify">
+                <DiffInline diff={mod.diff} />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+};
+
+// ─── Composant : rendu de l'article avec sections repliables ─────────────────
+
+const ArticleRenderer = ({ content }: { content: string }) => {
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(
+    new Set()
+  );
 
   const toggleSection = (id: string) => {
-    const newCollapsed = new Set(collapsedSections);
-    if (newCollapsed.has(id)) {
-      newCollapsed.delete(id);
-    } else {
-      newCollapsed.add(id);
-    }
-    setCollapsedSections(newCollapsed);
-  };
-
-  const renderContentWithModifications = (content: string, modifications?: Modification[]) => {
-    if (!modifications || modifications.length === 0) {
-      return renderCollapsibleContent(content);
-    }
-
-    let modifiedContent = content;
-    const sortedMods = [...modifications].sort((a, b) => b.position - a.position);
-
-    sortedMods.forEach(mod => {
-      const oldTextEscaped = mod.oldText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const regex = new RegExp(oldTextEscaped, 'g');
-      
-      const replacement = `<span class="modification-group">
-        <del class="text-red-600 line-through font-normal">${mod.oldText}</del>
-        <ins class="text-green-700 no-underline font-semibold">${mod.newText}</ins>
-        <sup class="text-xs text-blue-600 ml-1 font-normal">[Version du ${new Date(mod.date).toLocaleDateString('fr-FR')}]</sup>
-      </span>`;
-      
-      modifiedContent = modifiedContent.replace(regex, replacement);
+    setCollapsedSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
     });
-
-    return renderCollapsibleContent(modifiedContent);
   };
 
-  const renderCollapsibleContent = (content: string) => {
+  const renderCollapsibleContent = (html: string) => {
     const parser = new DOMParser();
-    const doc = parser.parseFromString(content, 'text/html');
+    const doc = parser.parseFromString(html, "text/html");
     const elements = Array.from(doc.body.childNodes);
-    
+
     interface Section {
       id: string;
       title: string;
@@ -80,205 +178,245 @@ const ArticleContent = ({ entry }: { entry: JournalEntry }) => {
     let currentPath: Section[] = [];
 
     elements.forEach((node, idx) => {
-      if (node instanceof HTMLElement && ['h1', 'h2', 'h3', 'h4'].includes(node.tagName.toLowerCase())) {
+      if (
+        node instanceof HTMLElement &&
+        ["h1", "h2", "h3", "h4"].includes(node.tagName.toLowerCase())
+      ) {
         const level = parseInt(node.tagName.substring(1));
         const newSection: Section = {
           id: `section-${level}-${idx}`,
-          title: node.textContent || '',
-          level: level,
-          htmlContent: '',
-          children: []
+          title: node.textContent || "",
+          level,
+          htmlContent: "",
+          children: [],
         };
 
-        while (currentPath.length > 0 && currentPath[currentPath.length - 1].level >= level) {
+        while (
+          currentPath.length > 0 &&
+          currentPath[currentPath.length - 1].level >= level
+        ) {
           currentPath.pop();
         }
 
-        if (currentPath.length === 0) {
-          tree.push(newSection);
-        } else {
-          currentPath[currentPath.length - 1].children.push(newSection);
-        }
+        if (currentPath.length === 0) tree.push(newSection);
+        else currentPath[currentPath.length - 1].children.push(newSection);
         currentPath.push(newSection);
       } else {
         const target = currentPath[currentPath.length - 1];
-        const html = node instanceof HTMLElement ? node.outerHTML : node.textContent || '';
-        if (target) {
-          target.htmlContent += html;
-        } else if (html.trim()) {
-          tree.push({ id: `intro-${idx}`, title: '', level: 0, htmlContent: html, children: [] });
-        }
+        const htmlStr =
+          node instanceof HTMLElement
+            ? node.outerHTML
+            : node.textContent || "";
+        if (target) target.htmlContent += htmlStr;
+        else if (htmlStr.trim())
+          tree.push({
+            id: `intro-${idx}`,
+            title: "",
+            level: 0,
+            htmlContent: htmlStr,
+            children: [],
+          });
       }
     });
 
-    const renderTree = (nodes: Section[]) => {
-      return nodes.map((section) => {
+    const levelStyles: Record<number, string> = {
+      1: "text-2xl font-black border-l-4 border-[#07419e] bg-blue-50/30",
+      2: "text-xl font-bold border-l-4 border-blue-300",
+      3: "text-lg font-semibold border-l-2 border-gray-300",
+      4: "text-base font-medium border-l-2 border-gray-200 italic text-gray-600",
+    };
+
+    const renderTree = (nodes: Section[]): React.ReactNode =>
+      nodes.map((section) => {
         const isCollapsed = collapsedSections.has(section.id);
         const isHeader = section.level > 0;
-        
-        // On définit ici les styles de bordure et de taille, SANS le gras général
-        const levelContainerStyles: Record<number, string> = {
-          1: "border-l-4 border-[#FFD700] bg-blue-50/20",
-          2: "border-l-4 border-blue-200",
-          3: "border-l-2 border-gray-300",
-          4: "border-l-2 border-gray-200",
-        };
-
-        // Styles spécifiques au texte du titre
-        const levelTextStyles: Record<number, string> = {
-          1: "text-2xl font-bold",
-          2: "text-xl font-bold",
-          3: "text-lg font-semibold",
-          4: "text-base font-medium italic",
-        };
 
         return (
-          <div key={section.id} className={`${isHeader ? `mt-2 ${levelContainerStyles[section.level] || ''} pl-4` : 'mb-2'}`}>
+          <div
+            key={section.id}
+            className={isHeader ? `mt-4 ${levelStyles[section.level] || ""} pl-4` : "mb-4"}
+          >
             {isHeader && (
               <button
                 onClick={() => toggleSection(section.id)}
-                className="flex items-center gap-2 w-full text-left hover:bg-white/50 py-1 px-2 rounded transition-all group"
+                className="flex items-center gap-2 w-full text-left hover:bg-gray-100/50 p-2 rounded transition-all group"
               >
                 {isCollapsed ? (
-                  <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-[#07419e] flex-shrink-0" />
+                  <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-[#07419e]" />
                 ) : (
-                  <ChevronDown className="h-5 w-5 text-gray-400 group-hover:text-[#07419e] flex-shrink-0" />
+                  <ChevronDown className="h-4 w-4 text-gray-400 group-hover:text-[#07419e]" />
                 )}
-                <span className={`${levelTextStyles[section.level]} ${section.level <= 2 ? 'text-[#07419e]' : 'text-gray-800'}`}>
+                <span
+                  className={
+                    section.level <= 2 ? "text-[#07419e]" : "text-gray-800"
+                  }
+                >
                   {section.title}
                 </span>
               </button>
             )}
-            
+
             {!isCollapsed && (
-              <div className={isHeader ? "mt-1 ml-6" : ""}>
-                <div 
-                  className="text-justify font-normal journal-article prose-sm max-w-none last:[&_p]:mb-0"
+              <div className={isHeader ? "mt-2 ml-4" : ""}>
+                <div
+                  className="text-justify leading-relaxed prose-sm max-w-none"
                   dangerouslySetInnerHTML={{ __html: section.htmlContent }}
                 />
                 {section.children.length > 0 && (
-                  <div className="mt-1 space-y-1 font-normal">
-                    {renderTree(section.children)}
-                  </div>
+                  <div className="mt-2 space-y-2">{renderTree(section.children)}</div>
                 )}
               </div>
             )}
           </div>
         );
       });
-    };
 
-    if (tree.length === 0) {
-      return <div className="journal-article font-normal" dangerouslySetInnerHTML={{ __html: content }} />;
-    }
-
-    return <div className="space-y-1 font-normal">{renderTree(tree)}</div>;
+    return <div className="space-y-2">{renderTree(tree)}</div>;
   };
 
-  return (
-    <article className="text-black font-normal">
-      {renderContentWithModifications(entry.content, entry.modifications)}
-    </article>
-  );
+  return renderCollapsibleContent(content);
 };
 
-const JobdlArticle = () => {
+// ─── Composant principal ──────────────────────────────────────────────────────
+
+export default function NorPage() {
   const { nor } = useParams<{ nor: string }>();
   const [entry, setEntry] = useState<JournalEntry | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    const fetchEntry = async () => {
-      if (!nor) return;
-      setLoading(true);
-      setError(null);
+    if (!nor) return;
 
+    const fetchEntry = async () => {
+      setLoading(true);
       const { data, error } = await supabase
-        .from("official_journal")
+        .from("official_journal" as any)
         .select("*")
         .eq("nor_number", nor)
         .single();
 
-      if (error) {
-        console.error("Erreur Supabase :", error);
-        setError("Impossible de charger la publication officielle demandée. Si vous pensez qu'il s'agit d'une erreur, veuillez contacter la Secrétaire Générale.");
+      if (error || !data) {
+        setNotFound(true);
       } else {
-        setEntry(data as JournalEntry);
+        setEntry(data as unknown as JournalEntry);
       }
-
       setLoading(false);
     };
 
     fetchEntry();
   }, [nor]);
 
-  const getRoleLabel = (role: string | null): string => {
-    if (!role) return "Bureau des Lycéens";
-    const labels: Record<string, string> = {
-      president: "Le Président",
-      vice_president: "La Vice-Présidente",
-      secretary_general: "La Secrétaire Générale",
-      communication_manager: "Le Directeur de la Communauté et de la Communication",
-    };
-    return labels[role] || "Bureau des Lycéens";
-  };
+  // ── États de chargement ───────────────────────────────────────────────────
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background text-lg text-muted-foreground">
-        Chargement de la publication officielle...
+      <div className="min-h-screen flex items-center justify-center bg-muted/20">
+        <p className="text-muted-foreground text-sm animate-pulse">
+          Chargement de l'article…
+        </p>
       </div>
     );
   }
 
-  if (error) {
+  if (notFound || !entry) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background text-lg text-red-700">
-        {error}
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-muted/20">
+        <p className="text-lg font-serif text-gray-600">
+          Article introuvable — NOR : <strong>{nor}</strong>
+        </p>
+        <Button asChild variant="outline">
+          <Link to="/journal-officiel">← Retour au Journal Officiel</Link>
+        </Button>
       </div>
     );
   }
 
-  if (!entry) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background text-lg text-muted-foreground">
-        Aucune publication trouvée pour ce numéro NOR.
-      </div>
-    );
-  }
+  // ── Rendu principal ───────────────────────────────────────────────────────
+
+  const hasModifications =
+    entry.modifications && entry.modifications.length > 0;
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#f9f9f9] font-[Times_New_Roman]">
-      <Navigation />
-      <main className="flex-1 py-16">
-        <div className="container mx-auto px-6 max-w-4xl">
-          <div className="border border-[#FFD700] rounded-2xl bg-white/95 shadow-card p-10">
-            <h1 className="text-4xl font-bold mb-4 text-[#07419e] text-center">
-              {entry.title}
-            </h1>
-            <p className="text-sm text-center text-muted-foreground italic mb-6">
-              NOR : {entry.nor_number} — publié le{" "}
-              {new Date(entry.publication_date).toLocaleDateString("fr-FR", {
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              })}
-            </p>
-            
-            <ArticleContent entry={entry} />
-            
-            {entry.author_name && (
-              <div className="mt-8 pt-4 border-t text-right text-sm text-gray-600 italic">
-                {getRoleLabel(entry.author_role)} : {entry.author_name}
-              </div>
-            )}
+    <div className="min-h-screen bg-muted/10 py-10 px-4">
+      {/* En-tête de navigation */}
+      <div className="max-w-4xl mx-auto mb-6">
+        <Button asChild variant="ghost" size="sm" className="text-gray-500 hover:text-gray-800">
+          <Link to="/journal-officiel">
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Journal Officiel du BDL
+          </Link>
+        </Button>
+      </div>
+
+      {/* Article */}
+      <article className="max-w-4xl mx-auto border border-[#FFD700] rounded-2xl bg-white/95 shadow-lg p-6 md:p-12 font-serif">
+
+        {/* Bandeau "consolidé" si des modifications existent */}
+        {hasModifications && (
+          <div className="mb-6 bg-amber-50 border border-amber-300 rounded-lg px-4 py-3 text-xs text-amber-800">
+            <span className="font-bold">⚠ Version consolidée</span> — Cet
+            article a fait l'objet de{" "}
+            {entry.modifications!.length} modification
+            {entry.modifications!.length > 1 ? "s" : ""} depuis sa publication
+            initiale. Le texte ci-dessous est la version en vigueur.
           </div>
+        )}
+
+        {/* Titre & métadonnées */}
+        <h1 className="text-3xl md:text-4xl font-bold text-center text-[#07419e] mb-3 leading-tight">
+          {entry.title}
+        </h1>
+
+        <div className="text-center text-sm text-gray-500 italic mb-8 space-y-1">
+          <p>
+            <span className="font-medium text-gray-700">NOR</span> :{" "}
+            {entry.nor_number}
+          </p>
+          <p>
+            Publié le{" "}
+            <span className="font-medium text-gray-700">
+              {formatDate(entry.publication_date)}
+            </span>
+          </p>
         </div>
-      </main>
-      <Footer />
+
+        {/* Séparateur décoratif */}
+        <div className="flex items-center gap-3 mb-8">
+          <div className="flex-1 h-px bg-[#FFD700]" />
+          <div className="w-2 h-2 rounded-full bg-[#FFD700]" />
+          <div className="flex-1 h-px bg-[#FFD700]" />
+        </div>
+
+        {/* Contenu de l'article */}
+        <div className="text-black leading-relaxed">
+          <ArticleRenderer content={entry.content} />
+        </div>
+
+        {/* Signature */}
+        {entry.author_name && (
+          <div className="mt-10 pt-6 border-t text-right text-sm text-gray-600 italic">
+            {entry.author_role === "president"
+              ? "Le Président"
+              : entry.author_role === "vice_president"
+              ? "La Vice-Présidente"
+              : entry.author_role === "secretary_general"
+              ? "Le Secrétaire Général"
+              : "Bureau des Lycéens"}{" "}
+            : {entry.author_name}
+          </div>
+        )}
+
+        {/* ── Historique des modifications ── */}
+        <ModificationsHistory modifications={entry.modifications || []} />
+
+      </article>
+
+      {/* Pied de page légal */}
+      <p className="max-w-4xl mx-auto mt-6 text-center text-xs text-gray-400 font-serif">
+        Journal Officiel du Bureau des Lycéens — Les modifications sont
+        enregistrées de manière irréversible et datées.
+      </p>
     </div>
   );
-};
-
-export default JobdlArticle;
+}

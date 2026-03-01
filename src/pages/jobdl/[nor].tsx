@@ -111,9 +111,14 @@ const injectDiffIntoContent = (
 ): string => {
   if (!modifications || modifications.length === 0) return htmlContent;
 
-  // On construit le texte annoté à partir du diff de la dernière modification
-  // (la plus récente est la référence de l'état actuel avec historique visible)
-  const lastMod = modifications[modifications.length - 1];
+  // Filtre les modifications au nouveau format uniquement (avec diff[])
+  // Les anciennes entrées { oldText, newText, position } sont ignorées silencieusement
+  const validMods = modifications.filter(
+    (m) => Array.isArray((m as any).diff) && (m as any).diff.length > 0
+  );
+  if (validMods.length === 0) return htmlContent;
+
+  const lastMod = validMods[validMods.length - 1];
 
   let diffHTML = "";
   const dateStr = new Date(lastMod.date).toLocaleDateString("fr-FR");

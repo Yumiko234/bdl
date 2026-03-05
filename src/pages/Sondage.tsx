@@ -19,6 +19,7 @@ import {
   Eye,
   EyeOff,
   Info,
+  ShieldCheck,
 } from "lucide-react";
 import {
   PieChart,
@@ -40,6 +41,7 @@ interface Survey {
   end_date: string | null;
   allow_anonymous: boolean;
   is_form: boolean;
+  limit_responses: boolean;
 }
 
 interface Question {
@@ -78,21 +80,21 @@ interface ResultsData {
 // ─── constants ────────────────────────────────────────────────────────────────
 
 const COLORS = [
-  "#3B82F6", // blue-500
-  "#10B981", // emerald-500
-  "#F59E0B", // amber-500
-  "#EF4444", // red-500
-  "#8B5CF6", // violet-500
-  "#EC4899", // pink-500
-  "#14B8A6", // teal-500
-  "#F97316", // orange-500
+  "#3B82F6",
+  "#10B981",
+  "#F59E0B",
+  "#EF4444",
+  "#8B5CF6",
+  "#EC4899",
+  "#14B8A6",
+  "#F97316",
 ];
 
 // ─── Custom pie label ─────────────────────────────────────────────────────────
 
 const renderCustomLabel = (props: any) => {
   const { cx, cy, midAngle, innerRadius, outerRadius, percent } = props;
-  if (percent < 0.06) return null; // skip tiny slices
+  if (percent < 0.06) return null;
 
   const RADIAN = Math.PI / 180;
   const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
@@ -125,13 +127,14 @@ const Sondage = () => {
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [loading, setLoading] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [alreadyResponded, setAlreadyResponded] = useState(false);
   const [results, setResults] = useState<ResultsData | null>(null);
 
   useEffect(() => {
     loadSurveys();
   }, []);
 
-  // ── load surveys (open + closed only) ────────────────────────────────────
+  // ── load surveys ──────────────────────────────────────────────────────────
   const loadSurveys = async () => {
     const { data, error } = await supabase
       .from("surveys")
@@ -146,7 +149,7 @@ const Sondage = () => {
     }
   };
 
-  // ── load questions + options for a survey ────────────────────────────────
+  // ── load questions ────────────────────────────────────────────────────────
   const loadQuestions = async (surveyId: string): Promise<Question[]> => {
     const { data: qData } = await supabase
       .from("survey_questions")
@@ -172,7 +175,7 @@ const Sondage = () => {
     return result;
   };
 
-  // ── load aggregated results for closed non-form surveys ──────────────────
+  // ── load results for closed non-form surveys ──────────────────────────────
   const loadResults = async (surveyId: string, qs: Question[]) => {
     const resultsData: ResultsData = {};
 
@@ -216,10 +219,36 @@ const Sondage = () => {
     setResults(resultsData);
   };
 
+  // ── check if respondent already answered (for limit_responses) ───────────
+  const checkAlreadyResponded = async (
+    surveyId: string,
+    name: string,
+    anonymous: boolean
+  ): Promise<boolean> => {
+    // Anonymous responses are never blocked (we can't track them reliably)
+    if (anonymous) return false;
+
+    const normalizedName = name.trim().toLowerCase();
+    if (!normalizedName) return false;
+
+    const { data } = await supabase
+      .from("survey_responses")
+      .select("id, respondent_name")
+      .eq("survey_id", surveyId)
+      .eq("is_anonymous", false);
+
+    if (!data) return false;
+
+    return data.some(
+      (r) => r.respondent_name?.trim().toLowerCase() === normalizedName
+    );
+  };
+
   // ── select a survey ──────────────────────────────────────────────────────
   const handleSelectSurvey = async (survey: Survey) => {
     setSelectedSurvey(survey);
     setHasSubmitted(false);
+    setAlreadyResponded(false);
     setAnswers([]);
     setResults(null);
     setIsAnonymous(false);
@@ -227,7 +256,6 @@ const Sondage = () => {
 
     const qs = await loadQuestions(survey.id);
 
-    // For closed surveys that are NOT forms, show results
     if (survey.status === "closed" && !survey.is_form) {
       await loadResults(survey.id, qs);
     }
@@ -241,10 +269,7 @@ const Sondage = () => {
   ) => {
     setAnswers((prev) => {
       const filtered = prev.filter((a) => a.questionId !== questionId);
-      return [
-        ...filtered,
-        { questionId, optionId, textAnswer },
-      ];
+      return [...filtered, { questionId, optionId, textAnswer }];
     });
   };
 
@@ -255,7 +280,7 @@ const Sondage = () => {
     }
 
     for (const q of questions) {
-      if (q.question_type === "info") continue; // info blocks are decorative
+      if (q.question_type === "info") continue;
       if (!q.is_required) continue;
       const ans = answers.find((a) => a.questionId === q.id);
       if (!ans) return `La question « ${q.question_text} » est obligatoire.`;
@@ -272,13 +297,27 @@ const Sondage = () => {
   const handleSubmit = async () => {
     if (!selectedSurvey || selectedSurvey.status !== "open") return;
 
-    const error = validate();
-    if (error) {
-      toast.error(error);
+    const validationError = validate();
+    if (validationError) {
+      toast.error(validationError);
       return;
     }
 
     setLoading(true);
+
+    // ── Check for duplicate response if limit_responses is enabled ──
+    if (selectedSurvey.limit_responses && !isAnonymous) {
+      const already = await checkAlreadyResponded(
+        selectedSurvey.id,
+        respondentName,
+        isAnonymous
+      );
+      if (already) {
+        setAlreadyResponded(true);
+        setLoading(false);
+        return;
+      }
+    }
 
     // 1. create response row
     const { data: response, error: respErr } = await supabase
@@ -305,9 +344,8 @@ const Sondage = () => {
       text_answer: ans.textAnswer || null,
     }));
 
-    // also insert rows for non-required unanswered questions (null answer)
     questions.forEach((q) => {
-      if (q.question_type === "info") return; // info blocks have no answers
+      if (q.question_type === "info") return;
       if (!answers.find((a) => a.questionId === q.id)) {
         answerRows.push({
           response_id: response.id,
@@ -405,6 +443,15 @@ const Sondage = () => {
                                   Formulaire
                                 </Badge>
                               )}
+                              {survey.limit_responses && (
+                                <Badge
+                                  variant="outline"
+                                  className="border-orange-400 text-orange-600 gap-1"
+                                >
+                                  <ShieldCheck className="h-3 w-3" />
+                                  1 réponse / personne
+                                </Badge>
+                              )}
                             </div>
                             {survey.description && (
                               <p className="text-muted-foreground">
@@ -422,7 +469,6 @@ const Sondage = () => {
                               </p>
                             )}
                           </div>
-                          {/* Right-hand icon hint */}
                           <div className="ml-4 text-muted-foreground">
                             {survey.status === "open" ? (
                               <span className="text-sm underline">Répondre →</span>
@@ -474,6 +520,15 @@ const Sondage = () => {
                             Formulaire
                           </Badge>
                         )}
+                        {selectedSurvey.limit_responses && (
+                          <Badge
+                            variant="outline"
+                            className="border-orange-400 text-orange-600 gap-1"
+                          >
+                            <ShieldCheck className="h-3 w-3" />
+                            1 réponse / personne
+                          </Badge>
+                        )}
                       </div>
                       {selectedSurvey.description && (
                         <p className="text-muted-foreground mt-1">
@@ -483,148 +538,176 @@ const Sondage = () => {
                     </CardHeader>
 
                     <CardContent className="space-y-6">
-                      {/* ═══ OPEN + not yet submitted → answer form ═══ */}
-                      {selectedSurvey.status === "open" && !hasSubmitted && (
-                        <>
-                          {/* Identification block */}
-                          <div className="border rounded-lg p-4 bg-muted/30 space-y-4">
-                            <h3 className="font-semibold">Identification</h3>
 
-                            {/* Name field – hidden when anonymous */}
-                            {!isAnonymous && (
-                              <div className="space-y-2">
-                                <Label>Nom et Prénom</Label>
-                                <Input
-                                  value={respondentName}
-                                  onChange={(e) =>
-                                    setRespondentName(e.target.value)
-                                  }
-                                  placeholder="Votre nom complet"
-                                />
-                              </div>
-                            )}
+                      {/* ═══ ALREADY RESPONDED block ═══ */}
+                      {alreadyResponded && (
+                        <div className="text-center py-12 space-y-4">
+                          <ShieldCheck className="h-16 w-16 text-orange-500 mx-auto" />
+                          <h3 className="text-2xl font-bold">
+                            Vous avez déjà répondu
+                          </h3>
+                          <p className="text-muted-foreground">
+                            Ce sondage est limité à une réponse par personne.
+                            Une réponse avec le nom{" "}
+                            <strong>« {respondentName} »</strong> a déjà été
+                            enregistrée.
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            Si vous pensez qu'il s'agit d'une erreur, contactez
+                            le BDL.
+                          </p>
+                        </div>
+                      )}
 
-                            {/* Anonymous checkbox – only when survey allows it */}
-                            {selectedSurvey.allow_anonymous && (
-                              <div className="flex items-center space-x-2">
-                                <Checkbox
-                                  id="anonymous"
-                                  checked={isAnonymous}
-                                  onCheckedChange={(checked) =>
-                                    setIsAnonymous(checked as boolean)
-                                  }
-                                />
-                                <Label
-                                  htmlFor="anonymous"
-                                  className="cursor-pointer flex items-center gap-1.5"
-                                >
-                                  <EyeOff className="h-4 w-4 text-muted-foreground" />
-                                  Répondre anonymement
-                                </Label>
-                              </div>
-                            )}
-                          </div>
+                      {/* ═══ OPEN + not yet submitted + not already responded → answer form ═══ */}
+                      {selectedSurvey.status === "open" &&
+                        !hasSubmitted &&
+                        !alreadyResponded && (
+                          <>
+                            {/* Identification block */}
+                            <div className="border rounded-lg p-4 bg-muted/30 space-y-4">
+                              <h3 className="font-semibold">Identification</h3>
 
-                          {/* Questions & info blocs */}
-                          {(() => {
-                            let qNum = 0;
-                            return questions.map((question) => {
-                              // ── info block ──
-                              if (question.question_type === "info") {
+                              {!isAnonymous && (
+                                <div className="space-y-2">
+                                  <Label>Nom et Prénom</Label>
+                                  <Input
+                                    value={respondentName}
+                                    onChange={(e) =>
+                                      setRespondentName(e.target.value)
+                                    }
+                                    placeholder="Votre nom complet"
+                                  />
+                                </div>
+                              )}
+
+                              {selectedSurvey.allow_anonymous && (
+                                <div className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id="anonymous"
+                                    checked={isAnonymous}
+                                    onCheckedChange={(checked) =>
+                                      setIsAnonymous(checked as boolean)
+                                    }
+                                  />
+                                  <Label
+                                    htmlFor="anonymous"
+                                    className="cursor-pointer flex items-center gap-1.5"
+                                  >
+                                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                                    Répondre anonymement
+                                  </Label>
+                                </div>
+                              )}
+
+                              {/* Avertissement si limit_responses actif */}
+                              {selectedSurvey.limit_responses && !isAnonymous && (
+                                <p className="text-xs text-orange-600 flex items-center gap-1.5">
+                                  <ShieldCheck className="h-3.5 w-3.5 flex-shrink-0" />
+                                  Ce sondage est limité à une réponse par
+                                  personne (basé sur votre nom).
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Questions & info blocs */}
+                            {(() => {
+                              let qNum = 0;
+                              return questions.map((question) => {
+                                if (question.question_type === "info") {
+                                  return (
+                                    <div
+                                      key={question.id}
+                                      className="flex items-start gap-3 border border-blue-200 rounded-lg p-4 bg-blue-50/50"
+                                    >
+                                      <Info className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                                      <p className="text-sm text-blue-800">
+                                        {question.question_text}
+                                      </p>
+                                    </div>
+                                  );
+                                }
+
+                                qNum++;
+                                const currentAnswer = answers.find(
+                                  (a) => a.questionId === question.id
+                                );
+
                                 return (
                                   <div
                                     key={question.id}
-                                    className="flex items-start gap-3 border border-blue-200 rounded-lg p-4 bg-blue-50/50"
+                                    className="border rounded-lg p-4 space-y-3"
                                   >
-                                    <Info className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
-                                    <p className="text-sm text-blue-800">
-                                      {question.question_text}
-                                    </p>
-                                  </div>
-                                );
-                              }
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <h4 className="font-semibold">
+                                        {qNum}. {question.question_text}
+                                      </h4>
+                                      {question.is_required && (
+                                        <span className="text-red-500 text-sm font-bold">
+                                          *
+                                        </span>
+                                      )}
+                                    </div>
 
-                              // ── real question ──
-                              qNum++;
-                              const currentAnswer = answers.find(
-                                (a) => a.questionId === question.id
-                              );
-
-                              return (
-                                <div
-                                  key={question.id}
-                                  className="border rounded-lg p-4 space-y-3"
-                                >
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <h4 className="font-semibold">
-                                      {qNum}. {question.question_text}
-                                    </h4>
-                                    {question.is_required && (
-                                      <span className="text-red-500 text-sm font-bold">
-                                        *
-                                      </span>
+                                    {question.question_type === "qcm" &&
+                                    question.options.length > 0 ? (
+                                      <RadioGroup
+                                        value={currentAnswer?.optionId || ""}
+                                        onValueChange={(value) =>
+                                          handleAnswerChange(question.id, value)
+                                        }
+                                      >
+                                        {question.options.map((option) => (
+                                          <div
+                                            key={option.id}
+                                            className="flex items-center space-x-2"
+                                          >
+                                            <RadioGroupItem
+                                              value={option.id}
+                                              id={option.id}
+                                            />
+                                            <Label
+                                              htmlFor={option.id}
+                                              className="cursor-pointer"
+                                            >
+                                              {option.option_text}
+                                            </Label>
+                                          </div>
+                                        ))}
+                                      </RadioGroup>
+                                    ) : (
+                                      <Textarea
+                                        rows={3}
+                                        placeholder="Votre réponse..."
+                                        value={
+                                          currentAnswer?.textAnswer || ""
+                                        }
+                                        onChange={(e) =>
+                                          handleAnswerChange(
+                                            question.id,
+                                            undefined,
+                                            e.target.value
+                                          )
+                                        }
+                                      />
                                     )}
                                   </div>
+                                );
+                              });
+                            })()}
 
-                                  {question.question_type === "qcm" &&
-                                  question.options.length > 0 ? (
-                                    <RadioGroup
-                                      value={currentAnswer?.optionId || ""}
-                                      onValueChange={(value) =>
-                                        handleAnswerChange(question.id, value)
-                                      }
-                                    >
-                                      {question.options.map((option) => (
-                                        <div
-                                          key={option.id}
-                                          className="flex items-center space-x-2"
-                                        >
-                                          <RadioGroupItem
-                                            value={option.id}
-                                            id={option.id}
-                                          />
-                                          <Label
-                                            htmlFor={option.id}
-                                            className="cursor-pointer"
-                                          >
-                                            {option.option_text}
-                                          </Label>
-                                        </div>
-                                      ))}
-                                    </RadioGroup>
-                                  ) : (
-                                    <Textarea
-                                      rows={3}
-                                      placeholder="Votre réponse..."
-                                      value={
-                                        currentAnswer?.textAnswer || ""
-                                      }
-                                      onChange={(e) =>
-                                        handleAnswerChange(
-                                          question.id,
-                                          undefined,
-                                          e.target.value
-                                        )
-                                      }
-                                    />
-                                  )}
-                                </div>
-                              );
-                            });
-                          })()}
-
-                          <Button
-                            onClick={handleSubmit}
-                            disabled={loading}
-                            size="lg"
-                            className="w-full"
-                          >
-                            {loading
-                              ? "Envoi en cours..."
-                              : "Soumettre mes réponses"}
-                          </Button>
-                        </>
-                      )}
+                            <Button
+                              onClick={handleSubmit}
+                              disabled={loading}
+                              size="lg"
+                              className="w-full"
+                            >
+                              {loading
+                                ? "Envoi en cours..."
+                                : "Soumettre mes réponses"}
+                            </Button>
+                          </>
+                        )}
 
                       {/* ═══ Submitted confirmation ═══ */}
                       {hasSubmitted && (
@@ -666,7 +749,6 @@ const Sondage = () => {
                             {(() => {
                               let qNum = 0;
                               return questions.map((question) => {
-                                // ── info block inside results ──
                                 if (question.question_type === "info") {
                                   return (
                                     <div
@@ -681,7 +763,6 @@ const Sondage = () => {
                                   );
                                 }
 
-                                // ── real question result ──
                                 qNum++;
                                 const qResult = results[question.id];
 
@@ -696,7 +777,6 @@ const Sondage = () => {
 
                                     {qResult?.type === "qcm" ? (
                                       <>
-                                        {/* Pie chart */}
                                         <div className="h-72">
                                           <ResponsiveContainer
                                             width="100%"
@@ -737,7 +817,6 @@ const Sondage = () => {
                                           </ResponsiveContainer>
                                         </div>
 
-                                        {/* Summary table below chart */}
                                         <div className="space-y-2 mt-2">
                                           {(() => {
                                             const total = qResult.options.reduce(

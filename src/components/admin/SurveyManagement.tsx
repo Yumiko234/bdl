@@ -25,6 +25,7 @@ import {
   Clock,
   GripVertical,
   Info,
+  ShieldCheck,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -49,12 +50,9 @@ interface Survey {
   end_date: string | null;
   allow_anonymous: boolean;
   is_form: boolean;
-  created_at: string;
+  limit_responses: boolean; // ← nouveau champ
 }
 
-// question_type can be "qcm" | "text" | "info"
-// "info" rows are purely decorative blocks; they have no options and are
-// never submitted as answers.
 interface Question {
   id: string;
   survey_id: string;
@@ -114,7 +112,6 @@ const ResponsesView = ({
   const [loading, setLoading] = useState(true);
   const [expandedResponse, setExpandedResponse] = useState<string | null>(null);
 
-  // only real questions (not info blocks) are shown in response detail
   const realQuestions = questions.filter((q) => q.question_type !== "info");
 
   const load = useCallback(async () => {
@@ -182,6 +179,11 @@ const ResponsesView = ({
         {survey.is_form && (
           <Badge variant="outline" className="border-blue-500 text-blue-600">
             Formulaire
+          </Badge>
+        )}
+        {survey.limit_responses && (
+          <Badge variant="outline" className="border-orange-500 text-orange-600">
+            1 réponse / personne
           </Badge>
         )}
       </div>
@@ -279,6 +281,7 @@ export const SurveyManagement = () => {
     end_date: "",
     allow_anonymous: true,
     is_form: false,
+    limit_responses: false, // ← nouveau
   });
 
   // expanded survey editing
@@ -295,7 +298,7 @@ export const SurveyManagement = () => {
   const [viewingResponses, setViewingResponses] = useState<Survey | null>(null);
   const [viewingQuestions, setViewingQuestions] = useState<Question[]>([]);
 
-  // drag state – we only need a ref for the index being dragged
+  // drag state
   const dragIndexRef = useRef<number | null>(null);
 
   // ── load ────────────────────────────────────────────────────────────────────
@@ -363,6 +366,7 @@ export const SurveyManagement = () => {
         status: "draft",
         allow_anonymous: formData.allow_anonymous,
         is_form: formData.is_form,
+        limit_responses: formData.limit_responses, // ← nouveau
       })
       .select()
       .single();
@@ -380,6 +384,7 @@ export const SurveyManagement = () => {
         end_date: "",
         allow_anonymous: true,
         is_form: false,
+        limit_responses: false,
       });
       setEditingSurveyId(data.id);
       await loadQuestions(data.id);
@@ -546,15 +551,12 @@ export const SurveyManagement = () => {
   };
 
   // ── drag & drop ─────────────────────────────────────────────────────────────
-  // Pure client-side reorder; persists to DB only on drop.
-
   const handleDragStart = (
     e: React.DragEvent<HTMLDivElement>,
     index: number
   ) => {
     dragIndexRef.current = index;
     e.dataTransfer.effectAllowed = "move";
-    // Chrome needs this to actually show the ghost
     e.dataTransfer.setData("text/plain", String(index));
   };
 
@@ -568,12 +570,11 @@ export const SurveyManagement = () => {
     const from = dragIndexRef.current;
     if (from === null || from === index) return;
 
-    // optimistic reorder in local state
     setQuestions((prev) => {
       const updated = [...prev];
       const [moved] = updated.splice(from, 1);
       updated.splice(index, 0, moved);
-      dragIndexRef.current = index; // track new position
+      dragIndexRef.current = index;
       return updated;
     });
   };
@@ -581,18 +582,14 @@ export const SurveyManagement = () => {
   const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     dragIndexRef.current = null;
-
-    // persist the current visual order to the DB
     await persistOrder();
   };
 
   const handleDragEnd = () => {
-    // safety net: reset ref even if drop didn't fire (e.g. dropped outside)
     dragIndexRef.current = null;
   };
 
   const persistOrder = async () => {
-    // fire individual updates – Supabase has no bulk-update shortcut
     for (let i = 0; i < questions.length; i++) {
       if (questions[i].display_order !== i) {
         await supabase
@@ -729,6 +726,24 @@ export const SurveyManagement = () => {
                   Mode formulaire (résultats non publics)
                 </Label>
               </div>
+              {/* ── NOUVEAU toggle limit_responses ── */}
+              <div className="flex items-center gap-3">
+                <Switch
+                  checked={formData.limit_responses}
+                  onCheckedChange={(v) =>
+                    setFormData({ ...formData, limit_responses: v })
+                  }
+                />
+                <div>
+                  <Label className="cursor-pointer select-none flex items-center gap-1.5">
+                    <ShieldCheck className="h-4 w-4 text-orange-500" />
+                    Limiter à 1 réponse par personne
+                  </Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Basé sur le nom saisi (ou "anonyme")
+                  </p>
+                </div>
+              </div>
             </div>
 
             <Button onClick={handleCreateSurvey} disabled={loading}>
@@ -774,6 +789,16 @@ export const SurveyManagement = () => {
                             className="border-gray-500 text-gray-500 text-xs"
                           >
                             Anonyme OK
+                          </Badge>
+                        )}
+                        {/* ── Badge limit_responses ── */}
+                        {survey.limit_responses && (
+                          <Badge
+                            variant="outline"
+                            className="border-orange-500 text-orange-600 text-xs gap-1"
+                          >
+                            <ShieldCheck className="h-3 w-3" />
+                            1 réponse / personne
                           </Badge>
                         )}
                       </div>
@@ -874,9 +899,7 @@ export const SurveyManagement = () => {
                     </div>
                   </div>
 
-                  {/* ════════════════════════════════════════════════════════
-                      EDITING PANEL
-                      ════════════════════════════════════════════════════════ */}
+                  {/* ════ EDITING PANEL ════ */}
                   {isEditing && (
                     <div className="mt-5 border-t pt-5 space-y-5">
                       {/* toggles */}
@@ -900,6 +923,24 @@ export const SurveyManagement = () => {
                             }
                           />
                           <Label className="select-none">Mode formulaire</Label>
+                        </div>
+                        {/* ── NOUVEAU toggle dans le panneau d'édition ── */}
+                        <div className="flex items-center gap-3">
+                          <Switch
+                            checked={survey.limit_responses ?? false}
+                            onCheckedChange={(v) =>
+                              patchSurvey(survey.id, { limit_responses: v })
+                            }
+                          />
+                          <div>
+                            <Label className="select-none flex items-center gap-1.5">
+                              <ShieldCheck className="h-4 w-4 text-orange-500" />
+                              Limiter à 1 réponse par personne
+                            </Label>
+                            <p className="text-xs text-muted-foreground">
+                              Basé sur le nom saisi (ou "anonyme")
+                            </p>
+                          </div>
                         </div>
                       </div>
 
@@ -942,9 +983,7 @@ export const SurveyManagement = () => {
                             {q.question_type === "info" && (
                               <div className="p-3 space-y-2">
                                 <div className="flex items-start gap-2">
-                                  {/* grip */}
                                   <GripVertical className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0 cursor-grab active:cursor-grabbing" />
-
                                   <div className="flex items-center gap-2 flex-1 min-w-0">
                                     <Info className="h-4 w-4 text-blue-500 flex-shrink-0" />
                                     <Badge
@@ -954,7 +993,6 @@ export const SurveyManagement = () => {
                                       Info
                                     </Badge>
                                   </div>
-
                                   <Button
                                     size="sm"
                                     variant="ghost"
@@ -966,14 +1004,11 @@ export const SurveyManagement = () => {
                                     <Trash2 className="h-3.5 w-3.5" />
                                   </Button>
                                 </div>
-
-                                {/* editable text area */}
                                 <Textarea
                                   className="ml-6 text-sm bg-white border-blue-200 focus:ring-blue-300"
                                   rows={2}
                                   value={q.question_text}
                                   onChange={(e) => {
-                                    // optimistic local update
                                     setQuestions((prev) =>
                                       prev.map((item) =>
                                         item.id === q.id
@@ -990,15 +1025,12 @@ export const SurveyManagement = () => {
                               </div>
                             )}
 
-                            {/* ── QUESTION (qcm | text) ── */}
+                            {/* ── QUESTION ── */}
                             {q.question_type !== "info" && (
                               <div className="p-3 space-y-3">
-                                {/* header */}
                                 <div className="flex items-start justify-between gap-2">
                                   <div className="flex items-center gap-2 flex-1 min-w-0">
-                                    {/* grip */}
                                     <GripVertical className="h-4 w-4 text-muted-foreground flex-shrink-0 cursor-grab active:cursor-grabbing" />
-
                                     <span className="text-xs font-bold text-muted-foreground flex-shrink-0">
                                       {idx + 1}.
                                     </span>
@@ -1006,9 +1038,7 @@ export const SurveyManagement = () => {
                                       {q.question_text}
                                     </p>
                                     <Badge variant="outline" className="text-xs flex-shrink-0">
-                                      {q.question_type === "qcm"
-                                        ? "QCM"
-                                        : "Texte libre"}
+                                      {q.question_type === "qcm" ? "QCM" : "Texte libre"}
                                     </Badge>
                                     {q.is_required && (
                                       <Badge className="text-xs bg-orange-100 text-orange-700 border-orange-300 flex-shrink-0">
@@ -1028,41 +1058,26 @@ export const SurveyManagement = () => {
                                   </Button>
                                 </div>
 
-                                {/* QCM options */}
                                 {q.question_type === "qcm" && (
                                   <div className="space-y-1.5 pl-6">
                                     {q.options.map((opt) => (
-                                      <div
-                                        key={opt.id}
-                                        className="flex items-center gap-2"
-                                      >
-                                        <span className="text-muted-foreground text-xs">
-                                          •
-                                        </span>
+                                      <div key={opt.id} className="flex items-center gap-2">
+                                        <span className="text-muted-foreground text-xs">•</span>
                                         <Input
                                           className="h-7 text-sm flex-1"
                                           value={opt.option_text}
                                           onChange={(e) =>
-                                            handleUpdateOption(
-                                              opt.id,
-                                              e.target.value
-                                            )
+                                            handleUpdateOption(opt.id, e.target.value)
                                           }
                                           onBlur={() =>
-                                            handleUpdateOption(
-                                              opt.id,
-                                              opt.option_text
-                                            )
+                                            handleUpdateOption(opt.id, opt.option_text)
                                           }
                                         />
                                         <Button
                                           size="sm"
                                           variant="ghost"
                                           onClick={() =>
-                                            handleDeleteOption(
-                                              opt.id,
-                                              survey.id
-                                            )
+                                            handleDeleteOption(opt.id, survey.id)
                                           }
                                           className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
                                         >
@@ -1073,13 +1088,10 @@ export const SurveyManagement = () => {
                                     <Button
                                       size="sm"
                                       variant="ghost"
-                                      onClick={() =>
-                                        handleAddOption(q.id, survey.id)
-                                      }
+                                      onClick={() => handleAddOption(q.id, survey.id)}
                                       className="h-7 text-xs text-muted-foreground hover:text-accent"
                                     >
-                                      <Plus className="h-3 w-3 mr-1" /> Ajouter
-                                      une option
+                                      <Plus className="h-3 w-3 mr-1" /> Ajouter une option
                                     </Button>
                                   </div>
                                 )}
@@ -1091,11 +1103,7 @@ export const SurveyManagement = () => {
 
                       {/* ── Add question form ── */}
                       <div className="border rounded-lg p-4 bg-muted/20 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <h5 className="font-semibold text-sm">
-                            Ajouter un élément
-                          </h5>
-                        </div>
+                        <h5 className="font-semibold text-sm">Ajouter un élément</h5>
 
                         <Input
                           value={newQuestionText}
@@ -1103,29 +1111,23 @@ export const SurveyManagement = () => {
                           placeholder="Texte de la question…"
                         />
 
-                        {/* type selector */}
                         <div className="flex gap-2">
                           <Button
                             size="sm"
-                            variant={
-                              newQuestionType === "qcm" ? "default" : "outline"
-                            }
+                            variant={newQuestionType === "qcm" ? "default" : "outline"}
                             onClick={() => setNewQuestionType("qcm")}
                           >
                             <PieChartIcon className="h-4 w-4 mr-1" /> QCM
                           </Button>
                           <Button
                             size="sm"
-                            variant={
-                              newQuestionType === "text" ? "default" : "outline"
-                            }
+                            variant={newQuestionType === "text" ? "default" : "outline"}
                             onClick={() => setNewQuestionType("text")}
                           >
                             <FileText className="h-4 w-4 mr-1" /> Texte libre
                           </Button>
                         </div>
 
-                        {/* QCM options */}
                         {newQuestionType === "qcm" && (
                           <div className="space-y-2 pl-3 border-l-2 border-muted ml-1">
                             <Label className="text-xs text-muted-foreground">
@@ -1133,9 +1135,7 @@ export const SurveyManagement = () => {
                             </Label>
                             {newOptions.map((opt, i) => (
                               <div key={i} className="flex items-center gap-2">
-                                <span className="text-muted-foreground text-xs w-4">
-                                  {i + 1}.
-                                </span>
+                                <span className="text-muted-foreground text-xs w-4">{i + 1}.</span>
                                 <Input
                                   className="h-8 text-sm flex-1"
                                   value={opt}
@@ -1151,9 +1151,7 @@ export const SurveyManagement = () => {
                                     size="sm"
                                     variant="ghost"
                                     onClick={() =>
-                                      setNewOptions(
-                                        newOptions.filter((_, idx) => idx !== i)
-                                      )
+                                      setNewOptions(newOptions.filter((_, idx) => idx !== i))
                                     }
                                     className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
                                   >
@@ -1166,31 +1164,23 @@ export const SurveyManagement = () => {
                               size="sm"
                               variant="ghost"
                               onClick={() =>
-                                setNewOptions([
-                                  ...newOptions,
-                                  `Option ${newOptions.length + 1}`,
-                                ])
+                                setNewOptions([...newOptions, `Option ${newOptions.length + 1}`])
                               }
                               className="h-7 text-xs text-muted-foreground hover:text-accent"
                             >
-                              <Plus className="h-3 w-3 mr-1" /> Ajouter une
-                              option
+                              <Plus className="h-3 w-3 mr-1" /> Ajouter une option
                             </Button>
                           </div>
                         )}
 
-                        {/* required toggle */}
                         <div className="flex items-center gap-3 pt-1">
                           <Switch
                             checked={newQuestionRequired}
                             onCheckedChange={setNewQuestionRequired}
                           />
-                          <Label className="select-none text-sm">
-                            Question obligatoire
-                          </Label>
+                          <Label className="select-none text-sm">Question obligatoire</Label>
                         </div>
 
-                        {/* action row: add question + add info block */}
                         <div className="flex gap-2 pt-1 flex-wrap">
                           <Button
                             size="sm"
@@ -1200,7 +1190,6 @@ export const SurveyManagement = () => {
                             <Plus className="h-4 w-4 mr-1" />
                             Ajouter la question
                           </Button>
-
                           <Button
                             size="sm"
                             variant="outline"

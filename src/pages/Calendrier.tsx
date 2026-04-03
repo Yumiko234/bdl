@@ -170,6 +170,7 @@ export default function Calendrier() {
   // Fetch
   // -----------------------------------------------------------------------
   useEffect(() => {
+    document.title = "Calendrier – Bureau des Lycéens";
     fetchEvents();
   }, []);
 

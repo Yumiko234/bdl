@@ -45,6 +45,7 @@ const BDLMemberProfile = () => {
 
       if (error) throw error;
       setProfile(data);
+      document.title = `${data.full_name} – Bureau des Lycéens`;
     } catch (error) {
       console.error("Error loading profile:", error);
       toast.error("Profil introuvable");

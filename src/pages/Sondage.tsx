@@ -131,6 +131,7 @@ const Sondage = () => {
   const [results, setResults] = useState<ResultsData | null>(null);
 
   useEffect(() => {
+    document.title = "Sondages – Bureau des Lycéens";
     loadSurveys();
   }, []);
 

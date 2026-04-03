@@ -26,6 +26,8 @@ const BDLHistory = () => {
     loadYears();
   }, []);
 
+document.title = "Historique – Bureau des Lycéens";
+
   const loadYears = async () => {
     try {
       const { data, error } = await supabase

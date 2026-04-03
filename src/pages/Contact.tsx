@@ -28,6 +28,7 @@ const Contact = () => {
   const [contactInfos, setContactInfos] = useState<ContactInfo[]>([]);
 
   useEffect(() => {
+    document.title = "Contact – Bureau des Lycéens";
     loadContactInfos();
   }, []);
 

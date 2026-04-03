@@ -354,7 +354,7 @@ const JobdlArticle = () => {
       } else {
         setEntry(data as JournalEntry);
       }
-
+document.title = `${data.title} – Bureau des Lycéens`;
       setLoading(false);
     };
 

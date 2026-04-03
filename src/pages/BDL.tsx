@@ -25,7 +25,7 @@ const BDL = () => {
     loadMembers();
     loadContent();
   }, []);
-
+document.title = "Le BDL – Bureau des Lycéens";
   const loadContent = async () => {
     const { data } = await supabase
       .from('bdl_content')

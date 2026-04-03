@@ -23,6 +23,7 @@ const JOBDL = () => {
 
   useEffect(() => {
     const loadEntries = async () => {
+      document.title = "Journal Officiel – Bureau des Lycéens";
       const { data, error } = await supabase
         .from("official_journal" as any)
         .select("id,title,nor_number,publication_date,author_name,author_role")

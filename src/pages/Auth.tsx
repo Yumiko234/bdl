@@ -25,6 +25,7 @@ const Auth = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    document.title = "Connexion – Bureau des Lycéens";
     if (user) {
       navigate('/intranet');
     }

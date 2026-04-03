@@ -101,6 +101,7 @@ const Scrutin = () => {
 
   // On recharge quand la page ou la recherche change
   useEffect(() => {
+    document.title = "Scrutins – Bureau des Lycéens";
     loadScrutins();
   }, [currentPage, searchQuery]);
 

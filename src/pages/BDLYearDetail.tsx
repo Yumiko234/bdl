@@ -51,6 +51,8 @@ const BDLYearDetail = () => {
       if (yearError) throw yearError;
       setYearData(yearInfo);
 
+document.title = `BDL ${yearInfo.year_label} – Bureau des Lycéens`;
+
       // Load members for this year
       const { data: members, error: membersError } = await supabase
         .from("bdl_historical_members")

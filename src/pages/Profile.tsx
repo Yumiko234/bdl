@@ -41,6 +41,7 @@ const Profile = () => {
   /* ===================== LOAD PROFILE ===================== */
 
   useEffect(() => {
+    document.title = "Mon Profil – Bureau des Lycéens";
     if (!authLoading && !user) {
       navigate("/auth");
     } else if (user) {

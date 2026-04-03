@@ -39,6 +39,7 @@ const Admin = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    document.title = "Administration – Bureau des Lycéens";
     if (!loading && !user) {
       navigate('/auth');
     }

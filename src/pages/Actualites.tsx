@@ -33,6 +33,7 @@ const Actualites = () => {
 
   useEffect(() => {
     const fetchNews = async () => {
+      document.title = "Actualités – Bureau des Lycéens";
       const { data, error } = await supabase
         .from("news")
         .select("*")

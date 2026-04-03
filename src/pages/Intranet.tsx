@@ -12,6 +12,7 @@ const Intranet = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    document.title = "Intranet – Bureau des Lycéens";
     if (!loading && !user) {
       navigate('/auth');
     }

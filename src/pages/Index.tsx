@@ -38,6 +38,7 @@ const Index = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
+    document.title = "Bureau des Lycéens – Lycée Saint-André";
     loadPresidentMessage();
     loadLatestContent();
   }, []);

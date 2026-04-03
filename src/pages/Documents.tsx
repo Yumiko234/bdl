@@ -64,6 +64,7 @@ const Documents = () => {
   ]);
 
   useEffect(() => {
+    document.title = "Documents – Bureau des Lycéens";
     loadDocuments();
   }, []);
 

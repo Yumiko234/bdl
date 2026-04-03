@@ -17,6 +17,7 @@ const Etablissement = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    document.title = "L'Établissement – Bureau des Lycéens";
     loadSections();
   }, []);
 

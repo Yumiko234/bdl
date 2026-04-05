@@ -95,7 +95,7 @@ export const MaintenanceOverlay = ({ children }: MaintenanceOverlayProps) => {
         {/* Title */}
         <div className="space-y-2">
           <h1 className="text-3xl font-bold text-foreground">
-            Site en maintenance
+            Maintenance en cours
           </h1>
           <div className="w-16 h-1 rounded-full bg-accent mx-auto" />
         </div>

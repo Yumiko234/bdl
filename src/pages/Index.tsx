@@ -15,6 +15,7 @@ import { Link } from "react-router-dom";
 import { ChevronRight, FileText, Users, MessageCircle, AlertCircle, Vote, X } from "lucide-react";
 import logo from "@/assets/logo-bdl.jpeg";
 import { supabase } from "@/integrations/supabase/client";
+import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 
 // Fonction pour traduire les rôles
 const translateRole = (role: string): string => {
@@ -84,6 +85,7 @@ const Index = () => {
       <Navigation />
 
       <main className="flex-1">
+        <MaintenanceOverlay>
         {/* Hero Section */}
         <section className="relative py-20 gradient-institutional text-white overflow-hidden">
           <div className="absolute inset-0 bg-black/20"></div>
@@ -344,6 +346,7 @@ const Index = () => {
             </div>
           </div>
         </section>
+        </MaintenanceOverlay>
       </main>
 
       <Footer />

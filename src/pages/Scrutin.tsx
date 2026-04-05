@@ -24,6 +24,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 
 interface Scrutin {
   id: string;
@@ -411,6 +412,7 @@ const Scrutin = () => {
       <Navigation />
 
       <main className="flex-1">
+        <MaintenanceOverlay>
         {/* Hero */}
         <section className="py-16 gradient-institutional text-white">
           <div className="container mx-auto px-4">
@@ -732,6 +734,7 @@ const Scrutin = () => {
             </div>
           </div>
         </section>
+        </MaintenanceOverlay>
       </main>
 
       {/* Modal de confirmation du vote */}

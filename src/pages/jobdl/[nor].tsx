@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import "@/styles/journal.css";
+import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -401,6 +402,7 @@ document.title = `${data.title} – Bureau des Lycéens`;
     <div className="min-h-screen flex flex-col bg-[#f9f9f9] font-[Times_New_Roman]">
       <Navigation />
       <main className="flex-1 py-16">
+        <MaintenanceOverlay>
         <div className="container mx-auto px-6 max-w-4xl">
           <div className="border border-[#FFD700] rounded-2xl bg-white/95 shadow-card p-10">
             <h1 className="text-4xl font-bold mb-4 text-[#07419e] text-center">
@@ -424,6 +426,7 @@ document.title = `${data.title} – Bureau des Lycéens`;
             )}
           </div>
         </div>
+        </MaintenanceOverlay>
       </main>
       <Footer />
     </div>

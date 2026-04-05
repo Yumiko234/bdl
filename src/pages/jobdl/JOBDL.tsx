@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { AlertCircle } from "lucide-react"; // ✅ Import ajouté
+import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 
 interface JournalEntry {
   id: string;
@@ -60,6 +61,7 @@ const JOBDL = () => {
       <Navigation />
 
       <main className="flex-1 py-16">
+        <MaintenanceOverlay>
         <section className="py-16 gradient-institutional text-white">
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center space-y-4">
@@ -145,6 +147,7 @@ const JOBDL = () => {
             </div>
           </div>
         </section>
+        </MaintenanceOverlay>
       </main>
 
       <Footer />

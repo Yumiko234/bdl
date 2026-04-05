@@ -11,6 +11,7 @@ import { Shield, Lock, UserPlus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client"; // Import direct pour le reset
 import { toast } from "sonner";
+import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 
 const Auth = () => {
   const [loginCredentials, setLoginCredentials] = useState({ email: "", password: "" });
@@ -72,6 +73,7 @@ const Auth = () => {
       <Navigation />
       
       <main className="flex-1">
+        <MaintenanceOverlay>
         <section className="py-16 gradient-institutional text-white">
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center space-y-4">
@@ -220,6 +222,7 @@ const Auth = () => {
             </div>
           </div>
         </section>
+        </MaintenanceOverlay>
       </main>
 
       <Footer />

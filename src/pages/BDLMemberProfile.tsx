@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ChevronLeft, Mail, MessageCircle, Calendar, GraduationCap, Lightbulb, Award } from "lucide-react";
+import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 
 interface MemberProfile {
   id: string;
@@ -105,6 +106,7 @@ const BDLMemberProfile = () => {
       <Navigation />
 
       <main className="flex-1">
+        <MaintenanceOverlay>
         {/* Hero Section */}
         <section className="py-16 gradient-institutional text-white">
           <div className="container mx-auto px-4">
@@ -224,6 +226,7 @@ const BDLMemberProfile = () => {
             </div>
           </div>
         </section>
+        </MaintenanceOverlay>
       </main>
 
       <Footer />

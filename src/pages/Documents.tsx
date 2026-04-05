@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { FileText, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 
 interface Document {
   id: string;
@@ -116,6 +117,7 @@ const Documents = () => {
       <Navigation />
 
       <main className="flex-1">
+        <MaintenanceOverlay>
         {/* Bannière */}
         <section className="py-16 gradient-institutional text-white">
           <div className="container mx-auto px-4">
@@ -235,6 +237,7 @@ const Documents = () => {
             </div>
           </div>
         </section>
+        </MaintenanceOverlay>
       </main>
 
       <Footer />

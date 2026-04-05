@@ -6,24 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 const Footer = () => {
   const [content, setContent] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    loadContent();
-  }, []);
-
-  const loadContent = async () => {
-    const { data } = await supabase
-      .from('footer_content')
-      .select('*');
-    
-    if (data) {
-      const contentMap: Record<string, string> = {};
-      data.forEach(item => {
-        contentMap[item.section_key] = item.content;
-      });
-      setContent(contentMap);
-    }
-  };
-
   return (
     <footer className="bg-secondary text-secondary-foreground mt-20">
       <div className="container mx-auto px-4 py-12">

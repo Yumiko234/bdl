@@ -72,10 +72,10 @@ const Intranet = () => {
                       <MessageSquare className="h-6 w-6 text-white" />
                     </div>
                     <h3 className="text-xl font-semibold">
-                      Forum de Classe | Fonctionnalité en développement
+                      Support
                     </h3>
                     <p className="text-muted-foreground">
-                      Discussions avec les élèves de votre classe
+                      Gérer vos demandes d'aide
                     </p>
                   </CardContent>
                 </Card>

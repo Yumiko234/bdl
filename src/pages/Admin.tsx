@@ -26,6 +26,9 @@ import { ScrutinManagement } from "@/components/admin/ScrutinManagement";
 import { BDLHistoryManagement } from "@/components/admin/BDLHistoryManagement";
 import { SurveyManagement } from "@/components/admin/SurveyManagement";
 import { CalendarManagement } from "@/components/admin/CalendarManagement";
+// Import du nouveau composant de gestion du bandeau
+import { BannerManagement } from "@/components/admin/BannerManagement";
+import { MaintenanceManagement } from "@/components/admin/MaintenanceManagement";
 
 const Admin = () => {
   const { user, loading } = useAuth();
@@ -181,6 +184,9 @@ const Admin = () => {
               <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-12 h-auto gap-1 bg-muted p-1">
                 <TabsTrigger value="audience">Demandes</TabsTrigger>
                 {isPresident && <TabsTrigger value="message">Message</TabsTrigger>}
+                {/* Ajout de l'onglet Bandeau pour le Président */}
+                {isPresident && <TabsTrigger value="bandeau">Bandeau</TabsTrigger>}
+                {isPresident && <TabsTrigger value="maintenance">Maintenance</TabsTrigger>}
                 <TabsTrigger value="members">Membres</TabsTrigger>
                 {isExecutive && (
                   <TabsTrigger value="member-profiles">PM</TabsTrigger>
@@ -302,6 +308,19 @@ const Admin = () => {
                 </TabsContent>
               )}
 
+              {/* Contenu de l'onglet Bandeau */}
+              {isPresident && (
+                <TabsContent value="bandeau">
+                  <BannerManagement />
+                </TabsContent>
+              )}
+
+              {isPresident && (
+               <TabsContent value="maintenance">
+                <MaintenanceManagement />
+               </TabsContent>
+              )}
+
               <TabsContent value="members"><BDLMembersManagement /></TabsContent>
 
               {isExecutive && (
@@ -314,7 +333,6 @@ const Admin = () => {
               <TabsContent value="news"><NewsManagement isPresident={isPresident} /></TabsContent>
               <TabsContent value="events"><EventManagement isPresident={isPresident} /></TabsContent>
 
-              {/* ---- Calendrier (Exécutif uniquement) ---- */}
               {isExecutive && (
                 <TabsContent value="calendar">
                   <CalendarManagement />

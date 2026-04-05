@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Shield, FileText, Users, MessageSquare } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 
 const Intranet = () => {
   const { user, loading, signOut } = useAuth();
@@ -31,6 +32,7 @@ const Intranet = () => {
       <Navigation />
       
       <main className="flex-1">
+        <MaintenanceOverlay>
         <section className="py-16 gradient-institutional text-white">
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center space-y-4">
@@ -130,6 +132,7 @@ const Intranet = () => {
             </div>
           </div>
         </section>
+        </MaintenanceOverlay>
       </main>
 
       <Footer />

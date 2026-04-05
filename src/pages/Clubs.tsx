@@ -1,6 +1,7 @@
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
+import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 
 const Clubs = () => {
   return (
@@ -8,6 +9,7 @@ const Clubs = () => {
       <Navigation />
       
       <main className="flex-1">
+        <MaintenanceOverlay>
         <section className="py-16 gradient-institutional text-white">
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center space-y-4">
@@ -31,6 +33,7 @@ const Clubs = () => {
             </div>
           </div>
         </section>
+        </MaintenanceOverlay>
       </main>
 
       <Footer />

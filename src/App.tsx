@@ -40,6 +40,7 @@ const App = () => {
         <Sonner />
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/admin" element={<Admin />} />
           <Route path="/etablissement" element={<Etablissement />} />
           <Route path="/bdl" element={<BDL />} />
           <Route path="/bdl/historique" element={<BDLHistory />} />
@@ -55,7 +56,6 @@ const App = () => {
           <Route path="/jo/:nor" element={<JobdlArticle />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/intranet" element={<Intranet />} />
-          <Route path="/admin" element={<Admin />} />
           <Route path="/scrutin" element={<Scrutin />} />
           <Route path="/sondage" element={<Sondage />} />
           <Route path="/profile" element={<Profile />} />

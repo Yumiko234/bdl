@@ -11,7 +11,8 @@ import { ProfilePhotoUpload } from "@/components/ProfilePhotoUpload";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { User, Mail, Shield, Trash } from "lucide-react";
+import { User, Mail, Shield, Trash, MailMinus } from "lucide-react";
+import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 
 interface UserProfile {
   full_name: string;
@@ -203,6 +204,7 @@ const Profile = () => {
       <Navigation />
 
       <main className="flex-1">
+        <MaintenanceOverlay>
         <section className="py-16 gradient-institutional text-white">
           <div className="container mx-auto px-4 text-center space-y-4">
             <User className="h-20 w-20 mx-auto" />
@@ -333,6 +335,7 @@ const Profile = () => {
             </div>
           </div>
         </section>
+        </MaintenanceOverlay>
       </main>
 
       <Footer />

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Calendar, Pin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 
 interface NewsArticle {
   id: string;
@@ -61,6 +62,7 @@ const Actualites = () => {
       <Navigation />
 
       <main className="flex-1">
+        <MaintenanceOverlay>
         <section className="py-16 gradient-institutional text-white">
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center space-y-4">
@@ -135,6 +137,7 @@ const Actualites = () => {
             </div>
           </div>
         </section>
+        </MaintenanceOverlay>
       </main>
 
       <Footer />

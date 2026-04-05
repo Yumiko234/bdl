@@ -4,6 +4,7 @@ import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 
 interface EstablishmentSection {
   id: string;
@@ -43,6 +44,7 @@ const Etablissement = () => {
       <Navigation />
       
       <main className="flex-1">
+        <MaintenanceOverlay>
         <section className="py-16 gradient-institutional text-white">
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center space-y-4">
@@ -79,6 +81,7 @@ const Etablissement = () => {
             </div>
           </div>
         </section>
+        </MaintenanceOverlay>
       </main>
 
       <Footer />

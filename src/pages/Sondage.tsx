@@ -29,6 +29,7 @@ import {
   Legend,
   Tooltip,
 } from "recharts";
+import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -381,6 +382,7 @@ const Sondage = () => {
       <Navigation />
 
       <main className="flex-1">
+        <MaintenanceOverlay>
         {/* Hero */}
         <section className="py-16 gradient-institutional text-white">
           <div className="container mx-auto px-4">
@@ -903,6 +905,7 @@ const Sondage = () => {
             </div>
           </div>
         </section>
+        </MaintenanceOverlay>
       </main>
 
       <Footer />

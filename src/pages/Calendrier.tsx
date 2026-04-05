@@ -20,6 +20,7 @@ import {
   addDays,
   differenceInDays,
 } from "date-fns";
+import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -320,6 +321,7 @@ export default function Calendrier() {
       <Navigation />
 
       <main className="flex-1">
+        <MaintenanceOverlay>
         {/* ---- Hero ---- */}
         <section className="py-16 gradient-institutional text-white">
           <div className="container mx-auto px-4">
@@ -582,6 +584,7 @@ export default function Calendrier() {
             </div>
           </div>
         </section>
+        </MaintenanceOverlay>
       </main>
 
       <Footer />

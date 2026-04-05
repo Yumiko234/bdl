@@ -10,6 +10,7 @@ import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { toast } from "sonner";
+import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 
 interface Event {
   id: number;
@@ -69,6 +70,7 @@ export default function Events() {
       <Navigation />
 
       <main className="flex-1">
+        <MaintenanceOverlay>
         {/* En-tête harmonisée avec la page Actualités */}
         <section className="py-16 gradient-institutional text-white">
           <div className="container mx-auto px-4">
@@ -168,6 +170,7 @@ export default function Events() {
             </div>
           </div>
         </section>
+        </MaintenanceOverlay>
       </main>
 
       <Footer />

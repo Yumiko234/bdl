@@ -16,7 +16,7 @@ interface MaintenanceOverlayProps {
 
 // Pages that remain accessible even in maintenance mode
 // The admin panel is always accessible so the president can turn it off
-const BYPASS_PATHS = ["/admin", "/auth", "/intranet"];
+const BYPASS_PATHS = ["/admin", "/auth", "/intranet", "/contact"];
 
 const isBypassPath = () =>
   BYPASS_PATHS.some((p) => window.location.pathname.startsWith(p));

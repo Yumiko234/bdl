@@ -34,6 +34,7 @@ const Footer = () => {
               <li><Link to="/bdl" className="hover:text-accent transition-colors">Le BDL</Link></li>
               <li><Link to="/clubs" className="hover:text-accent transition-colors">Clubs</Link></li>
               <li><Link to="/contact" className="hover:text-accent transition-colors">Contact</Link></li>
+              <li><Link to="/support" className="hover:text-accent transition-colors">Support</Link></li>
             </ul>
           </div>
 
@@ -51,7 +52,7 @@ const Footer = () => {
 
           <div>
             <h3 className="font-semibold mb-4">Contact</h3>
-            <p className="text-sm space-y-1">
+            <div className="text-sm space-y-1">
               <span 
                 className="block"
                 dangerouslySetInnerHTML={{ 
@@ -80,16 +81,24 @@ const Footer = () => {
               >
                 www.st-andre.com
               </a>
-            </p>
+            </div>
           </div>
         </div>
 
         <div className="border-t border-border mt-8 pt-8 text-center text-sm text-muted-foreground">
-          <p 
-            dangerouslySetInnerHTML={{ 
-              __html: `&copy; ${new Date().getFullYear()} ${content.copyright || 'Bureau des Lycéens - Lycée Saint-André. Tous droits réservés. - Site géré par Alexandre Lejal.'}` 
-            }}
-          />
+          <p>
+            &copy; {new Date().getFullYear()} {content.copyright || 'Bureau des Lycéens - Lycée Saint-André. Tous droits réservés.'}
+            <span className="mx-2">—</span>
+            Site géré par{" "}
+            <a 
+              href="https://fr.linkedin.com/in/alexandre-lejal" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-muted-foreground hover:text-accent transition-colors underline-offset-4 hover:underline"
+            >
+              Alexandre Lejal
+            </a>
+          </p>
         </div>
       </div>
     </footer>

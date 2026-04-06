@@ -18,17 +18,25 @@ import Actualites from "./pages/Actualites";
 import Documents from "./pages/Documents";
 import Events from "./pages/Events";
 import Calendrier from "./pages/Calendrier";
-import Contact from "./pages/Contact";
-import Intranet from "./pages/Intranet";
-import Auth from "./pages/Auth";
-import Admin from "./pages/Admin";
+
+
+
 import JOBDL from "./pages/jobdl/JOBDL";
 import JobdlArticle from "./pages/jobdl/[nor]";
+
 import Scrutin from "./pages/Scrutin";
 import NotFound from "./pages/NotFound";
 import Sondage from "./pages/Sondage";
-import Profile from "./pages/Profile";
+
+import Intranet from "./pages/Intranet";
+import Auth from "./pages/Auth";
+import Admin from "./pages/Admin";
+
+import Contact from "./pages/Contact";
+import Support from "./pages/Support";
+
 import ResetPassword from "./pages/ResetPassword";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
@@ -57,6 +65,7 @@ const App = () => {
           <Route path="/auth" element={<Auth />} />
           <Route path="/intranet" element={<Intranet />} />
           <Route path="/scrutin" element={<Scrutin />} />
+          <Route path="/support" element={<Support />} />
           <Route path="/sondage" element={<Sondage />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/reset-password" element={<ResetPassword />} />

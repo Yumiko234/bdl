@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
+import { AlertCircle } from "lucide-react";
 
 interface ContactInfo {
   section_key: string;
@@ -96,6 +97,21 @@ const Contact = () => {
             </div>
           </div>
         </section>
+
+        {/* Alert Banner */}
+        <div className="bg-accent/10 border-y border-accent/20 py-4">
+          <div className="container mx-auto px-4">
+            <div className="flex items-center justify-center gap-2 text-sm md:text-base">
+              <AlertCircle className="h-5 w-5 text-accent flex-shrink-0" />
+              <p className="text-center">
+                <span className="font-semibold">
+                  Utilisateurs disposant d'un compte :
+                </span>{" "}
+                Il est recommandé d'utiliser l'outil support de l'intranet pour une meilleur prise en charge.
+              </p>
+            </div>
+          </div>
+        </div>
 
         <section className="py-16">
           <div className="container mx-auto px-4">

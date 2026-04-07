@@ -9,15 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Users, UserPlus, Shield } from "lucide-react";
 
-/**
- * Règle importante :
- * - Assure-toi que ta table des rôles s'appelle bien "user_roles" avec colonnes { user_id, role }
- * - Assure-toi que la table des profils s'appelle "profiles" avec colonnes { id, full_name, email }
- * - Les valeurs stockées dans user_roles.role doivent être exactement les clefs ci-dessous.
- */
-
-/* ---------- Configuration des rôles et labels ---------- */
 const ROLE_KEYS = [
+  "administrator",
   "president",
   "vice_president",
   "secretary_general",
@@ -28,6 +21,7 @@ const ROLE_KEYS = [
 type RoleKey = typeof ROLE_KEYS[number];
 
 const rolePrecedence: Record<RoleKey, number> = {
+  administrator: 0,
   president: 1,
   vice_president: 2,
   secretary_general: 3,
@@ -37,14 +31,15 @@ const rolePrecedence: Record<RoleKey, number> = {
 };
 
 const roleLabel = (r: RoleKey | string) =>
+  r === "administrator" ? "Administrateur" :
   r === "president" ? "Président" :
   r === "vice_president" ? "Vice-président" :
   r === "secretary_general" ? "Secrétaire général" :
   r === "communication_manager" ? "Responsable communication" :
+  r === "vie_scolaire" ? "Vie Scolaire" :
   r === "bdl_member" ? "Membre BDL" :
   "Étudiant";
 
-/* ---------- Types ---------- */
 interface UserProfile {
   id: string;
   full_name: string;
@@ -53,7 +48,6 @@ interface UserProfile {
   primaryRole: RoleKey;
 }
 
-/* ---------- Composant principal ---------- */
 export const UserManagement = () => {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(false);
@@ -66,7 +60,6 @@ export const UserManagement = () => {
 
   const [currentUserPrimaryRole, setCurrentUserPrimaryRole] = useState<RoleKey>("student");
 
-  /* ---------- Utilitaires ---------- */
   const getPrimaryRole = (roles: string[] | undefined): RoleKey => {
     if (!roles || roles.length === 0) return "student";
     return roles.reduce((best: string, r: string) => {
@@ -76,22 +69,19 @@ export const UserManagement = () => {
     }, roles[0]) as RoleKey;
   };
 
-  // Peut-on attribuer ce rôle ? (le rôle cible doit être de rang >= notre rang)
   const canAssignRole = (targetRole: string) => {
     const curRank = rolePrecedence[currentUserPrimaryRole] ?? 999;
     const targetRank = rolePrecedence[(ROLE_KEYS.includes(targetRole as RoleKey) ? targetRole : "student") as RoleKey] ?? 999;
+    // Un administrateur peut tout assigner, les autres ne peuvent assigner que des rôles de rang >= le leur
     return targetRank >= curRank;
   };
 
-  // Peut-on modifier CET utilisateur ?
-  // Son rôle actuel doit être strictement de rang INFÉRIEUR au nôtre (rang plus grand = moins de pouvoir)
   const canEditUser = (targetPrimaryRole: RoleKey) => {
     const curRank = rolePrecedence[currentUserPrimaryRole] ?? 999;
     const targetRank = rolePrecedence[targetPrimaryRole] ?? 999;
     return targetRank > curRank;
   };
 
-  /* ---------- Chargement du rôle courant ---------- */
   const loadCurrentUserRole = async () => {
     try {
       const res = await supabase.auth.getUser();
@@ -116,14 +106,12 @@ export const UserManagement = () => {
       const roles: string[] = (rolesData ?? []).map((r: any) => r.role);
       const primary = getPrimaryRole(roles);
       setCurrentUserPrimaryRole(primary);
-      console.debug("current user roles", roles, "primary:", primary);
     } catch (err) {
       console.debug("loadCurrentUserRole error", err);
       setCurrentUserPrimaryRole("student");
     }
   };
 
-  /* ---------- Chargement et tri des utilisateurs ---------- */
   const loadUsers = async () => {
     try {
       const { data: profiles, error: profilesError } = await supabase
@@ -172,10 +160,8 @@ export const UserManagement = () => {
 
   useEffect(() => {
     loadCurrentUserRole().then(() => loadUsers());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /* ---------- Création d'utilisateur ---------- */
   const handleCreateUser = async () => {
     if (!newUser.email || !newUser.fullName) {
       toast.error("Veuillez remplir tous les champs requis");
@@ -198,7 +184,6 @@ export const UserManagement = () => {
       } as any);
 
       if (signError) {
-        console.debug("signUp error", signError);
         toast.error("Erreur lors de la création du compte : " + (signError.message ?? "Erreur"));
         setLoading(false);
         return;
@@ -215,16 +200,13 @@ export const UserManagement = () => {
         .from("profiles")
         .insert([{ id: createdUserId, full_name: newUser.fullName, email: newUser.email }]);
 
-      if (profErr) {
-        console.debug("profiles insert error", profErr);
-      }
+      if (profErr) console.debug("profiles insert error", profErr);
 
       const { error: roleErr } = await supabase
         .from("user_roles")
         .insert([{ user_id: createdUserId, role: newUser.role }]);
 
       if (roleErr) {
-        console.debug("user_roles insert error", roleErr);
         toast.error("Utilisateur créé mais échec lors de l'attribution du rôle");
         setLoading(false);
         loadUsers();
@@ -235,21 +217,17 @@ export const UserManagement = () => {
       setNewUser({ email: "", password: "", fullName: "", role: "student" });
       await loadUsers();
     } catch (err) {
-      console.debug("handleCreateUser error", err);
       toast.error("Erreur inattendue lors de la création");
     } finally {
       setLoading(false);
     }
   };
 
-  /* ---------- Modification du rôle principal d'un utilisateur ---------- */
   const handleChangeRole = async (userId: string, newRole: RoleKey, currentTargetRole: RoleKey) => {
-    // Double vérification : peut-on toucher à cet utilisateur ?
     if (!canEditUser(currentTargetRole)) {
       toast.error("Vous ne pouvez pas modifier le rôle d'un utilisateur de rang égal ou supérieur au vôtre.");
       return;
     }
-    // Peut-on attribuer le nouveau rôle ?
     if (!canAssignRole(newRole)) {
       toast.error("Autorisation insuffisante pour attribuer ce rôle.");
       return;
@@ -263,7 +241,6 @@ export const UserManagement = () => {
         .eq("user_id", userId);
 
       if (delErr) {
-        console.debug("delete user_roles error", delErr);
         toast.error("Erreur lors de la suppression des anciens rôles");
         setLoading(false);
         return;
@@ -274,7 +251,6 @@ export const UserManagement = () => {
         .insert([{ user_id: userId, role: newRole }]);
 
       if (insErr) {
-        console.debug("insert user_roles error", insErr);
         toast.error("Erreur lors de l'attribution du rôle");
         setLoading(false);
         return;
@@ -283,7 +259,6 @@ export const UserManagement = () => {
       toast.success(`Rôle attribué : ${roleLabel(newRole)}`);
       await loadUsers();
     } catch (err) {
-      console.debug("handleChangeRole error", err);
       toast.error("Erreur inattendue");
     } finally {
       setLoading(false);
@@ -292,7 +267,6 @@ export const UserManagement = () => {
 
   const availableRolesOrdered = [...ROLE_KEYS].sort((a, b) => rolePrecedence[a] - rolePrecedence[b]);
 
-  /* ---------- Rendu ---------- */
   return (
     <Card className="shadow-card">
       <CardHeader>
@@ -391,7 +365,13 @@ export const UserManagement = () => {
                       <p className="text-sm text-muted-foreground">{u.email}</p>
                       <div className="flex gap-2 mt-2">
                         {u.roles.map((r) => (
-                          <Badge key={r} variant="secondary">{roleLabel(r)}</Badge>
+                          <Badge
+                            key={r}
+                            variant={r === "administrator" ? "default" : "secondary"}
+                            className={r === "administrator" ? "bg-red-600 text-white" : ""}
+                          >
+                            {r === "administrator" && "👑 "}{roleLabel(r)}
+                          </Badge>
                         ))}
                       </div>
                     </div>

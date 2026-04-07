@@ -40,17 +40,20 @@ import {
 
 // ─── Role helpers ─────────────────────────────────────────────────────────────
 const ROLE_KEYS = [
+  "administrator",
   "president", "vice_president", "secretary_general",
   "communication_manager", "bdl_member", "student",
 ] as const;
 type RoleKey = typeof ROLE_KEYS[number];
 
 const rolePrecedence: Record<RoleKey, number> = {
-  president: 1, vice_president: 2, secretary_general: 3,
-  communication_manager: 4, bdl_member: 5, student: 6,
+  administrator: 1,
+  president: 2, vice_president: 3, secretary_general: 4,
+  communication_manager: 5, bdl_member: 6, student: 7,
 };
 
 const roleLabel = (r: string) =>
+  r === "administrator"          ? "Administrateur"        :
   r === "president"              ? "Président"               :
   r === "vice_president"         ? "Vice-Présidente"         :
   r === "secretary_general"      ? "Secrétaire Générale"     :
@@ -72,34 +75,33 @@ interface NavItem {
   label:    string;
   icon:     React.ReactNode;
   group:    string;
-  minRank?: number; // 1: President, 2: Vice-Pres, 3/4: Exec, 5: BDL
+  minRank?: number;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { id: "news",          label: "Actualités",         icon: <Newspaper    className="h-4 w-4" />, group: "Contenu" },
+  { id: "news",          label: "Actualités",         icon:  <Newspaper    className="h-4 w-4" />, group: "Contenu" },
   { id: "events",        label: "Événements",          icon: <Calendar     className="h-4 w-4" />, group: "Contenu" },
   { id: "calendar",      label: "Calendrier",          icon: <CalendarDays className="h-4 w-4" />, group: "Contenu" },
   { id: "documents",     label: "Documents",           icon: <FileText     className="h-4 w-4" />, group: "Contenu" },
   { id: "journal",       label: "Journal Officiel",    icon: <BookMarked   className="h-4 w-4" />, group: "Contenu" },
   
   { id: "bdl-members",   label: "Membres BDL",         icon: <Users        className="h-4 w-4" />, group: "BDL" },
-  { id: "bdl-profiles",  label: "Profils détaillés",   icon: <UserCircle   className="h-4 w-4" />, group: "BDL", minRank: 4 },
-  { id: "bdl-history",   label: "Historique BDL",      icon: <History      className="h-4 w-4" />, group: "BDL", minRank: 1 },
+  { id: "bdl-profiles",  label: "Profils détaillés",   icon: <UserCircle   className="h-4 w-4" />, group: "BDL", minRank: 5 },
+  { id: "bdl-history",   label: "Historique BDL",      icon: <History      className="h-4 w-4" />, group: "BDL", minRank: 2 },
   
-  { id: "scrutin",       label: "Scrutins",            icon: <Vote         className="h-4 w-4" />, group: "Participation", minRank: 2 },
+  { id: "scrutin",       label: "Scrutins",            icon: <Vote         className="h-4 w-4" />, group: "Participation", minRank: 3 },
   { id: "surveys",       label: "Sondages",            icon: <BarChart3    className="h-4 w-4" />, group: "Participation" },
   
   { id: "support",       label: "Support & Audiences", icon: <Headphones   className="h-4 w-4" />, group: "Assistance" },
   
-  { id: "president-msg", label: "Message Président",   icon: <MessageSquare className="h-4 w-4" />, group: "Site", minRank: 1 },
-  { id: "establishment", label: "Établissement",       icon: <Building2    className="h-4 w-4" />, group: "Site", minRank: 2 },
+  { id: "president-msg", label: "Message Président",   icon: <MessageSquare className="h-4 w-4" />, group: "Site", minRank: 2 },
+  { id: "establishment", label: "Établissement",       icon: <Building2    className="h-4 w-4" />, group: "Site", minRank: 3 },
   { id: "contact",       label: "Contact",             icon: <Phone        className="h-4 w-4" />, group: "Site" },
  
-  { id: "users",         label: "Utilisateurs",        icon: <Shield       className="h-4 w-4" />, group: "Administration", minRank: 5 },
+  { id: "users",         label: "Utilisateurs",        icon: <Shield       className="h-4 w-4" />, group: "Administration", minRank: 6 },
 
- { id: "banner",        label: "Bandeau global",      icon: <Megaphone    className="h-4 w-4" />, group: "Gestion", minRank: 1 },
- { id: "maintenance",   label: "Maintenance",         icon: <Wrench       className="h-4 w-4" />, group: "Gestion", minRank: 1 },
-  
+  { id: "banner",        label: "Bandeau global",      icon: <Megaphone    className="h-4 w-4" />, group: "Gestion", minRank: 1 },
+  { id: "maintenance",   label: "Maintenance",         icon: <Wrench       className="h-4 w-4" />, group: "Gestion", minRank: 1 },
 ];
 
 const Admin = () => {
@@ -113,7 +115,6 @@ const Admin = () => {
   const [rolesLoading,  setRolesLoading]  = useState(true);
   const [mobileOpen,    setMobileOpen]    = useState(false);
   
-  // States issus de CODE1
   const [presidentMessage, setPresidentMessage] = useState("");
   const [audienceRequests, setAudienceRequests] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
@@ -144,8 +145,9 @@ const Admin = () => {
       const primary = getPrimaryRole(roles);
       setPrimaryRole(primary);
 
+      // administrator + tous les rôles BDL ont accès
       const isBDLStaff = roles.some((r: any) =>
-        ['president', 'vice_president', 'secretary_general', 'communication_manager', 'bdl_member'].includes(r)
+        ['administrator', 'president', 'vice_president', 'secretary_general', 'communication_manager', 'bdl_member'].includes(r)
       );
 
       if (!isBDLStaff) {
@@ -177,7 +179,8 @@ const Admin = () => {
   };
 
   const handleSaveMessage = async () => {
-    if (primaryRole !== 'president') return;
+    // administrator ET president peuvent modifier le message
+    if (primaryRole !== 'president' && primaryRole !== 'administrator') return;
     setSaving(true);
     const { data: currentMessage } = await supabase.from('president_message').select('id').single();
     const { error } = await supabase
@@ -191,7 +194,7 @@ const Admin = () => {
   };
 
   const handleUpdateAudienceStatus = async (id: string, status: string) => {
-    if (primaryRole !== 'president') return;
+    if (primaryRole !== 'president' && primaryRole !== 'administrator') return;
     const { error } = await supabase
       .from('audience_requests')
       .update({ status, reviewed_by: user?.id, reviewed_at: new Date().toISOString() })
@@ -204,7 +207,8 @@ const Admin = () => {
     }
   };
 
-  const isPresident = primaryRole === "president";
+  // L'administrateur a accès à tout (rang 0 ≤ toutes les minRank)
+  const isPresident = primaryRole === "president" || primaryRole === "administrator";
   const userRank    = rolePrecedence[primaryRole] ?? 99;
   const visibleItems = NAV_ITEMS.filter((item) => !item.minRank || userRank <= item.minRank);
   const groups = Array.from(new Set(visibleItems.map((i) => i.group)));
@@ -222,7 +226,6 @@ const Admin = () => {
     );
   }
 
-  // ── Section Support avec double onglets ─────────────────────────────────────
   const renderSupportSection = () => (
     <div className="space-y-6">
       <div>
@@ -319,10 +322,17 @@ const Admin = () => {
     <div className="flex flex-col h-full">
       <div className="p-4 border-b">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center"><Shield className="h-4 w-4 text-primary" /></div>
+          <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
+            <Shield className="h-4 w-4 text-primary" />
+          </div>
           <div className="min-w-0">
             <p className="font-semibold text-sm truncate">{userProfile?.full_name ?? user?.email}</p>
-            <Badge variant="secondary" className="text-[10px] h-4">{roleLabel(primaryRole)}</Badge>
+            <Badge
+              variant="secondary"
+              className={`text-[10px] h-4 ${primaryRole === 'administrator' ? 'bg-red-100 text-red-700' : ''}`}
+            >
+              {primaryRole === 'administrator' && '👑 '}{roleLabel(primaryRole)}
+            </Badge>
           </div>
         </div>
       </div>

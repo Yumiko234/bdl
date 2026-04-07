@@ -352,6 +352,7 @@ const Scrutin = () => {
   const getRoleLabel = (profile: VoteData["profiles"]) => {
     if (!profile?.user_roles || profile.user_roles.length === 0) return "Membre BDL";
     const roleLabels: Record<string, string> = {
+      administrator: "Adminstrateur",
       president: "Président",
       vice_president: "Vice-Présidente",
       secretary_general: "Secrétaire Générale",

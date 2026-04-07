@@ -20,6 +20,7 @@ import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 // Fonction pour traduire les rôles
 const translateRole = (role: string): string => {
   const roleTranslations: { [key: string]: string } = {
+    administrator: "Administrateur",
     president: "Président",
     vice_president: "Vice-Présidente",
     secretary_general: "Secrétaire Générale",

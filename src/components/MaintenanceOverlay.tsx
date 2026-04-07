@@ -54,6 +54,7 @@ export const MaintenanceOverlay = ({ children }: MaintenanceOverlayProps) => {
       .eq("user_id", user.id);
     if (data) {
       const staffRoles = [
+        "administrator",
         "president",
         "vice_president",
         "secretary_general",

@@ -56,6 +56,7 @@ export default function Events() {
 
   const getRoleLabel = (role: string | null): string => {
     const roleLabels: { [key: string]: string } = {
+      administrator: "Administrateur",
       president: "Président",
       vice_president: "Vice-Présidente",
       secretary_general: "Secrétaire Générale",

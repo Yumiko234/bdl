@@ -22,6 +22,7 @@ interface NewsArticle {
 }
 
 const roleLabels: Record<string, string> = {
+  "administrator": "Administrateur",
   "president": "Président",
   "vice_president": "Vice-Présidente",
   "secretary_general": "Secrétaire Générale",

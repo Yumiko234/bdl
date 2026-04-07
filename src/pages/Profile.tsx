@@ -177,11 +177,13 @@ const Profile = () => {
 
   const getRoleLabel = (role: string): string => {
     const labels: Record<string, string> = {
+      administrator: "Administrateur",
       president: "Président",
       vice_president: "Vice-Présidente",
       secretary_general: "Secrétaire Générale",
       communication_manager: "Directeur de la Communication",
       bdl_member: "Membre BDL",
+      vie_scolaire: "Vie Scolaire",
       student: "Étudiant"
     };
     return labels[role] || role;

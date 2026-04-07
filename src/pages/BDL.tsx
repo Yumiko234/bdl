@@ -98,6 +98,7 @@ document.title = "Le BDL – Bureau des Lycéens";
 
   const getRoleLabel = (role: string): string => {
     const labels: Record<string, string> = {
+      "administrator": "Administrateur",
       'president': 'Président',
       'vice_president': 'Vice-Présidente',
       'secretary_general': 'Secrétaire Générale',

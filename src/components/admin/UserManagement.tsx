@@ -15,19 +15,21 @@ const ROLE_KEYS = [
   "vice_president",
   "secretary_general",
   "communication_manager",
+  "vie_scolaire",
   "bdl_member",
   "student"
 ] as const;
 type RoleKey = typeof ROLE_KEYS[number];
 
 const rolePrecedence: Record<RoleKey, number> = {
-  administrator: 0,
-  president: 1,
-  vice_president: 2,
-  secretary_general: 3,
-  communication_manager: 4,
-  bdl_member: 5,
-  student: 6
+  administrator: 1,
+  president: 2,
+  vice_president: 3,
+  secretary_general: 4,
+  communication_manager: 5,
+  vie_scolaire: 6,
+  bdl_member: 7,
+  student: 8
 };
 
 const roleLabel = (r: RoleKey | string) =>

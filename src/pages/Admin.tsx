@@ -42,22 +42,23 @@ import {
 const ROLE_KEYS = [
   "administrator",
   "president", "vice_president", "secretary_general",
-  "communication_manager", "bdl_member", "student",
+  "communication_manager", "bdl_member", "vie_scolaire","student",
 ] as const;
 type RoleKey = typeof ROLE_KEYS[number];
 
 const rolePrecedence: Record<RoleKey, number> = {
   administrator: 1,
   president: 2, vice_president: 3, secretary_general: 4,
-  communication_manager: 5, bdl_member: 6, student: 7,
+  communication_manager: 5, bdl_member: 6, vie_scolaire: 7, student: 8,
 };
 
 const roleLabel = (r: string) =>
-  r === "administrator"          ? "Administrateur"        :
+  r === "administrator"          ? "Administrateur"          :
   r === "president"              ? "Président"               :
   r === "vice_president"         ? "Vice-Présidente"         :
   r === "secretary_general"      ? "Secrétaire Générale"     :
   r === "communication_manager"  ? "Dir. Communication"      :
+  r === "vie_scolaire"           ? "Vie Scolaire"            :
   r === "bdl_member"             ? "Membre BDL"              : "Étudiant";
 
 const getPrimaryRole = (roles: string[]): RoleKey => {
@@ -87,7 +88,7 @@ const NAV_ITEMS: NavItem[] = [
   
   { id: "bdl-members",   label: "Membres BDL",         icon: <Users        className="h-4 w-4" />, group: "BDL" },
   { id: "bdl-profiles",  label: "Profils détaillés",   icon: <UserCircle   className="h-4 w-4" />, group: "BDL", minRank: 5 },
-  { id: "bdl-history",   label: "Historique BDL",      icon: <History      className="h-4 w-4" />, group: "BDL", minRank: 2 },
+  { id: "bdl-history",   label: "Historique BDL",      icon: <History      className="h-4 w-4" />, group: "BDL", minRank: 5 },
   
   { id: "scrutin",       label: "Scrutins",            icon: <Vote         className="h-4 w-4" />, group: "Participation", minRank: 3 },
   { id: "surveys",       label: "Sondages",            icon: <BarChart3    className="h-4 w-4" />, group: "Participation" },

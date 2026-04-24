@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -53,26 +53,26 @@ interface GroupedScrutins {
   [key: string]: Scrutin[];
 }
 
-// ── Pagination ────────────────────────────────────────────────────────────────
 const PAGE_SIZE = 10;
 
 const Scrutin = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
-  // ── données ──────────────────────────────────────────────────────────────
   const [scrutins, setScrutins] = useState<Scrutin[]>([]);
   const [votes, setVotes] = useState<Record<string, VoteData[]>>({});
   const [myVotes, setMyVotes] = useState<Record<string, MyVote>>({});
   const [loading, setLoading] = useState(true);
 
-  // ── droits ───────────────────────────────────────────────────────────────
   const [canVote, setCanVote] = useState(false);
   const [isPresident, setIsPresident] = useState(false);
 
-  // ── UI ───────────────────────────────────────────────────────────────────
   const [openDetails, setOpenDetails] = useState<Record<string, boolean>>({});
+
+  // Deux états séparés : ce que l'utilisateur tape, et ce qui est effectivement recherché
+  const [inputValue, setInputValue] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
     scrutinId: string;
@@ -85,14 +85,10 @@ const Scrutin = () => {
     scrutinTitle: "",
   });
 
-  // ── pagination ────────────────────────────────────────────────────────────
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
 
-  // Nombre total de pages calculé sur les scrutins filtrés
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
-
-  // ── chargement ────────────────────────────────────────────────────────────
 
   useEffect(() => {
     if (user) {
@@ -100,16 +96,26 @@ const Scrutin = () => {
     }
   }, [user]);
 
-  // On recharge quand la page ou la recherche change
   useEffect(() => {
     document.title = "Scrutins – Bureau des Lycéens";
     loadScrutins();
   }, [currentPage, searchQuery]);
 
-  // Quand la recherche change, on revient à la page 1
-  const handleSearchChange = (value: string) => {
-    setSearchQuery(value);
-    setCurrentPage(1);
+  // La recherche ne se déclenche que quand searchQuery change (via Enter)
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      setSearchQuery(inputValue);
+      setCurrentPage(1);
+    }
+  };
+
+  const handleInputChange = (value: string) => {
+    setInputValue(value);
+    // Si le champ est vidé, on réinitialise la recherche immédiatement
+    if (value === "") {
+      setSearchQuery("");
+      setCurrentPage(1);
+    }
   };
 
   const checkVotingRights = async () => {
@@ -128,14 +134,13 @@ const Scrutin = () => {
         "vice_president",
       ];
       setCanVote(roles.some((r) => votingRoles.includes(r)));
-      setIsPresident(roles.includes("president"));
+      setIsPresident(roles.includes("president") || roles.includes("administrator"));
     }
   };
 
   const loadScrutins = async () => {
     setLoading(true);
 
-    // ── 1. Compter le total (avec filtre éventuel) ──
     let countQuery = supabase
       .from("scrutins")
       .select("*", { count: "exact", head: true });
@@ -149,7 +154,6 @@ const Scrutin = () => {
     const { count } = await countQuery;
     setTotalCount(count ?? 0);
 
-    // ── 2. Récupérer la page courante ──
     const from = (currentPage - 1) * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;
 
@@ -175,14 +179,12 @@ const Scrutin = () => {
 
     setScrutins(data || []);
 
-    // Initialiser openDetails pour les scrutins de la page
     const initialOpenDetails: Record<string, boolean> = {};
     (data || []).forEach((s) => {
       initialOpenDetails[s.id] = false;
     });
     setOpenDetails(initialOpenDetails);
 
-    // Charger votes + mon vote pour chaque scrutin de la page
     for (const scrutin of data || []) {
       await loadMyVote(scrutin.id);
       if (scrutin.status === "closed") {
@@ -233,8 +235,6 @@ const Scrutin = () => {
       setMyVotes((prev) => ({ ...prev, [scrutinId]: data }));
     }
   };
-
-  // ── vote ─────────────────────────────────────────────────────────────────
 
   const openConfirmDialog = (
     scrutinId: string,
@@ -303,8 +303,6 @@ const Scrutin = () => {
     handleVote(confirmDialog.scrutinId, confirmDialog.voteValue);
   };
 
-  // ── helpers UI ────────────────────────────────────────────────────────────
-
   const toggleDetails = (scrutinId: string) => {
     setOpenDetails((prev) => ({ ...prev, [scrutinId]: !prev[scrutinId] }));
   };
@@ -352,7 +350,7 @@ const Scrutin = () => {
   const getRoleLabel = (profile: VoteData["profiles"]) => {
     if (!profile?.user_roles || profile.user_roles.length === 0) return "Membre BDL";
     const roleLabels: Record<string, string> = {
-      administrator: "Adminstrateur",
+      administrator: "Administrateur",
       president: "Président",
       vice_president: "Vice-Présidente",
       secretary_general: "Secrétaire Générale",
@@ -385,16 +383,12 @@ const Scrutin = () => {
       return groups;
     }, {});
 
-  // ── dérivés ───────────────────────────────────────────────────────────────
-
   const groupedScrutins = groupScrutinsByPeriod(scrutins);
   const periods = Object.keys(groupedScrutins).sort((a, b) => {
     const dateA = new Date(groupedScrutins[a][0].created_at);
     const dateB = new Date(groupedScrutins[b][0].created_at);
     return dateB.getTime() - dateA.getTime();
   });
-
-  // ── render ────────────────────────────────────────────────────────────────
 
   if (authLoading || loading) {
     return (
@@ -414,7 +408,6 @@ const Scrutin = () => {
 
       <main className="flex-1">
         <MaintenanceOverlay>
-        {/* Hero */}
         <section className="py-16 gradient-institutional text-white">
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center space-y-4">
@@ -429,7 +422,6 @@ const Scrutin = () => {
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto space-y-6">
 
-              {/* Bannières d'information */}
               {!user && (
                 <Card className="border-accent bg-accent/10">
                   <CardContent className="p-6">
@@ -447,7 +439,7 @@ const Scrutin = () => {
                 <Card className="border-primary bg-primary/10">
                   <CardContent className="p-6">
                     <p className="text-center font-semibold">
-                      En tant que Président, vous ne pouvez pas voter (neutralité présidentielle).
+                      En tant que Président / Administrateur, vous ne pouvez pas voter (neutralité).
                     </p>
                   </CardContent>
                 </Card>
@@ -463,27 +455,27 @@ const Scrutin = () => {
                 </Card>
               )}
 
-              {/* Barre de recherche */}
+              {/* Barre de recherche — déclenchée par Entrée */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="text"
-                  placeholder="Rechercher un scrutin par titre ou description..."
-                  value={searchQuery}
-                  onChange={(e) => handleSearchChange(e.target.value)}
+                  placeholder="Rechercher un scrutin… (appuyez sur Entrée)"
+                  value={inputValue}
+                  onChange={(e) => handleInputChange(e.target.value)}
+                  onKeyDown={handleKeyDown}
                   className="pl-10 h-12"
                 />
               </div>
 
-              {/* Compteur de résultats */}
               {totalCount > 0 && (
                 <p className="text-sm text-muted-foreground">
                   {totalCount} scrutin{totalCount > 1 ? "s" : ""} au total —
                   page {currentPage} sur {totalPages}
+                  {searchQuery && <span className="ml-1 italic">· filtré par « {searchQuery} »</span>}
                 </p>
               )}
 
-              {/* Liste des scrutins */}
               {scrutins.length === 0 ? (
                 <Card className="shadow-card">
                   <CardContent className="p-8 text-center text-muted-foreground">
@@ -495,7 +487,6 @@ const Scrutin = () => {
               ) : (
                 periods.map((period) => (
                   <div key={period} className="space-y-4">
-                    {/* Séparateur de période */}
                     <div className="flex items-center gap-3">
                       <div className="h-px bg-border flex-1" />
                       <h2 className="text-lg font-semibold text-muted-foreground uppercase tracking-wide">
@@ -530,7 +521,6 @@ const Scrutin = () => {
                             </div>
                           </div>
 
-                          {/* Boutons de vote */}
                           {scrutin.status === "open" && user && canVote && !isPresident && (
                             <div className="flex gap-3 pt-4 border-t">
                               {(["pour", "contre", "abstention"] as const).map((v) => (
@@ -559,7 +549,6 @@ const Scrutin = () => {
                             </div>
                           )}
 
-                          {/* Résultats (scrutin fermé) */}
                           {scrutin.status === "closed" && votes[scrutin.id] && (() => {
                             const currentVotes = votes[scrutin.id];
                             const pour = currentVotes.filter((v) => v.vote === "pour").length;
@@ -664,10 +653,8 @@ const Scrutin = () => {
                 ))
               )}
 
-              {/* ── Contrôles de pagination ── */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-center gap-2 pt-4">
-                  {/* Précédent */}
                   <Button
                     variant="outline"
                     size="sm"
@@ -677,34 +664,16 @@ const Scrutin = () => {
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
 
-                  {/* Numéros de pages */}
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                    // Afficher : première, dernière, et les 2 pages autour de la courante
                     const isVisible =
                       page === 1 ||
                       page === totalPages ||
                       Math.abs(page - currentPage) <= 1;
-
-                    // Ellipse entre la première et le groupe central
                     const showLeftEllipsis = page === 2 && currentPage > 4;
-                    // Ellipse entre le groupe central et la dernière
-                    const showRightEllipsis =
-                      page === totalPages - 1 && currentPage < totalPages - 3;
+                    const showRightEllipsis = page === totalPages - 1 && currentPage < totalPages - 3;
 
-                    if (showLeftEllipsis) {
-                      return (
-                        <span key={`ellipsis-left`} className="px-2 text-muted-foreground">
-                          …
-                        </span>
-                      );
-                    }
-                    if (showRightEllipsis) {
-                      return (
-                        <span key={`ellipsis-right`} className="px-2 text-muted-foreground">
-                          …
-                        </span>
-                      );
-                    }
+                    if (showLeftEllipsis) return <span key="ellipsis-left" className="px-2 text-muted-foreground">…</span>;
+                    if (showRightEllipsis) return <span key="ellipsis-right" className="px-2 text-muted-foreground">…</span>;
                     if (!isVisible) return null;
 
                     return (
@@ -720,7 +689,6 @@ const Scrutin = () => {
                     );
                   })}
 
-                  {/* Suivant */}
                   <Button
                     variant="outline"
                     size="sm"
@@ -738,7 +706,6 @@ const Scrutin = () => {
         </MaintenanceOverlay>
       </main>
 
-      {/* Modal de confirmation du vote */}
       <Dialog open={confirmDialog.open} onOpenChange={closeConfirmDialog}>
         <DialogContent>
           <DialogHeader>

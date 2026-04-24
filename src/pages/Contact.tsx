@@ -35,7 +35,7 @@ const Contact = () => {
   }, []);
 
   const loadContactInfos = async () => {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('contact_info')
       .select('section_key, title, content')
       .order('display_order');
@@ -60,22 +60,26 @@ const Contact = () => {
     setLoading(true);
 
     const { data: { user } } = await supabase.auth.getUser();
-    
+
+    // "audience" → ticket_type audience, tout le reste → support
+    const ticketType = formData.type === "audience" ? "audience" : "support";
+
     const { error } = await supabase
-      .from('audience_requests')
+      .from('support_tickets' as any)
       .insert({
+        requester_user_id: user?.id ?? null,
         requester_name: formData.name,
         requester_email: formData.email,
         subject: formData.subject,
-        request_type: formData.type,
-        message: formData.message,
-        requester_id: user?.id || '00000000-0000-0000-0000-000000000000',
-        status: 'pending'
+        description: `[${formData.type.toUpperCase()}] ${formData.message}`,
+        ticket_type: ticketType,
+        status: 'pending',
       });
 
     setLoading(false);
 
     if (error) {
+      console.error(error);
       toast.error("Erreur lors de l'envoi du message");
     } else {
       toast.success("Votre message a été envoyé avec succès. Le BDL vous répondra dans les plus brefs délais.");
@@ -107,7 +111,7 @@ const Contact = () => {
                 <span className="font-semibold">
                   Utilisateurs disposant d'un compte :
                 </span>{" "}
-                Il est recommandé d'utiliser l'outil support de l'intranet pour une meilleur prise en charge.
+                Il est recommandé d'utiliser l'outil support de l'intranet pour une meilleure prise en charge.
               </p>
             </div>
           </div>

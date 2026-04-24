@@ -1,4 +1,7 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,81 +9,112 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { Wrench, Save, AlertTriangle } from "lucide-react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { Wrench, Clock, Globe, LayoutList, X, Plus, Info } from "lucide-react";
+
+// Routes disponibles dans l'application
+const AVAILABLE_ROUTES = [
+  { path: "/",             label: "Accueil" },
+  { path: "/etablissement",label: "L'Établissement" },
+  { path: "/bdl",          label: "Le BDL" },
+  { path: "/clubs",        label: "Clubs" },
+  { path: "/actualites",   label: "Actualités" },
+  { path: "/events",       label: "Événements" },
+  { path: "/calendrier",   label: "Calendrier" },
+  { path: "/documents",    label: "Documents" },
+  { path: "/jo",           label: "Journal Officiel" },
+  { path: "/scrutin",      label: "Scrutins" },
+  { path: "/sondage",      label: "Sondages" },
+  { path: "/contact",      label: "Contact" },
+  { path: "/support",      label: "Support" },
+  { path: "/profile",      label: "Profil" },
+];
 
 interface MaintenanceConfig {
   id: string;
   is_active: boolean;
   message: string;
-  submessage: string;
+  submessage: string | null;
   estimated_end: string | null;
+  affected_paths: string[] | null;
 }
 
 export const MaintenanceManagement = () => {
+  const { user } = useAuth();
   const [config, setConfig] = useState<MaintenanceConfig | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  // Mode : "global" = toutes les pages, "specific" = pages ciblées
+  const [mode, setMode] = useState<"global" | "specific">("global");
+  const [selectedPaths, setSelectedPaths] = useState<string[]>([]);
+  const [customPath, setCustomPath] = useState("");
+
   const [form, setForm] = useState({
+    is_active: false,
     message: "",
     submessage: "",
     estimated_end: "",
   });
-  const [saving, setSaving] = useState(false);
-  const [toggling, setToggling] = useState(false);
 
   useEffect(() => {
     loadConfig();
   }, []);
 
   const loadConfig = async () => {
+    setLoading(true);
     const { data, error } = await supabase
       .from("maintenance_mode" as any)
       .select("*")
       .limit(1)
       .maybeSingle();
 
-    if (!error && data) {
-      const c = data as unknown as MaintenanceConfig;
-      setConfig(c);
+    if (error) {
+      toast.error("Erreur lors du chargement de la configuration");
+      setLoading(false);
+      return;
+    }
+
+    if (data) {
+      const cfg = data as unknown as MaintenanceConfig;
+      setConfig(cfg);
       setForm({
-        message: c.message,
-        submessage: c.submessage || "",
-        estimated_end: c.estimated_end
-          ? new Date(c.estimated_end).toISOString().slice(0, 16)
+        is_active: cfg.is_active,
+        message: cfg.message ?? "",
+        submessage: cfg.submessage ?? "",
+        estimated_end: cfg.estimated_end
+          ? new Date(cfg.estimated_end).toISOString().slice(0, 16)
           : "",
       });
+
+      // Initialiser le mode et les chemins sélectionnés
+      if (cfg.affected_paths && cfg.affected_paths.length > 0) {
+        setMode("specific");
+        setSelectedPaths(cfg.affected_paths);
+      } else {
+        setMode("global");
+        setSelectedPaths([]);
+      }
     }
+    setLoading(false);
   };
 
   const handleSave = async () => {
     if (!config) return;
-    if (!form.message.trim()) {
-      toast.error("Le message principal est obligatoire");
-      return;
-    }
-
     setSaving(true);
-    const { data: { user } } = await supabase.auth.getUser();
+
+    const affected_paths =
+      mode === "specific" && selectedPaths.length > 0 ? selectedPaths : null;
 
     const { error } = await supabase
       .from("maintenance_mode" as any)
       .update({
+        is_active: form.is_active,
         message: form.message,
         submessage: form.submessage || null,
         estimated_end: form.estimated_end
           ? new Date(form.estimated_end).toISOString()
           : null,
+        affected_paths,
         updated_by: user?.id,
       })
       .eq("id", config.id);
@@ -88,36 +122,41 @@ export const MaintenanceManagement = () => {
     if (error) {
       toast.error("Erreur lors de la sauvegarde");
     } else {
-      toast.success("Paramètres de maintenance sauvegardés");
+      toast.success(
+        form.is_active
+          ? "Maintenance activée"
+          : "Maintenance désactivée"
+      );
       loadConfig();
     }
     setSaving(false);
   };
 
-  const handleToggle = async (newState: boolean) => {
-    if (!config) return;
-    setToggling(true);
-    const { data: { user } } = await supabase.auth.getUser();
-
-    const { error } = await supabase
-      .from("maintenance_mode" as any)
-      .update({ is_active: newState, updated_by: user?.id })
-      .eq("id", config.id);
-
-    if (error) {
-      toast.error("Erreur lors de la mise à jour");
-    } else {
-      toast.success(
-        newState
-          ? "⚠️ Mode maintenance ACTIVÉ — le site est maintenant bloqué pour les visiteurs"
-          : "✅ Mode maintenance désactivé — le site est accessible normalement"
-      );
-      loadConfig();
-    }
-    setToggling(false);
+  const togglePath = (path: string) => {
+    setSelectedPaths((prev) =>
+      prev.includes(path) ? prev.filter((p) => p !== path) : [...prev, path]
+    );
   };
 
-  if (!config) {
+  const addCustomPath = () => {
+    const trimmed = customPath.trim();
+    if (!trimmed) return;
+    const normalized = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+    if (!selectedPaths.includes(normalized)) {
+      setSelectedPaths((prev) => [...prev, normalized]);
+    }
+    setCustomPath("");
+  };
+
+  const removePath = (path: string) => {
+    setSelectedPaths((prev) => prev.filter((p) => p !== path));
+  };
+
+  const getRouteLabel = (path: string) => {
+    return AVAILABLE_ROUTES.find((r) => r.path === path)?.label ?? path;
+  };
+
+  if (loading) {
     return (
       <Card className="shadow-card">
         <CardContent className="p-8 text-center text-muted-foreground">
@@ -137,189 +176,223 @@ export const MaintenanceManagement = () => {
       </CardHeader>
 
       <CardContent className="space-y-8">
-        {/* ── Statut & toggle principal ── */}
-        <div
-          className={`rounded-xl border-2 p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-colors ${
-            config.is_active
-              ? "border-destructive/60 bg-destructive/5"
-              : "border-border bg-muted/30"
-          }`}
-        >
+
+        {/* ── Activation globale ── */}
+        <div className={`flex items-center justify-between p-5 rounded-xl border-2 transition-colors ${
+          form.is_active
+            ? "border-destructive/50 bg-destructive/5"
+            : "border-border bg-muted/20"
+        }`}>
           <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-lg">Statut actuel :</span>
-              {config.is_active ? (
-                <Badge variant="destructive" className="text-sm px-3 py-1">
-                  🔴 MAINTENANCE ACTIVE
-                </Badge>
-              ) : (
-                <Badge
-                  variant="secondary"
-                  className="text-sm px-3 py-1 bg-green-100 text-green-800 border-green-200"
-                >
-                  🟢 Site accessible normalement
-                </Badge>
-              )}
-            </div>
+            <p className="font-semibold text-base">
+              {form.is_active ? "🔴 Maintenance active" : "🟢 Site en ligne"}
+            </p>
             <p className="text-sm text-muted-foreground">
-              {config.is_active
-                ? "Les visiteurs voient uniquement le message de maintenance. Les membres BDL conservent l'accès."
-                : "Le site est entièrement accessible à tous les visiteurs."}
+              {form.is_active
+                ? mode === "specific" && selectedPaths.length > 0
+                  ? `${selectedPaths.length} page(s) ciblée(s) en maintenance`
+                  : "Tout le site est en maintenance (sauf pages bypass)"
+                : "Le site est accessible normalement"}
             </p>
           </div>
-
-          {/* Activation → confirmation requise */}
-          {!config.is_active ? (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" disabled={toggling} className="gap-2 flex-shrink-0">
-                  <Wrench className="h-4 w-4" />
-                  Activer la maintenance
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle className="flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5 text-destructive" />
-                    Activer le mode maintenance ?
-                  </AlertDialogTitle>
-                  <AlertDialogDescription className="space-y-2">
-                    <span className="block">
-                      Le site sera immédiatement bloqué pour tous les visiteurs non-BDL.
-                    </span>
-                    <span className="block font-medium text-foreground">
-                      Seuls les membres du BDL conserveront l'accès complet.
-                    </span>
-                    <span className="block">
-                      Assurez-vous que le message de maintenance est bien configuré avant de continuer.
-                    </span>
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Annuler</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() => handleToggle(true)}
-                    className="bg-destructive hover:bg-destructive/90"
-                  >
-                    Oui, activer la maintenance
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          ) : (
-            <Button
-              variant="outline"
-              onClick={() => handleToggle(false)}
-              disabled={toggling}
-              className="gap-2 flex-shrink-0 border-green-500 text-green-700 hover:bg-green-50"
-            >
-              ✅ Désactiver la maintenance
-            </Button>
-          )}
+          <Switch
+            checked={form.is_active}
+            onCheckedChange={(v) => setForm({ ...form, is_active: v })}
+          />
         </div>
 
-        {/* ── Formulaire de configuration ── */}
-        <div className="space-y-5">
-          <h3 className="font-semibold text-lg border-b pb-2">
-            Configuration du message
-          </h3>
+        {/* ── Portée de la maintenance ── */}
+        <div className="space-y-4">
+          <Label className="text-base font-semibold">Portée de la maintenance</Label>
 
-          <div className="space-y-2">
-            <Label htmlFor="maint-message">Message principal *</Label>
-            <Textarea
-              id="maint-message"
-              rows={3}
-              value={form.message}
-              onChange={(e) => setForm({ ...form, message: e.target.value })}
-              placeholder="Le site est actuellement en maintenance…"
-            />
-            <p className="text-xs text-muted-foreground">
-              Ce texte sera affiché en gros au centre de la page.
-            </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Option : tout le site */}
+            <button
+              type="button"
+              onClick={() => { setMode("global"); setSelectedPaths([]); }}
+              className={`flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all ${
+                mode === "global"
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:border-primary/40"
+              }`}
+            >
+              <Globe className={`h-5 w-5 mt-0.5 flex-shrink-0 ${mode === "global" ? "text-primary" : "text-muted-foreground"}`} />
+              <div>
+                <p className="font-semibold text-sm">Tout le site</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Affiche la maintenance sur toutes les pages publiques
+                </p>
+              </div>
+            </button>
+
+            {/* Option : pages spécifiques */}
+            <button
+              type="button"
+              onClick={() => setMode("specific")}
+              className={`flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all ${
+                mode === "specific"
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:border-primary/40"
+              }`}
+            >
+              <LayoutList className={`h-5 w-5 mt-0.5 flex-shrink-0 ${mode === "specific" ? "text-primary" : "text-muted-foreground"}`} />
+              <div>
+                <p className="font-semibold text-sm">Pages spécifiques</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Cible uniquement certaines pages du site
+                </p>
+              </div>
+            </button>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="maint-submessage">
-              Message secondaire{" "}
-              <span className="text-muted-foreground text-xs">(optionnel)</span>
-            </Label>
-            <Input
-              id="maint-submessage"
-              value={form.submessage}
-              onChange={(e) => setForm({ ...form, submessage: e.target.value })}
-              placeholder="Merci de votre compréhension."
-            />
-          </div>
+          {/* Sélecteur de pages (mode specific) */}
+          {mode === "specific" && (
+            <div className="space-y-4 p-4 rounded-xl border bg-muted/20">
+              <p className="text-sm font-medium">Pages ciblées :</p>
 
-          <div className="space-y-2">
-            <Label htmlFor="maint-end">
-              Retour prévu{" "}
-              <span className="text-muted-foreground text-xs">
-                (optionnel — s'affiche sous le message)
-              </span>
-            </Label>
-            <Input
-              id="maint-end"
-              type="datetime-local"
-              value={form.estimated_end}
-              onChange={(e) => setForm({ ...form, estimated_end: e.target.value })}
-            />
-          </div>
+              {/* Grille de routes disponibles */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {AVAILABLE_ROUTES.map((route) => {
+                  const selected = selectedPaths.includes(route.path);
+                  return (
+                    <button
+                      key={route.path}
+                      type="button"
+                      onClick={() => togglePath(route.path)}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm border transition-all text-left ${
+                        selected
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-background border-border hover:border-primary/50"
+                      }`}
+                    >
+                      <span className="truncate">{route.label}</span>
+                      <span className={`text-xs ml-auto flex-shrink-0 ${selected ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                        {route.path}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
 
-          {/* Prévisualisation compacte */}
-          {form.message && (
-            <div className="rounded-lg border-2 border-dashed border-muted-foreground/30 p-6 text-center space-y-3 bg-background">
-              <p className="text-xs text-muted-foreground uppercase tracking-wide font-semibold mb-4">
-                Aperçu du message affiché aux visiteurs
-              </p>
-              <div className="flex justify-center">
-                <div className="w-12 h-12 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center">
-                  <Wrench className="h-6 w-6 text-primary" />
+              {/* Chemin personnalisé */}
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">Ajouter un chemin personnalisé</Label>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="/ma-page"
+                    value={customPath}
+                    onChange={(e) => setCustomPath(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomPath(); } }}
+                    className="flex-1"
+                  />
+                  <Button type="button" variant="outline" size="icon" onClick={addCustomPath}>
+                    <Plus className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
-              <h2 className="text-xl font-bold">Site en maintenance</h2>
-              <p className="text-muted-foreground">{form.message}</p>
-              {form.submessage && (
-                <p className="text-sm text-muted-foreground">{form.submessage}</p>
-              )}
-              {form.estimated_end && (
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted text-sm font-medium">
-                  Retour prévu le{" "}
-                  <strong>
-                    {new Date(form.estimated_end).toLocaleString("fr-FR", {
-                      day: "2-digit",
-                      month: "long",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </strong>
+
+              {/* Pages sélectionnées */}
+              {selectedPaths.length > 0 ? (
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">
+                    {selectedPaths.length} page(s) sélectionnée(s) :
+                  </Label>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedPaths.map((path) => (
+                      <Badge
+                        key={path}
+                        variant="secondary"
+                        className="gap-1.5 pr-1.5 text-sm"
+                      >
+                        {getRouteLabel(path)}
+                        <span className="text-muted-foreground text-xs">{path}</span>
+                        <button
+                          type="button"
+                          onClick={() => removePath(path)}
+                          className="ml-1 rounded-full hover:bg-destructive/20 hover:text-destructive p-0.5 transition-colors"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
+              ) : (
+                <p className="text-sm text-muted-foreground italic">
+                  Aucune page sélectionnée — sélectionnez au moins une page ou passez en mode "Tout le site".
+                </p>
               )}
+
+              {/* Note informative */}
+              <div className="flex gap-2 p-3 rounded-lg bg-blue-50 border border-blue-200 text-xs text-blue-800">
+                <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                <p>
+                  Les pages <strong>/admin</strong>, <strong>/auth</strong>, <strong>/intranet</strong> et <strong>/contact</strong> restent toujours accessibles. Le staff BDL n'est jamais bloqué.
+                </p>
+              </div>
             </div>
           )}
-
-          <Button onClick={handleSave} disabled={saving} className="gap-2">
-            <Save className="h-4 w-4" />
-            {saving ? "Sauvegarde…" : "Sauvegarder la configuration"}
-          </Button>
         </div>
 
-        {/* ── Info accès BDL ── */}
-        <div className="rounded-lg bg-primary/5 border border-primary/20 p-4 text-sm text-muted-foreground space-y-1">
-          <p className="font-semibold text-foreground">ℹ️ Accès pendant la maintenance</p>
-          <p>
-            Les membres du BDL (tous rôles confondus) conservent l'accès à toutes les pages,
-            y compris le panel d'administration.
-          </p>
-          <p>
-            Les visiteurs non-connectés et les élèves sans rôle BDL verront uniquement
-            le message de maintenance à la place du contenu des pages.
-          </p>
-          <p>
-            La navigation, le bandeau global et le footer restent visibles pour tous.
-          </p>
+        {/* ── Message ── */}
+        <div className="space-y-4">
+          <Label className="text-base font-semibold">Message affiché</Label>
+
+          <div className="space-y-2">
+            <Label htmlFor="message">Message principal *</Label>
+            <Textarea
+              id="message"
+              value={form.message}
+              onChange={(e) => setForm({ ...form, message: e.target.value })}
+              placeholder="Le site est actuellement en maintenance. Merci de votre patience."
+              rows={3}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="submessage">Message secondaire (optionnel)</Label>
+            <Input
+              id="submessage"
+              value={form.submessage}
+              onChange={(e) => setForm({ ...form, submessage: e.target.value })}
+              placeholder="Des améliorations sont en cours..."
+            />
+          </div>
         </div>
+
+        {/* ── Heure de retour ── */}
+        <div className="space-y-2">
+          <Label htmlFor="estimated_end" className="flex items-center gap-2">
+            <Clock className="h-4 w-4" />
+            Retour estimé (optionnel)
+          </Label>
+          <Input
+            id="estimated_end"
+            type="datetime-local"
+            value={form.estimated_end}
+            onChange={(e) => setForm({ ...form, estimated_end: e.target.value })}
+          />
+        </div>
+
+        {/* ── Bouton sauvegarde ── */}
+        <Button
+          onClick={handleSave}
+          disabled={saving || (mode === "specific" && selectedPaths.length === 0 && form.is_active)}
+          className="w-full"
+          variant={form.is_active ? "destructive" : "default"}
+        >
+          {saving
+            ? "Enregistrement…"
+            : form.is_active
+            ? "Activer la maintenance"
+            : "Enregistrer"}
+        </Button>
+
+        {mode === "specific" && selectedPaths.length === 0 && form.is_active && (
+          <p className="text-xs text-destructive text-center -mt-4">
+            Sélectionnez au moins une page en mode "Pages spécifiques".
+          </p>
+        )}
       </CardContent>
     </Card>
   );

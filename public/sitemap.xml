@@ -6,6 +6,7 @@
 <url><loc>https://bdl-saintandre.fr/auth</loc><changefreq>monthly</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/bdl</loc><changefreq>daily</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/bdl/historique</loc><changefreq>daily</changefreq></url>
+<url><loc>https://bdl-saintandre.fr/bdl/historique/2025-2026</loc><changefreq>daily</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/clubs</loc><changefreq>monthly</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/contact</loc><changefreq>monthly</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/documents</loc><changefreq>daily</changefreq></url>
@@ -32,5 +33,8 @@
 <url><loc>https://bdl-saintandre.fr/jo/PBDL26AR0001A</loc><changefreq>daily</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/jo/RCBDL26CM0001A</loc><changefreq>daily</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/jo/PBDL26DC0001A</loc><changefreq>daily</changefreq></url>
+<url><loc>https://bdl-saintandre.fr/jo/BDL26PV0001A</loc><changefreq>daily</changefreq></url>
+<url><loc>https://bdl-saintandre.fr/jo/BDL26CR0001A</loc><changefreq>daily</changefreq></url>
+<url><loc>https://bdl-saintandre.fr/jo/PBDL26DC0002A</loc><changefreq>daily</changefreq></url>
 
   </urlset>

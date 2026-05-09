@@ -17,7 +17,7 @@ interface MaintenanceOverlayProps {
 }
 
 // Pages toujours accessibles quoi qu'il arrive
-const BYPASS_PATHS = ["/admin", "/auth", "/intranet", "/contact"];
+const BYPASS_PATHS = ["/admin", "/auth", "/intranet", "/contact", "/support"];
 
 const isBypassPath = () =>
   BYPASS_PATHS.some((p) => window.location.pathname.startsWith(p));

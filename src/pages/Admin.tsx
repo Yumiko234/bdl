@@ -22,6 +22,7 @@ import { OfficialJournalManagement} from "@/components/admin/OfficialJournalMana
 import { BannerManagement }         from "@/components/admin/BannerManagement";
 import { MaintenanceManagement }    from "@/components/admin/MaintenanceManagement";
 import { UserManagement }           from "@/components/admin/UserManagement";
+import { AdminManagement } from "@/components/admin/AdminManagament";
 import { SupportManagement }        from "@/components/admin/SupportManagement";
 import { RichTextEditor }           from "@/components/RichTextEditor";
 
@@ -100,6 +101,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "contact",       label: "Contact",             icon: <Phone        className="h-4 w-4" />, group: "Site" },
  
   { id: "users",         label: "Utilisateurs",        icon: <Shield       className="h-4 w-4" />, group: "Administration", minRank: 6 },
+  { id: "admin-user",    label: "Gestion User",        icon: <Wrench       className="h-4 w-4" />, group: "Administration", minRank: 1},
 
   { id: "banner",        label: "Bandeau global",      icon: <Megaphone    className="h-4 w-4" />, group: "Gestion", minRank: 1 },
   { id: "maintenance",   label: "Maintenance",         icon: <Wrench       className="h-4 w-4" />, group: "Gestion", minRank: 1 },
@@ -315,6 +317,7 @@ const Admin = () => {
       case "banner":        return <BannerManagement />;
       case "maintenance":   return <MaintenanceManagement />;
       case "users":         return <UserManagement />;
+      case "admin-user":    return <AdminManagement />;
       default:              return null;
     }
   };

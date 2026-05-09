@@ -327,7 +327,7 @@ export const MaintenanceManagement = () => {
               <div className="flex gap-2 p-3 rounded-lg bg-blue-50 border border-blue-200 text-xs text-blue-800">
                 <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
                 <p>
-                  Les pages <strong>/admin</strong>, <strong>/auth</strong>, <strong>/intranet</strong> et <strong>/contact</strong> restent toujours accessibles. Le staff BDL n'est jamais bloqué.
+                  Les pages <strong>/admin</strong>, <strong>/auth</strong>, <strong>/intranet</strong>, <strong>/support</strong> et <strong>/contact</strong> restent toujours accessibles. Le staff BDL n'est jamais bloqué.
                 </p>
               </div>
             </div>

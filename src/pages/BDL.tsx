@@ -41,60 +41,34 @@ document.title = "Le BDL – Bureau des Lycéens";
     }
   };
 
-  const loadMembers = async () => {
-    try {
-      const { data: bdlMembersData, error: membersError } = await supabase
-        .from('bdl_members')
-        .select(`
-          user_id,
-          is_executive,
-          display_order,
-          profiles!inner (
-            id,
-            full_name,
-            email,
-            avatar_url
-          )
-        `)
-        .order('is_executive', { ascending: false })
-        .order('display_order', { ascending: true });
+// Remplace la fonction loadMembers() dans src/pages/BDL.tsx
+// par celle-ci — elle lit directement full_name, role_label, avatar_url
+// depuis bdl_members (plus besoin de jointure profiles / user_roles)
 
-      if (membersError) {
-        console.error("Erreur chargement membres:", membersError);
-        toast.error("Erreur lors du chargement des membres");
-        return;
-      }
+const loadMembers = async () => {
+  const { data, error } = await supabase
+    .from("bdl_members")
+    .select("id, user_id, full_name, role_label, avatar_url, is_executive, display_order")
+    .order("is_executive", { ascending: false })
+    .order("display_order", { ascending: true });
 
-      const { data: roles, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('user_id, role');
+  if (error) {
+    toast.error("Erreur lors du chargement des membres");
+    return;
+  }
 
-      if (rolesError) {
-        console.error("Erreur chargement rôles:", rolesError);
-      }
+  const mapped = (data ?? []).map((m: any) => ({
+    id: m.id,
+    full_name: m.full_name ?? "—",
+    email: "",
+    avatar_url: m.avatar_url ?? null,
+    roles: [m.role_label ?? "bdl_member"],
+    is_executive: m.is_executive,
+  }));
 
-      const members = (bdlMembersData || []).map((m: any) => {
-        const profile = m.profiles;
-        return {
-          id: profile.id,
-          full_name: profile.full_name,
-          email: profile.email,
-          avatar_url: profile.avatar_url || null,
-          roles: roles ? roles.filter(r => r.user_id === m.user_id).map(r => r.role) : [],
-          is_executive: m.is_executive
-        };
-      });
-
-      const executive = members.filter((m: any) => m.is_executive);
-      const regular = members.filter((m: any) => !m.is_executive);
-
-      setExecutiveMembers(executive);
-      setRegularMembers(regular);
-    } catch (err) {
-      console.error("Erreur inattendue:", err);
-      toast.error("Erreur lors du chargement des données");
-    }
-  };
+  setExecutiveMembers(mapped.filter((m: any) => m.is_executive));
+  setRegularMembers(mapped.filter((m: any) => !m.is_executive));
+};
 
   const getRoleLabel = (role: string): string => {
     const labels: Record<string, string> = {

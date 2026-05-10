@@ -96,11 +96,11 @@ const NAV_ITEMS: NavItem[] = [
   { id: "surveys",       label: "Sondages",            icon: <BarChart3    className="h-4 w-4" />, group: "Participation" },
   
   { id: "support",       label: "Support & Audiences", icon: <Headphones   className="h-4 w-4" />, group: "Assistance" },
-  { id: "conference",    label: "Conférence",          icon: <Headphones   className="h-4" />,    group: "Assistance"},
+  { id: "conference",    label: "Conférence",          icon: <Headphones   className="h-4" />,    group: "Assistance", minRank: 3},
 
   { id: "president-msg", label: "Message Président",   icon: <MessageSquare className="h-4 w-4" />, group: "Site", minRank: 2 },
   { id: "establishment", label: "Établissement",       icon: <Building2    className="h-4 w-4" />, group: "Site", minRank: 3 },
-  { id: "contact",       label: "Contact",             icon: <Phone        className="h-4 w-4" />, group: "Site" },
+  { id: "contact",       label: "Contact",             icon: <Phone        className="h-4 w-4" />, group: "Site", minRank: 4 },
  
   { id: "users",         label: "Utilisateurs",        icon: <Shield       className="h-4 w-4" />, group: "Administration", minRank: 6 },
   { id: "admin-user",    label: "Gestion User",        icon: <Wrench       className="h-4 w-4" />, group: "Administration", minRank: 1},

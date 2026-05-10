@@ -79,6 +79,7 @@ const PUBLIC_CARDS: QuickCard[] = [
   { title: "Sondages",       description: "Donnez votre avis sur les projets du BDL.",      icon: <BarChart3    className="h-6 w-6" />, href: "/sondage",    color: "bg-pink-100 text-pink-700" },
   { title: "Journal Officiel", description: "Publications officielles du Bureau des Lycéens.", icon: <BookMarked className="h-6 w-6" />, href: "/jo",        color: "bg-yellow-100 text-yellow-700" },
   { title: "Le BDL",         description: "Découvrez les membres et la mission du BDL.",    icon: <BookOpen     className="h-6 w-6" />, href: "/bdl",        color: "bg-cyan-100 text-cyan-700" },
+  { title: "Salle de Conférence",     description: "Conférence du BDL concernant la vie de l'établissement.",      icon: <Headphones className="h-6 w-6" />, href: "/conference", color: "bg-indigo-100 text-indigo-700" },
 ];
 
 const Intranet = () => {

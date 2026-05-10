@@ -24,6 +24,7 @@ import { MaintenanceManagement }    from "@/components/admin/MaintenanceManageme
 import { UserManagement }           from "@/components/admin/UserManagement";
 import { AdminManagement } from "@/components/admin/AdminManagament";
 import { SupportManagement }        from "@/components/admin/SupportManagement";
+import { AdminConference }     from "@/components/admin/AdminConference";
 import { RichTextEditor }           from "@/components/RichTextEditor";
 
 // ─── UI ───────────────────────────────────────────────────────────────────────
@@ -95,7 +96,8 @@ const NAV_ITEMS: NavItem[] = [
   { id: "surveys",       label: "Sondages",            icon: <BarChart3    className="h-4 w-4" />, group: "Participation" },
   
   { id: "support",       label: "Support & Audiences", icon: <Headphones   className="h-4 w-4" />, group: "Assistance" },
-  
+  { id: "conference",    label: "Conférence",          icon: <Headphones   className="h-4" />,    group: "Assistance"},
+
   { id: "president-msg", label: "Message Président",   icon: <MessageSquare className="h-4 w-4" />, group: "Site", minRank: 2 },
   { id: "establishment", label: "Établissement",       icon: <Building2    className="h-4 w-4" />, group: "Site", minRank: 3 },
   { id: "contact",       label: "Contact",             icon: <Phone        className="h-4 w-4" />, group: "Site" },
@@ -302,6 +304,7 @@ const Admin = () => {
       case "bdl-history":   return <BDLHistoryManagement />;
       case "scrutin":       return <ScrutinManagement />;
       case "surveys":       return <SurveyManagement />;
+      case "conference":    return <AdminConference />;
       case "support":       return renderSupportSection();
       case "president-msg": return (
         <Card>

@@ -17,6 +17,7 @@ import {
   Radio, LogIn, Clock, AlertCircle, Minimize2, Maximize2,
   ArrowLeft,
 } from "lucide-react";
+import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -40,6 +41,7 @@ interface Participant {
   role: ParticipantRole;
   hand_raised: boolean;
   is_muted: boolean;
+  is_video_off: boolean;
   joined_at: string;
 }
 
@@ -179,21 +181,14 @@ export default function ConferencePage() {
   const screenTrackRef = useRef<MediaStreamTrack | null>(null);
 
   // ─── sync localStream → <video> whenever tracks change ───────────────────
+  // Always point the <video> at localStream.current directly.
+  // For screen sharing we temporarily swap the video track inside the stream.
   const syncLocalVideo = useCallback(() => {
     const vid = localVideoRef.current;
     if (!vid) return;
-    // If screen is on, show screen track; else show camera track
-    const screenTrack = screenTrackRef.current;
-    if (screenTrack && !screenTrack.readyState.includes("ended")) {
-      const display = new MediaStream([screenTrack]);
-      vid.srcObject = display;
-    } else {
-      const camTracks = localStream.current.getVideoTracks();
-      if (camTracks.length > 0) {
-        vid.srcObject = new MediaStream([camTracks[0]]);
-      } else {
-        vid.srcObject = null;
-      }
+    // Always use the same stream object — just update its tracks externally
+    if (vid.srcObject !== localStream.current) {
+      vid.srcObject = localStream.current;
     }
     vid.play().catch(() => {});
   }, []);
@@ -210,7 +205,7 @@ export default function ConferencePage() {
       const { data: p } = await supabase.from("profiles").select("full_name").eq("id", user.id).single();
       if (p) setUserName((p as any).full_name);
       const { data: r } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
-      const exec = ["president", "vice_president", "secretary_general", "communication_manager"];
+      const exec = ["administrator","president", "vice_president", "secretary_general", "communication_manager"];
       setIsBDLExec(r?.some((x) => exec.includes(x.role)) ?? false);
       setCheckingRole(false);
     })();
@@ -357,6 +352,11 @@ export default function ConferencePage() {
           prev.map((p) => p.user_id === payload.user_id ? { ...p, is_muted: payload.muted } : p)
         );
       });
+      ch.on("broadcast", { event: "video_change" }, ({ payload }) => {
+        setParticipants((prev) =>
+          prev.map((p) => p.user_id === payload.user_id ? { ...p, is_video_off: payload.video_off } : p)
+        );
+      });
       ch.on("broadcast", { event: "force_mute" }, ({ payload }) => {
         if (payload.user_id !== user!.id) return;
         // Disable audio tracks without stopping them (keeps the sender alive)
@@ -402,7 +402,8 @@ export default function ConferencePage() {
         const list: Participant[] = Object.values(state).flat().map((p: any) => ({
           user_id: p.user_id, user_name: p.user_name,
           role: p.role ?? "audience", hand_raised: p.hand_raised ?? false,
-          is_muted: p.is_muted ?? true, joined_at: p.joined_at ?? "",
+          is_muted: p.is_muted ?? true, is_video_off: p.is_video_off ?? true,
+          joined_at: p.joined_at ?? "",
         }));
         setParticipants(list);
       });
@@ -414,7 +415,7 @@ export default function ConferencePage() {
             ...(newPresences as any[]).filter((p) => !ids.has(p.user_id)).map((p) => ({
               user_id: p.user_id, user_name: p.user_name,
               role: p.role ?? "audience", hand_raised: false,
-              is_muted: true, joined_at: "",
+              is_muted: true, is_video_off: true, joined_at: "",
             })),
           ];
         });
@@ -443,7 +444,7 @@ export default function ConferencePage() {
 
   const toggleMic = async () => {
     if (micOn) {
-      // Disable track (keep it alive so the sender stays valid)
+      // Mute: disable the track (keeps the RTCRtpSender alive, avoids renegotiation)
       localStream.current.getAudioTracks().forEach((t) => { t.enabled = false; });
       setMicOn(false);
       broadcastMuteChange(true);
@@ -451,31 +452,31 @@ export default function ConferencePage() {
     }
 
     try {
-      const constraints: MediaStreamConstraints = {
-        audio: selAudioIn ? { deviceId: { exact: selAudioIn } } : true,
-        video: false,
-      };
-      const got = await navigator.mediaDevices.getUserMedia(constraints);
-      await refreshDevices(); // now labels are available
+      // ⚠️ Do NOT pass video:false — some browsers reject it. Pass only audio constraints.
+      const audioConstraints: MediaStreamConstraints = selAudioIn
+        ? { audio: { deviceId: { exact: selAudioIn } } }
+        : { audio: true };
+
+      const got = await navigator.mediaDevices.getUserMedia(audioConstraints);
+      await refreshDevices(); // labels now available after permission granted
 
       const newTrack = got.getAudioTracks()[0];
       newTrack.enabled = true;
 
-      // Remove old audio tracks from localStream
-      localStream.current.getAudioTracks().forEach((t) => {
-        t.stop();
-        localStream.current.removeTrack(t);
-      });
+      // Remove & stop old audio tracks from localStream
+      const old = localStream.current.getAudioTracks();
+      old.forEach((t) => { t.stop(); localStream.current.removeTrack(t); });
+
       localStream.current.addTrack(newTrack);
 
-      // Push to peers
+      // Push track into every existing peer connection
       replaceTrackInAllPeers(newTrack, "audio");
 
       setMicOn(true);
       broadcastMuteChange(false);
     } catch (err: any) {
       console.error("mic error", err);
-      toast.error("Micro inaccessible : " + (err?.message ?? err));
+      toast.error("Micro inaccessible : " + (err?.name ?? err?.message ?? String(err)));
     }
   };
 
@@ -488,11 +489,13 @@ export default function ConferencePage() {
       replaceTrackInAllPeers(null, "video");
       setCamOn(false);
       syncLocalVideo();
+      broadcastVideoOff(true);
       return;
     }
 
     try {
-      const got = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      // ⚠️ Do NOT pass audio:false — pass only video constraints
+      const got = await navigator.mediaDevices.getUserMedia({ video: true });
       await refreshDevices();
 
       const newTrack = got.getVideoTracks()[0];
@@ -505,32 +508,33 @@ export default function ConferencePage() {
       replaceTrackInAllPeers(newTrack, "video");
       setCamOn(true);
       syncLocalVideo();
+      broadcastVideoOff(false);
     } catch (err: any) {
       console.error("cam error", err);
-      toast.error("Caméra inaccessible : " + (err?.message ?? err));
+      toast.error("Caméra inaccessible : " + (err?.name ?? err?.message ?? String(err)));
     }
   };
 
   const toggleScreen = async () => {
-    if (screenOn) {
-      stopScreen();
-      return;
-    }
+    if (screenOn) { stopScreen(); return; }
 
     try {
       const got = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
-      const track = got.getVideoTracks()[0];
-      screenTrackRef.current = track;
+      const screenTrack = got.getVideoTracks()[0];
+      screenTrackRef.current = screenTrack;
 
-      // Replace video sender in all peers with screen track
-      replaceTrackInAllPeers(track, "video");
+      // Swap video track inside localStream so srcObject auto-updates
+      localStream.current.getVideoTracks().forEach((t) => localStream.current.removeTrack(t));
+      localStream.current.addTrack(screenTrack);
+
+      replaceTrackInAllPeers(screenTrack, "video");
       setScreenOn(true);
       syncLocalVideo();
 
-      track.onended = stopScreen; // user clicked "Stop sharing" in browser UI
+      screenTrack.onended = stopScreen;
     } catch (err: any) {
       if (err?.name !== "NotAllowedError") {
-        toast.error("Partage d'écran : " + (err?.message ?? err));
+        toast.error("Partage d'écran : " + (err?.message ?? String(err)));
       }
     }
   };
@@ -539,12 +543,25 @@ export default function ConferencePage() {
     screenTrackRef.current?.stop();
     screenTrackRef.current = null;
 
-    // Restore camera track (if cam is on) or null
-    const camTrack = localStream.current.getVideoTracks()[0] ?? null;
-    replaceTrackInAllPeers(camTrack, "video");
+    // Remove screen track from localStream
+    localStream.current.getVideoTracks().forEach((t) => {
+      t.stop();
+      localStream.current.removeTrack(t);
+    });
 
+    if (camOn) {
+      // Re-acquire camera
+      navigator.mediaDevices.getUserMedia({ video: true }).then((s) => {
+        const camTrack = s.getVideoTracks()[0];
+        localStream.current.addTrack(camTrack);
+        replaceTrackInAllPeers(camTrack, "video");
+        syncLocalVideo();
+      }).catch(() => { replaceTrackInAllPeers(null, "video"); syncLocalVideo(); });
+    } else {
+      replaceTrackInAllPeers(null, "video");
+      syncLocalVideo();
+    }
     setScreenOn(false);
-    syncLocalVideo();
   };
 
   // ─── Broadcast helpers ────────────────────────────────────────────────────
@@ -553,6 +570,13 @@ export default function ConferencePage() {
     channelRef.current?.send({
       type: "broadcast", event: "mute_change",
       payload: { user_id: user!.id, muted },
+    });
+  };
+
+  const broadcastVideoOff = (off: boolean) => {
+    channelRef.current?.send({
+      type: "broadcast", event: "video_change",
+      payload: { user_id: user!.id, video_off: off },
     });
   };
 
@@ -753,6 +777,7 @@ export default function ConferencePage() {
         </section>
 
         <section className="py-12 flex-1">
+          <MaintenanceOverlay>
           <div className="container mx-auto px-4 max-w-5xl space-y-8">
 
             {/* Re-open active call */}
@@ -871,6 +896,7 @@ export default function ConferencePage() {
               </CardContent>
             </Card>
           </div>
+          </MaintenanceOverlay>
         </section>
 
         <Footer />

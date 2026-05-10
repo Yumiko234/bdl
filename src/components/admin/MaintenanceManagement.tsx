@@ -26,6 +26,7 @@ const AVAILABLE_ROUTES = [
   { path: "/sondage",      label: "Sondages" },
   { path: "/contact",      label: "Contact" },
   { path: "/support",      label: "Support" },
+  { path: "/conference",   label: "Conférence"},
   { path: "/profile",      label: "Profil" },
 ];
 

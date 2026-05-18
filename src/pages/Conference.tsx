@@ -17,7 +17,6 @@ import {
   Radio, LogIn, Clock, AlertCircle, Minimize2, Maximize2,
   ArrowLeft,
 } from "lucide-react";
-import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -174,8 +173,29 @@ export default function ConferencePage() {
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   // The single source of truth for local media.
-  // We keep ONE MediaStream object and add/remove tracks on it.
-  const localStream = useRef<MediaStream>(new MediaStream());
+  // Pre-populated with silent/black tracks so WebRTC SDP always contains m=audio + m=video.
+  // Real tracks replace these when the user enables mic/cam.
+  const localStream = useRef<MediaStream>((() => {
+    const s = new MediaStream();
+
+    // Silent audio track
+    try {
+      const ctx = new AudioContext();
+      const dest = ctx.createMediaStreamDestination();
+      const silentTrack = dest.stream.getAudioTracks()[0];
+      if (silentTrack) { silentTrack.enabled = false; s.addTrack(silentTrack); }
+    } catch { /* AudioContext not available (SSR / test env) */ }
+
+    // Black video track (1×1 canvas)
+    try {
+      const canvas = Object.assign(document.createElement("canvas"), { width: 1, height: 1 });
+      canvas.getContext("2d")?.fillRect(0, 0, 1, 1);
+      const blackTrack = (canvas as any).captureStream(0).getVideoTracks()[0];
+      if (blackTrack) { blackTrack.enabled = false; s.addTrack(blackTrack); }
+    } catch { /* captureStream not available */ }
+
+    return s;
+  })());
 
   // Current screen-share track (so we can stop it independently)
   const screenTrackRef = useRef<MediaStreamTrack | null>(null);
@@ -205,7 +225,7 @@ export default function ConferencePage() {
       const { data: p } = await supabase.from("profiles").select("full_name").eq("id", user.id).single();
       if (p) setUserName((p as any).full_name);
       const { data: r } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
-      const exec = ["administrator","president", "vice_president", "secretary_general", "communication_manager"];
+      const exec = ["administrator", "president", "vice_president", "secretary_general", "communication_manager"];
       setIsBDLExec(r?.some((x) => exec.includes(x.role)) ?? false);
       setCheckingRole(false);
     })();
@@ -276,7 +296,6 @@ export default function ConferencePage() {
 
       pc.ontrack = ({ streams }) => {
         if (!streams[0]) return;
-        // Retry until the ref is mounted
         const attach = () => {
           const vid = remoteVideoRefs.current[peerId];
           if (vid) {
@@ -290,15 +309,11 @@ export default function ConferencePage() {
         attach();
       };
 
-      // Add ALL current local tracks to the new peer
+      // ⚠️ Add tracks ONLY if the stream already has them.
+      // If not yet (mic/cam not started), they'll be pushed via replaceTrackInAllPeers later.
       localStream.current.getTracks().forEach((t) => {
         pc.addTrack(t, localStream.current);
       });
-      if (screenTrackRef.current) {
-        // Replace video sender with screen track
-        const sender = pc.getSenders().find((s) => s.track?.kind === "video");
-        if (sender) sender.replaceTrack(screenTrackRef.current).catch(() => {});
-      }
 
       peers[peerId] = pc;
       return pc;
@@ -306,17 +321,58 @@ export default function ConferencePage() {
     [user, selAudioOut]
   );
 
-  // Replace a track kind across all peer senders
-  const replaceTrackInAllPeers = (track: MediaStreamTrack | null, kind: "audio" | "video") => {
-    for (const pc of Object.values(peers)) {
-      const sender = pc.getSenders().find((s) => s.track?.kind === kind);
-      if (sender) {
-        sender.replaceTrack(track).catch(() => {});
-      } else if (track) {
-        pc.addTrack(track, localStream.current);
+  // Send an offer to a specific peer (called when someone joins)
+  const initiateOffer = useCallback(
+    async (peerId: string, ch: ReturnType<typeof supabase.channel>) => {
+      if (!user || peerId === user.id) return;
+      const pc = getOrCreatePeer(peerId, ch);
+      try {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        ch.send({
+          type: "broadcast", event: "offer",
+          payload: { from: user.id, to: peerId, sdp: offer },
+        });
+      } catch (e) {
+        console.error("initiateOffer error", e);
       }
-    }
-  };
+    },
+    [user, getOrCreatePeer]
+  );
+
+  // Replace/add a track in all existing peers and renegotiate if needed
+  const replaceTrackInAllPeers = useCallback(
+    (track: MediaStreamTrack | null, kind: "audio" | "video") => {
+      const ch = channelRef.current;
+      for (const [peerId, pc] of Object.entries(peers)) {
+        // Find the sender for this kind via transceivers (works even when track is null)
+        const transceiver = pc.getTransceivers().find(
+          (t) => t.sender.track?.kind === kind ||
+            (t.sender.track === null && t.receiver.track?.kind === kind)
+        );
+        const matchedSender = transceiver?.sender
+          ?? pc.getSenders().find((s) => s.track?.kind === kind);
+
+        if (matchedSender) {
+          // replaceTrack never needs renegotiation — perfect for enable/disable
+          matchedSender.replaceTrack(track).catch((e) => console.error("replaceTrack", peerId, e));
+        } else if (track) {
+          // No sender exists for this kind yet → addTrack + renegotiate
+          pc.addTrack(track, localStream.current);
+          if (ch && user) {
+            pc.createOffer().then(async (offer) => {
+              await pc.setLocalDescription(offer);
+              ch.send({
+                type: "broadcast", event: "offer",
+                payload: { from: user.id, to: peerId, sdp: offer },
+              });
+            }).catch((e) => console.error("renegotiate", peerId, e));
+          }
+        }
+      }
+    },
+    [user]
+  );
 
   // ─── Realtime channel ─────────────────────────────────────────────────────
 
@@ -408,16 +464,24 @@ export default function ConferencePage() {
         setParticipants(list);
       });
       ch.on("presence", { event: "join" }, ({ newPresences }) => {
+        const incoming = newPresences as any[];
         setParticipants((prev) => {
           const ids = new Set(prev.map((p) => p.user_id));
           return [
             ...prev,
-            ...(newPresences as any[]).filter((p) => !ids.has(p.user_id)).map((p) => ({
+            ...incoming.filter((p) => !ids.has(p.user_id)).map((p) => ({
               user_id: p.user_id, user_name: p.user_name,
               role: p.role ?? "audience", hand_raised: false,
               is_muted: true, is_video_off: true, joined_at: "",
             })),
           ];
+        });
+        // Initiate a WebRTC offer toward every new peer (except ourselves)
+        incoming.forEach((p) => {
+          if (p.user_id !== user!.id) {
+            // Small delay so both sides have time to subscribe
+            setTimeout(() => initiateOffer(p.user_id, ch), 300);
+          }
         });
       });
       ch.on("presence", { event: "leave" }, ({ leftPresences }) => {
@@ -437,7 +501,7 @@ export default function ConferencePage() {
 
       channelRef.current = ch;
     },
-    [user, userName, getOrCreatePeer, fetchConfs]
+    [user, userName, getOrCreatePeer, initiateOffer, fetchConfs]
   );
 
   // ─── Media controls ───────────────────────────────────────────────────────
@@ -777,7 +841,6 @@ export default function ConferencePage() {
         </section>
 
         <section className="py-12 flex-1">
-          <MaintenanceOverlay>
           <div className="container mx-auto px-4 max-w-5xl space-y-8">
 
             {/* Re-open active call */}
@@ -896,7 +959,6 @@ export default function ConferencePage() {
               </CardContent>
             </Card>
           </div>
-          </MaintenanceOverlay>
         </section>
 
         <Footer />

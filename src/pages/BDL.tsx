@@ -26,7 +26,9 @@ const BDL = () => {
     loadMembers();
     loadContent();
   }, []);
-document.title = "Le BDL – Bureau des Lycéens";
+  
+  document.title = "Le BDL – Bureau des Lycéens";
+
   const loadContent = async () => {
     const { data } = await supabase
       .from('bdl_content')
@@ -41,34 +43,33 @@ document.title = "Le BDL – Bureau des Lycéens";
     }
   };
 
-// Remplace la fonction loadMembers() dans src/pages/BDL.tsx
-// par celle-ci — elle lit directement full_name, role_label, avatar_url
-// depuis bdl_members (plus besoin de jointure profiles / user_roles)
+  // Remplace la fonction loadMembers() dans src/pages/BDL.tsx
+  // par celle-ci — elle lit directement full_name, role_label, avatar_url
+  // depuis bdl_members (plus besoin de jointure profiles / user_roles)
+  const loadMembers = async () => {
+    const { data, error } = await supabase
+      .from("bdl_members")
+      .select("id, user_id, full_name, role_label, avatar_url, is_executive, display_order")
+      .order("is_executive", { ascending: false })
+      .order("display_order", { ascending: true });
 
-const loadMembers = async () => {
-  const { data, error } = await supabase
-    .from("bdl_members")
-    .select("id, user_id, full_name, role_label, avatar_url, is_executive, display_order")
-    .order("is_executive", { ascending: false })
-    .order("display_order", { ascending: true });
+    if (error) {
+      toast.error("Erreur lors du chargement des membres");
+      return;
+    }
 
-  if (error) {
-    toast.error("Erreur lors du chargement des membres");
-    return;
-  }
+    const mapped = (data ?? []).map((m: any) => ({
+      id: m.id,
+      full_name: m.full_name ?? "—",
+      email: "",
+      avatar_url: m.avatar_url ?? null,
+      roles: [m.role_label ?? "bdl_member"],
+      is_executive: m.is_executive,
+    }));
 
-  const mapped = (data ?? []).map((m: any) => ({
-    id: m.id,
-    full_name: m.full_name ?? "—",
-    email: "",
-    avatar_url: m.avatar_url ?? null,
-    roles: [m.role_label ?? "bdl_member"],
-    is_executive: m.is_executive,
-  }));
-
-  setExecutiveMembers(mapped.filter((m: any) => m.is_executive));
-  setRegularMembers(mapped.filter((m: any) => !m.is_executive));
-};
+    setExecutiveMembers(mapped.filter((m: any) => m.is_executive));
+    setRegularMembers(mapped.filter((m: any) => !m.is_executive));
+  };
 
   const getRoleLabel = (role: string): string => {
     const labels: Record<string, string> = {
@@ -154,90 +155,100 @@ const loadMembers = async () => {
       
       <main className="flex-1">
         <MaintenanceOverlay>
-        <section className="py-16 gradient-institutional text-white">
-          <div className="container mx-auto px-4">
-            <div className="max-w-3xl mx-auto text-center space-y-4">
-              <h1 className="text-5xl font-bold">Le Bureau des Lycéens</h1>
-              <p className="text-xl">{content.hero_subtitle || 'Votre voix au sein de l\'établissement'}</p>
-            </div>
-          </div>
-        </section>
-
-        <section className="py-16">
-          <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto space-y-8">
-              <Card className="shadow-card">
-                <CardContent className="p-8">
-                  <h2 className="text-3xl font-bold mb-6">{content.mission_title || 'Notre Mission'}</h2>
-                  <div 
-                    className="prose prose-lg max-w-none"
-                    dangerouslySetInnerHTML={{ 
-                      __html: content.mission_content || "<p>Le Bureau des Lycéens (BDL) du Lycée Saint-André est l'instance associative des élèves. Il a pour mission de favoriser l'expression, la participation et l'engagement des lycéens dans la vie de l'établissement, d'assurer le lien permenant entre les élèves, la communauté éducative et la direction, et de promouvoir les valeurs d'initiative, de respect et de responsabilité.</p>" 
-                    }}
-                  />
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </section>
-
-        <section className="py-16 bg-muted/30">
-          <div className="container mx-auto px-4">
-            <div className="space-y-12">
-              <div>
-                <h2 className="text-4xl font-bold text-center mb-8">Équipe Exécutive</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
-                  {executiveMembers.map(renderMemberCard)}
+          <section className="py-16 gradient-institutional text-white">
+            <div className="container mx-auto px-4">
+              <div className="max-w-3xl mx-auto text-center space-y-6">
+                <h1 className="text-5xl font-bold">Le Bureau des Lycéens</h1>
+                <p className="text-xl">{content.hero_subtitle || 'Votre voix au sein de l\'établissement'}</p>
+                
+                {/* Bouton Historique BDL Ajouté */}
+                <div className="pt-2">
+                  <Link 
+                    to="/bdl/historique" 
+                    className="inline-flex items-center justify-center px-6 py-2.5 bg-white/10 hover:bg-white/20 border border-white/30 text-white rounded-full font-medium transition-all duration-300 backdrop-blur-sm shadow-elegant"
+                  >
+                    Historique BDL
+                  </Link>
                 </div>
               </div>
+            </div>
+          </section>
 
-              {regularMembers.length > 0 && (
+          <section className="py-16">
+            <div className="container mx-auto px-4">
+              <div className="max-w-4xl mx-auto space-y-8">
+                <Card className="shadow-card">
+                  <CardContent className="p-8">
+                    <h2 className="text-3xl font-bold mb-6">{content.mission_title || 'Notre Mission'}</h2>
+                    <div 
+                      className="prose prose-lg max-w-none"
+                      dangerouslySetInnerHTML={{ 
+                        __html: content.mission_content || "<p>Le Bureau des Lycéens (BDL) du Lycée Saint-André est l'instance associative des élèves. Il a pour mission de favoriser l'expression, la participation et l'engagement des lycéens dans la vie de l'établissement, d'assurer le lien permanent entre les élèves, la communauté éducative et la direction, et de promouvoir les valeurs d'initiative, de respect et de responsabilité.</p>" 
+                      }}
+                    />
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </section>
+
+          <section className="py-16 bg-muted/30">
+            <div className="container mx-auto px-4">
+              <div className="space-y-12">
                 <div>
-                  <h2 className="text-4xl font-bold text-center mb-8">Membres</h2>
+                  <h2 className="text-4xl font-bold text-center mb-8">Équipe Exécutive</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
-                    {regularMembers.map(renderMemberCard)}
+                    {executiveMembers.map(renderMemberCard)}
                   </div>
                 </div>
-              )}
-            </div>
-          </div>
-        </section>
 
-        <section className="py-16">
-          <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
-              <h2 className="text-4xl font-bold text-center mb-12">{content.responsibilities_title || 'Nos Responsabilités'}</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {[
-                  {
-                    title: "Représentation globale des élèves",
-                    description: "Porter la voix des lycéens auprès de l'administration."
-                  },
-                  {
-                    title: "Organisation d'événements",
-                    description: "Planifier et coordonner des événements culturels, sportifs et festifs..."
-                  },
-                  {
-                    title: "Gestion des clubs",
-                    description: "Superviser les activités des clubs étudiants et faciliter leur développement."
-                  },
-                  {
-                    title: "Médiation et écoute",
-                    description: "Être à l'écoute des préoccupations des élèves et faciliter le dialogue."
-                  }
-                ].map((item, index) => (
-                  <Card key={index} className="shadow-card">
-                    <CardContent className="p-6 space-y-3">
-                      <h3 className="text-xl font-semibold">{item.title}</h3>
-                      <p className="text-muted-foreground">{item.description}</p>
-                    </CardContent>
-                  </Card>
-                ))}
+                {regularMembers.length > 0 && (
+                  <div>
+                    <h2 className="text-4xl font-bold text-center mb-8">Membres</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
+                      {regularMembers.map(renderMemberCard)}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-          </div>
-        </section>
-       </MaintenanceOverlay>
+          </section>
+
+          <section className="py-16">
+            <div className="container mx-auto px-4">
+              <div className="max-w-4xl mx-auto">
+                <h2 className="text-4xl font-bold text-center mb-12">{content.responsibilities_title || 'Nos Responsabilités'}</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {[
+                    {
+                      title: "Représentation globale des élèves",
+                      description: "Porter la voix des lycéens auprès de l'administration."
+                    },
+                    {
+                      title: "Organisation d'événements",
+                      description: "Planifier et coordonner des événements culturels, sportifs et festifs..."
+                    },
+                    {
+                      title: "Gestion des clubs",
+                      description: "Superviser les activités des clubs étudiants et faciliter leur développement."
+                    },
+                    {
+                      title: "Médiation et écoute",
+                      description: "Être à l'écoute des préoccupations des élèves et faciliter le dialogue."
+                    }
+                  ].map((item, index) => (
+                    <Card key={index} className="shadow-card">
+                      <CardContent className="p-6 space-y-3">
+                        <h3 className="text-xl font-semibold">{item.title}</h3>
+                        <p className="text-muted-foreground">{item.description}</p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+        </MaintenanceOverlay>
       </main>
 
       <Footer />

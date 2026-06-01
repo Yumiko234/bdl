@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Link } from "react-router-dom";
-import { ChevronRight, FileText, Users, MessageCircle, AlertCircle, Vote, X } from "lucide-react";
+import { ChevronRight, FileText, Users, MessageCircle, AlertCircle, Vote, X, Headphones } from "lucide-react";
 import logo from "@/assets/logo-bdl.jpeg";
 import { supabase } from "@/integrations/supabase/client";
 import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
@@ -298,10 +298,10 @@ const Index = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
               {[
                 {
-                  title: "Le BDL",
-                  description: "Découvrez l'équipe et nos missions",
-                  icon: Users,
-                  link: "/bdl",
+                  title: "Conférence",
+                  description: "Accédez à la salle de conférence du BDL",
+                  icon: Headphones,
+                  link: "/conference",
                   gradient: "gradient-institutional",
                 },
                 {

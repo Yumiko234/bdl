@@ -16,6 +16,8 @@
 <url><loc>https://bdl-saintandre.fr/sondages</loc><changefreq>daily</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/intranet</loc><changefreq>monthly</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/profile</loc><changefreq>daily</changefreq></url>
+<url><loc>https://bdl-saintandre.fr/conference</loc><changefreq>daily</changefreq></url>
+<url><loc>https://bdl-saintandre.fr/certificat-verif</loc><changefreq>daily</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/jo/</loc><changefreq>daily</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/jo/BDL25DE0001A</loc><changefreq>daily</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/jo/PBDL25DC0001A</loc><changefreq>daily</changefreq></url>
@@ -36,5 +38,8 @@
 <url><loc>https://bdl-saintandre.fr/jo/BDL26PV0001A</loc><changefreq>daily</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/jo/BDL26CR0001A</loc><changefreq>daily</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/jo/PBDL26DC0002A</loc><changefreq>daily</changefreq></url>
-
+<url><loc>https://bdl-saintandre.fr/jo/PBDL26DC0003A</loc><changefreq>daily</changefreq></url>
+<url><loc>https://bdl-saintandre.fr/jo/BDL26DE0001A</loc><changefreq>daily</changefreq></url>
+<url><loc>https://bdl-saintandre.fr/jo/BDL26DE0002A</loc><changefreq>daily</changefreq></url>
+<url><loc>https://bdl-saintandre.fr/jo/BDL26CR0002A</loc><changefreq>daily</changefreq></url>
   </urlset>

@@ -67,7 +67,7 @@ export default function CertificatVerif() {
       const res = await (supabase as any)
         .from("bdl_certificates")
         .select("certificate_id, first_name, last_name, role_label, year_label, created_at")
-        .ilike("certificate_id", q);
+        .eq("certificate_id", q); // <-- MODIFIÉ : eq au lieu de ilike
       data = res.data;
       error = res.error;
     }
@@ -82,13 +82,13 @@ export default function CertificatVerif() {
           (supabase as any)
             .from("bdl_certificates")
             .select("certificate_id, first_name, last_name, role_label, year_label, created_at")
-            .ilike("first_name", a)
-            .ilike("last_name", b),
+            .eq("first_name", a) // <-- MODIFIÉ : eq au lieu de ilike
+            .eq("last_name", b), // <-- MODIFIÉ : eq au lieu de ilike
           (supabase as any)
             .from("bdl_certificates")
             .select("certificate_id, first_name, last_name, role_label, year_label, created_at")
-            .ilike("first_name", b)
-            .ilike("last_name", a),
+            .eq("first_name", b) // <-- MODIFIÉ : eq au lieu de ilike
+            .eq("last_name", a), // <-- MODIFIÉ : eq au lieu de ilike
         ]);
         const combined: Certificate[] = [...(res1.data ?? []), ...(res2.data ?? [])];
         const seen = new Set<string>();
@@ -99,15 +99,16 @@ export default function CertificatVerif() {
         });
         error = res1.error ?? res2.error;
       } else {
+        // MODIFIÉ : Si un seul mot est tapé, on cherche une correspondance exacte (plus de %q%)
         const [res1, res2] = await Promise.all([
           (supabase as any)
             .from("bdl_certificates")
             .select("certificate_id, first_name, last_name, role_label, year_label, created_at")
-            .ilike("first_name", `%${q}%`),
+            .eq("first_name", q), // <-- Strictement égal au prénom
           (supabase as any)
             .from("bdl_certificates")
             .select("certificate_id, first_name, last_name, role_label, year_label, created_at")
-            .ilike("last_name", `%${q}%`),
+            .eq("last_name", q), // <-- Strictement égal au nom
         ]);
         const combined: Certificate[] = [...(res1.data ?? []), ...(res2.data ?? [])];
         const seen = new Set<string>();
@@ -142,7 +143,7 @@ export default function CertificatVerif() {
       setAutoTriggered(true);
       runVerify(idFromUrl);
     }
-  }, []); // une seule fois au montage
+  }, [searchParams, runVerify]); // Ajout des dépendances pour éviter les warnings
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
@@ -202,9 +203,11 @@ export default function CertificatVerif() {
                         Saisissez le{" "}
                         <span className="font-medium text-foreground">prénom et nom</span>{" "}
                         du titulaire ou son{" "}
-                        <span className="font-medium text-foreground">identifiant de certificat</span>{" "}
+                        <span className="font-medium text-foreground">identifiant de certificat exact</span>{" "}
                         (ex : <code className="text-xs bg-muted px-1 rounded">PBDL-25-K3MX7P</code>).
                         Le scan d'un QR code imprimé sur le certificat lance la vérification automatiquement.
+                        <br/><br/>
+                        <span className="italic text-xs">Note : La saisie doit correspondre exactement aux données du certificat (majuscules/minuscules incluses).</span>
                       </p>
                     </div>
                   </CardContent>
@@ -353,7 +356,8 @@ export default function CertificatVerif() {
                     <div className="bg-white border border-red-200 rounded-lg p-4 text-sm text-muted-foreground space-y-1">
                       <p className="font-medium text-foreground">Raisons possibles :</p>
                       <ul className="list-disc list-inside space-y-0.5 ml-1">
-                        <li>Le nom ou l'identifiant est incorrect.</li>
+                        <li>L'identifiant est mal orthographié (ex: erreur de majuscule/minuscule).</li>
+                        <li>Le prénom et nom ne correspondent pas exactement à la base de données.</li>
                         <li>Ce certificat n'a pas été émis par le BDL de Saint-André.</li>
                         <li>Le certificat a été révoqué.</li>
                       </ul>

@@ -35,6 +35,7 @@ import Admin from "./pages/Admin";
 import Contact from "./pages/Contact";
 import Support from "./pages/Support";
 import Conference from "./pages/Conference";
+import CertificatVerif from "./pages/CertificatVerif";
 
 import ResetPassword from "./pages/ResetPassword";
 import Profile from "./pages/Profile";
@@ -67,6 +68,7 @@ const App = () => {
           <Route path="/intranet" element={<Intranet />} />
           <Route path="/scrutin" element={<Scrutin />} />
           <Route path="/support" element={<Support />} />
+          <Route path="/certificat-verif" element={<CertificatVerif />} />
           <Route path="/conference" element={<Conference />} />
           <Route path="/sondage" element={<Sondage />} />
           <Route path="/profile" element={<Profile />} />

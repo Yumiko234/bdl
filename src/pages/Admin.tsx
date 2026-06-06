@@ -24,6 +24,7 @@ import { MaintenanceManagement }    from "@/components/admin/MaintenanceManageme
 import { UserManagement }           from "@/components/admin/UserManagement";
 import { AdminManagement } from "@/components/admin/AdminManagament";
 import { SupportManagement }        from "@/components/admin/SupportManagement";
+import { CertificateManagement } from "@/components/admin/CertificatManagement";
 import { AdminConference }     from "@/components/admin/AdminConference";
 import { RichTextEditor }           from "@/components/RichTextEditor";
 
@@ -35,7 +36,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Loader2, Newspaper, Calendar, FileText, Users,
   History, Phone, Building2, CalendarDays, Vote,
-  BarChart3, BookMarked, Megaphone,
+  BarChart3, BookMarked, BookUser,  Megaphone,
   Wrench, Shield, Headphones, UserCircle,
   ChevronRight, LayoutDashboard, MessageSquare
 } from "lucide-react";
@@ -94,6 +95,7 @@ const NAV_ITEMS: NavItem[] = [
   
   { id: "scrutin",       label: "Scrutins",            icon: <Vote         className="h-4 w-4" />, group: "Participation", minRank: 3 },
   { id: "surveys",       label: "Sondages",            icon: <BarChart3    className="h-4 w-4" />, group: "Participation" },
+  { id: "certificat",    label: "Certificat BDL",      icon: <BookUser     className="h-4 w-4" />, group: "Participation", minRank : 3 },
   
   { id: "support",       label: "Support & Audiences", icon: <Headphones   className="h-4 w-4" />, group: "Assistance" },
   { id: "conference",    label: "Conférence",          icon: <Headphones   className="h-4" />,    group: "Assistance", minRank: 3},
@@ -304,6 +306,7 @@ const Admin = () => {
       case "bdl-history":   return <BDLHistoryManagement />;
       case "scrutin":       return <ScrutinManagement />;
       case "surveys":       return <SurveyManagement />;
+      case "certificat":    return <CertificateManagement />;
       case "conference":    return <AdminConference />;
       case "support":       return renderSupportSection();
       case "president-msg": return (

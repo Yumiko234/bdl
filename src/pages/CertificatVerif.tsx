@@ -38,15 +38,13 @@ const fmtDate = (iso: string) =>
 export default function CertificatVerif() {
   const [searchParams] = useSearchParams();
 
-  // Pré-remplir depuis le paramètre URL ?id=... (venant du QR code)
   const [query, setQuery] = useState(searchParams.get("id") ?? "");
   const [state, setState] = useState<VerifState>("idle");
   const [result, setResult] = useState<Certificate | null>(null);
   const [multipleFound, setMultipleFound] = useState(false);
-  // true si la vérif a été déclenchée automatiquement par QR code
   const [autoTriggered, setAutoTriggered] = useState(false);
 
-  // ── Core verify logic — accepte une valeur forcée (utile pour l'auto-trigger) ──
+  // ── Core verify logic ───────────────────────────────────────────────────────
 
   const runVerify = useCallback(async (rawQuery: string) => {
     const q = rawQuery.trim();
@@ -56,72 +54,62 @@ export default function CertificatVerif() {
     setResult(null);
     setMultipleFound(false);
 
-    // Détecter si ça ressemble à un ID (contient un tiret et pas d'espace,
-    // ou commence par un préfixe connu)
-    const looksLikeId = /^(P|V|S|DC)?BDL-/i.test(q) || (!/\s/.test(q) && q.includes("-"));
-
     let data: Certificate[] | null = null;
     let error: any = null;
 
-    if (looksLikeId) {
+
+    if (!q.includes(" ")) {
       const res = await (supabase as any)
         .from("bdl_certificates")
         .select("certificate_id, first_name, last_name, role_label, year_label, created_at")
-        .eq("certificate_id", q); // <-- MODIFIÉ : eq au lieu de ilike
+        .eq("certificate_id", q);
+      
       data = res.data;
       error = res.error;
-    }
-
-    // Fallback : recherche par nom si rien trouvé par ID
-    if ((!data || data.length === 0) && !error) {
+    } 
+    else {
       const parts = q.split(/\s+/);
-      if (parts.length >= 2) {
-        const [a, ...rest] = parts;
-        const b = rest.join(" ");
-        const [res1, res2] = await Promise.all([
+      const promises = [];
+
+      for (let i = 1; i < parts.length; i++) {
+        const part1 = parts.slice(0, i).join(" ");
+        const part2 = parts.slice(i).join(" ");
+
+        promises.push(
           (supabase as any)
             .from("bdl_certificates")
             .select("certificate_id, first_name, last_name, role_label, year_label, created_at")
-            .eq("first_name", a) // <-- MODIFIÉ : eq au lieu de ilike
-            .eq("last_name", b), // <-- MODIFIÉ : eq au lieu de ilike
+            .eq("first_name", part1)
+            .eq("last_name", part2),
           (supabase as any)
             .from("bdl_certificates")
             .select("certificate_id, first_name, last_name, role_label, year_label, created_at")
-            .eq("first_name", b) // <-- MODIFIÉ : eq au lieu de ilike
-            .eq("last_name", a), // <-- MODIFIÉ : eq au lieu de ilike
-        ]);
-        const combined: Certificate[] = [...(res1.data ?? []), ...(res2.data ?? [])];
-        const seen = new Set<string>();
-        data = combined.filter((c) => {
-          if (seen.has(c.certificate_id)) return false;
-          seen.add(c.certificate_id);
-          return true;
-        });
-        error = res1.error ?? res2.error;
-      } else {
-        // MODIFIÉ : Si un seul mot est tapé, on cherche une correspondance exacte (plus de %q%)
-        const [res1, res2] = await Promise.all([
-          (supabase as any)
-            .from("bdl_certificates")
-            .select("certificate_id, first_name, last_name, role_label, year_label, created_at")
-            .eq("first_name", q), // <-- Strictement égal au prénom
-          (supabase as any)
-            .from("bdl_certificates")
-            .select("certificate_id, first_name, last_name, role_label, year_label, created_at")
-            .eq("last_name", q), // <-- Strictement égal au nom
-        ]);
-        const combined: Certificate[] = [...(res1.data ?? []), ...(res2.data ?? [])];
-        const seen = new Set<string>();
-        data = combined.filter((c) => {
-          if (seen.has(c.certificate_id)) return false;
-          seen.add(c.certificate_id);
-          return true;
-        });
-        error = res1.error ?? res2.error;
+            .eq("first_name", part2)
+            .eq("last_name", part1)
+        );
       }
+
+      const results = await Promise.all(promises);
+      
+      // On rassemble tous les résultats trouvés
+      const combined = results.flatMap((res) => res.data ?? []);
+      
+      // On déduplique au cas où
+      const seen = new Set<string>();
+      data = combined.filter((c) => {
+        if (seen.has(c.certificate_id)) return false;
+        seen.add(c.certificate_id);
+        return true;
+      });
+
+      // S'il y a eu une erreur sur l'une des requêtes
+      error = results.find((res) => res.error)?.error;
     }
 
-    if (error) { setState("invalid"); return; }
+    if (error) { 
+      setState("invalid"); 
+      return; 
+    }
 
     if (!data || data.length === 0) {
       setState("invalid");
@@ -135,7 +123,7 @@ export default function CertificatVerif() {
     }
   }, []);
 
-  // ── Auto-trigger si ?id= présent dans l'URL (scan QR code) ────────────────
+  // ── Auto-trigger ────────────────────────────────────────────────────────────
 
   useEffect(() => {
     const idFromUrl = searchParams.get("id");
@@ -143,7 +131,7 @@ export default function CertificatVerif() {
       setAutoTriggered(true);
       runVerify(idFromUrl);
     }
-  }, [searchParams, runVerify]); // Ajout des dépendances pour éviter les warnings
+  }, [searchParams, runVerify]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
@@ -155,7 +143,6 @@ export default function CertificatVerif() {
     setResult(null);
     setMultipleFound(false);
     setAutoTriggered(false);
-    // Nettoyer le paramètre URL sans recharger la page
     window.history.replaceState({}, "", "/certificat-verif");
   };
 
@@ -183,7 +170,6 @@ export default function CertificatVerif() {
           <div className="container mx-auto px-4">
             <div className="max-w-xl mx-auto space-y-6">
 
-              {/* Bannière QR si déclenchement automatique */}
               {autoTriggered && state === "loading" && (
                 <div className="flex items-center gap-3 p-4 rounded-xl bg-primary/10 border border-primary/20 text-sm text-primary">
                   <QrCode className="h-5 w-5 flex-shrink-0" />
@@ -192,7 +178,6 @@ export default function CertificatVerif() {
                 </div>
               )}
 
-              {/* Comment ça marche — masqué si QR auto-trigger et résultat déjà là */}
               {!(autoTriggered && state !== "idle") && (
                 <Card className="bg-muted/30 border-dashed">
                   <CardContent className="p-5 flex items-start gap-3 text-sm text-muted-foreground">
@@ -201,20 +186,21 @@ export default function CertificatVerif() {
                       <p className="font-semibold text-foreground mb-1">Comment vérifier ?</p>
                       <p>
                         Saisissez le{" "}
-                        <span className="font-medium text-foreground">prénom et nom</span>{" "}
+                        <span className="font-medium text-foreground">prénom et nom complets</span>{" "}
                         du titulaire ou son{" "}
                         <span className="font-medium text-foreground">identifiant de certificat exact</span>{" "}
                         (ex : <code className="text-xs bg-muted px-1 rounded">PBDL-25-K3MX7P</code>).
                         Le scan d'un QR code imprimé sur le certificat lance la vérification automatiquement.
                         <br/><br/>
-                        <span className="italic text-xs">Note : La saisie doit correspondre exactement aux données du certificat (majuscules/minuscules incluses).</span>
+                        <span className="italic text-xs font-medium text-amber-700">
+                          Attention : La saisie doit correspondre au caractère près aux données du certificat (Prénom et Nom complets requis).
+                        </span>
                       </p>
                     </div>
                   </CardContent>
                 </Card>
               )}
 
-              {/* Champ de saisie — affiché même après QR pour permettre une nouvelle recherche */}
               <Card className="shadow-card">
                 <CardContent className="p-8 space-y-5">
                   {autoTriggered && state !== "idle" && state !== "loading" && (
@@ -289,7 +275,6 @@ export default function CertificatVerif() {
                       </p>
                     )}
 
-                    {/* Certificat visuel */}
                     <div className="rounded-xl border-2 border-amber-300 bg-white p-6 space-y-4 shadow-sm">
                       <div className="text-center space-y-1 border-b border-amber-200 pb-4">
                         <Award className="h-10 w-10 text-amber-500 mx-auto" />
@@ -356,10 +341,9 @@ export default function CertificatVerif() {
                     <div className="bg-white border border-red-200 rounded-lg p-4 text-sm text-muted-foreground space-y-1">
                       <p className="font-medium text-foreground">Raisons possibles :</p>
                       <ul className="list-disc list-inside space-y-0.5 ml-1">
-                        <li>L'identifiant est mal orthographié (ex: erreur de majuscule/minuscule).</li>
-                        <li>Le prénom et nom ne correspondent pas exactement à la base de données.</li>
-                        <li>Ce certificat n'a pas été émis par le BDL de Saint-André.</li>
-                        <li>Le certificat a été révoqué.</li>
+                        <li>L'identifiant n'est pas strictement identique à celui de la base (majuscules/minuscules incluses).</li>
+                        <li>Seul le prénom a été saisi (le prénom ET le nom sont obligatoires).</li>
+                        <li>Ce certificat n'a pas été émis par le BDL de Saint-André ou a été révoqué.</li>
                       </ul>
                     </div>
                   </CardContent>

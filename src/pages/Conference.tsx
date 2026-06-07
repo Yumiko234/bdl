@@ -126,6 +126,7 @@ function initials(name: string) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function ConferencePage() {
+  document.title = "Conférence - Bureau des Lycéens"
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 

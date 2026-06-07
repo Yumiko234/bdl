@@ -12,6 +12,7 @@ import {
   Award, Search, CheckCircle2, XCircle,
   Shield, Calendar, Loader2, RotateCcw, QrCode,
 } from "lucide-react";
+import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -155,6 +156,7 @@ export default function CertificatVerif() {
       <Navigation />
 
       <main className="flex-1">
+        <MaintenanceOverlay>
         {/* Hero */}
         <section className="py-16 gradient-institutional text-white">
           <div className="container mx-auto px-4">
@@ -355,6 +357,7 @@ export default function CertificatVerif() {
             </div>
           </div>
         </section>
+        </MaintenanceOverlay>
       </main>
 
       <Footer />

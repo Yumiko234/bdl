@@ -27,6 +27,7 @@ const AVAILABLE_ROUTES = [
   { path: "/contact",      label: "Contact" },
   { path: "/support",      label: "Support" },
   { path: "/conference",   label: "Conférence"},
+  { path: "/certificat-verif", label: "Certificat Verification"},
   { path: "/profile",      label: "Profil" },
 ];
 

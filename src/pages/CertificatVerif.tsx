@@ -44,6 +44,8 @@ export default function CertificatVerif() {
   const [multipleFound, setMultipleFound] = useState(false);
   const [autoTriggered, setAutoTriggered] = useState(false);
 
+  document.title = "Verification Certificat - Bureau des Lycéens"
+
   // ── Core verify logic ───────────────────────────────────────────────────────
 
   const runVerify = useCallback(async (rawQuery: string) => {

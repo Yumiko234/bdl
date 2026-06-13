@@ -46,11 +46,15 @@ interface Certificate {
 // ─── Rôles disponibles ────────────────────────────────────────────────────────
 
 const ROLE_OPTIONS = [
-  { value: "president",             label: "Président",                             prefix: "PBDL"  },
-  { value: "vice_president",        label: "Vice-Présidente",                       prefix: "VBDL"  },
-  { value: "secretary_general",     label: "Secrétaire Générale",                   prefix: "SBDL"  },
-  { value: "communication_manager", label: "Directeur Communauté & Communication",  prefix: "DCBDL" },
-  { value: "bdl_member",            label: "Membre BDL",                            prefix: "BDL"   },
+  { value: "president",              label: "Président",                              prefix: "PBDL"  },
+  { value: "presidente",             label: "Présidente",                             prefix: "PBDL"  },
+  { value: "vice_president",         label: "Vice-Président",                         prefix: "VBDL"  },
+  { value: "vice_presidente",        label: "Vice-Présidente",                        prefix: "VBDL"  },
+  { value: "secretary_general",      label: "Secrétaire Général",                     prefix: "SBDL"  },
+  { value: "secretary_general2",     label: "Secrétaire Générale",                    prefix: "SBDL"  },
+  { value: "communication_manager",  label: "Directeur Communauté & Communication",   prefix: "DCBDL" },
+  { value: "communication_manager2", label: "Directrice Communauté & Communication",  prefix: "DCBDL" },
+  { value: "bdl_member",             label: "Membre BDL",                             prefix: "BDL"   },
 ] as const;
 
 type RoleValue = typeof ROLE_OPTIONS[number]["value"];

@@ -179,9 +179,13 @@ const Profile = () => {
     const labels: Record<string, string> = {
       administrator: "Administrateur",
       president: "Président",
-      vice_president: "Vice-Présidente",
-      secretary_general: "Secrétaire Générale",
-      communication_manager: "Directeur de la Communication",
+      presidente: "Présidente",
+      vice_president: "Vice-Président",
+      vice_presidente: "Vice-Présidente",
+      secretary_general: "Secrétaire Général",
+      secretary_general2: "Secrétaire Générale",
+      communication_manager: "Directeur ComCom",
+      communication_manager2: "Directrice ComCom",
       bdl_member: "Membre BDL",
       vie_scolaire: "Vie Scolaire",
       student: "Étudiant"

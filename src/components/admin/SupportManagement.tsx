@@ -68,7 +68,7 @@ const formatDate = (iso: string) =>
   new Date(iso).toLocaleString("fr-FR", { day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
 // ─── Roles that can handle audience requests ──────────────────────────────────
-const AUDIENCE_ROLES = ["administrator","president", "vice_president", "secretary_general", "communication_manager"];
+const AUDIENCE_ROLES = ["administrator","president", "presidente", "vice_president", "vice_presidente","secretary_general", "secretary_general2", "communication_manager", "communication_manager2"];
 
 // ─── Component ────────────────────────────────────────────────────────────────
 

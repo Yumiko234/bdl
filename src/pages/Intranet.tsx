@@ -24,24 +24,43 @@ interface UserProfile {
 
 const ROLE_KEYS = [
   "administrator",
-  "president", "vice_president", "secretary_general",
-  "communication_manager", "bdl_member", "student",
+  "president", "presidente",
+  "vice_president", "vice_presidente",
+  "secretary_general", "secretary_general2",
+  "communication_manager", "communication_manager2",
+  "bdl_member", "vie_scolaire",
+  "student",
 ] as const;
 type RoleKey = typeof ROLE_KEYS[number];
 
 const rolePrecedence: Record<RoleKey, number> = {
-  administrator: 0,
-  president: 1, vice_president: 2, secretary_general: 3,
-  communication_manager: 4, bdl_member: 5, student: 6,
+  administrator: 1,
+  president: 2,
+  presidente: 2,
+  vice_president: 3,
+  vice_presidente: 3,
+  secretary_general: 4,
+  secretary_general2: 4,
+  communication_manager: 5,
+  communication_manager2: 5,
+  bdl_member: 6,
+  vie_scolaire: 7,
+  student: 8
 };
 
 const roleLabel = (r: string) =>
-  r === "administrator"          ? "Administrateur"        :
-  r === "president"              ? "Président"             :
-  r === "vice_president"         ? "Vice-Présidente"       :
-  r === "secretary_general"      ? "Secrétaire Générale"   :
-  r === "communication_manager"  ? "Dir. Communication"    :
-  r === "bdl_member"             ? "Membre BDL"            : "Étudiant";
+  r === "administrator"          ? "Administrateur" :
+  r === "president"              ? "Président" :
+  r === "presidente"             ? "Présidente" :
+  r === "vice_president"         ? "Vice-président" :
+  r === "vice_presidente"        ? "Vice-présidente" :
+  r === "secretary_general"      ? "Secrétaire Général" :
+  r === "secretary_general2"     ? "Secrétaire Générale" :
+  r === "communication_manager"  ? "Directeur de la Communauté et de la Communication" :
+  r === "communication_manager2" ? "Directrice de la Communauté et de la Communication" :
+  r === "vie_scolaire"           ? "Vie Scolaire" :
+  r === "bdl_member"             ? "Membre BDL" : "Étudiant";
+
 
 const getPrimaryRole = (roles: string[]): RoleKey => {
   if (!roles.length) return "student";
@@ -71,14 +90,14 @@ interface QuickCard {
 }
 
 const PUBLIC_CARDS: QuickCard[] = [
-  { title: "Actualités",     description: "Les dernières nouvelles du lycée et du BDL.",    icon: <Newspaper    className="h-6 w-6" />, href: "/actualites", color: "bg-blue-100 text-blue-700" },
-  { title: "Événements",     description: "Agenda des événements à venir.",                 icon: <Calendar     className="h-6 w-6" />, href: "/events",     color: "bg-violet-100 text-violet-700" },
-  { title: "Calendrier",     description: "Calendrier scolaire et dates importantes.",      icon: <CalendarDays className="h-6 w-6" />, href: "/calendrier", color: "bg-indigo-100 text-indigo-700" },
-  { title: "Documents",      description: "Règlements, formulaires et comptes-rendus.",     icon: <FileText     className="h-6 w-6" />, href: "/documents",  color: "bg-amber-100 text-amber-700" },
-  { title: "Scrutins",       description: "Votes et scrutins ouverts.",                     icon: <Vote         className="h-6 w-6" />, href: "/scrutin",    color: "bg-emerald-100 text-emerald-700" },
-  { title: "Sondages",       description: "Donnez votre avis sur les projets du BDL.",      icon: <BarChart3    className="h-6 w-6" />, href: "/sondage",    color: "bg-pink-100 text-pink-700" },
-  { title: "Journal Officiel", description: "Publications officielles du Bureau des Lycéens.", icon: <BookMarked className="h-6 w-6" />, href: "/jo",        color: "bg-yellow-100 text-yellow-700" },
-  { title: "Le BDL",         description: "Découvrez les membres et la mission du BDL.",    icon: <BookOpen     className="h-6 w-6" />, href: "/bdl",        color: "bg-cyan-100 text-cyan-700" },
+  { title: "Actualités",              description: "Les dernières nouvelles du lycée et du BDL.",                  icon: <Newspaper    className="h-6 w-6" />, href: "/actualites", color: "bg-blue-100 text-blue-700" },
+  { title: "Événements",              description: "Agenda des événements à venir.",                               icon: <Calendar     className="h-6 w-6" />, href: "/events",     color: "bg-violet-100 text-violet-700" },
+  { title: "Calendrier",              description: "Calendrier scolaire et dates importantes.",                    icon: <CalendarDays className="h-6 w-6" />, href: "/calendrier", color: "bg-indigo-100 text-indigo-700" },
+  { title: "Documents",               description: "Règlements, formulaires et comptes-rendus.",                   icon: <FileText     className="h-6 w-6" />, href: "/documents",  color: "bg-amber-100 text-amber-700" },
+  { title: "Scrutins",                description: "Votes et scrutins ouverts.",                                   icon: <Vote         className="h-6 w-6" />, href: "/scrutin",    color: "bg-emerald-100 text-emerald-700" },
+  { title: "Sondages",                description: "Donnez votre avis sur les projets du BDL.",                    icon: <BarChart3    className="h-6 w-6" />, href: "/sondage",    color: "bg-pink-100 text-pink-700" },
+  { title: "Journal Officiel",        description: "Publications officielles du Bureau des Lycéens.",              icon: <BookMarked className="h-6 w-6" />, href: "/jo",        color: "bg-yellow-100 text-yellow-700" },
+  { title: "Le BDL",                  description: "Découvrez les membres et la mission du BDL.",                  icon: <BookOpen     className="h-6 w-6" />, href: "/bdl",        color: "bg-cyan-100 text-cyan-700" },
   { title: "Salle de Conférence",     description: "Conférence du BDL concernant la vie de l'établissement.",      icon: <Headphones className="h-6 w-6" />, href: "/conference", color: "bg-indigo-100 text-indigo-700" },
 ];
 
@@ -122,7 +141,7 @@ const Intranet = () => {
   };
 
   // administrator est considéré comme BDL member (rang 0 ≤ 5)
-  const isBDLMember = rolePrecedence[primaryRole] <= 5 && primaryRole !== "student";
+  const isBDLMember = rolePrecedence[primaryRole] <= 6 && primaryRole !== "student";
 
   const getInitials = (name: string) =>
     name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);

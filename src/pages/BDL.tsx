@@ -73,12 +73,16 @@ const BDL = () => {
 
   const getRoleLabel = (role: string): string => {
     const labels: Record<string, string> = {
-      "administrator": "Administrateur",
-      'president': 'Président',
-      'vice_president': 'Vice-Présidente',
-      'secretary_general': 'Secrétaire Générale',
-      'communication_manager': 'Directeur de la Communication et de la Communauté',
-      'bdl_member': 'Membre BDL'
+  "administrator": "Administrateur",
+  "president": "Président",
+  "presidente": "Présidente",
+  "vice_president": "Vice-Président",
+  "vice_presidente": "Vice-Présidente",
+  "secretary_general": "Secrétaire Général",
+  "secretary_general2": "Secrétaire Générale",
+  "communication_manager": "Directeur de la Communication et de la Communauté",
+  "communication_manager2": "Directrice de la Communication et de la Communauté",
+  'bdl_member': 'Membre BDL'
     };
     return labels[role] || role;
   };
@@ -88,13 +92,18 @@ const BDL = () => {
   };
 
   const getRoleGradient = (roles: string[]): string => {
-    if (roles.includes('president') || roles.includes('secretary_general')) return 'gradient-institutional';
-    if (roles.includes('vice_president') || roles.includes('communication_manager')) return 'gradient-gold';
+    if (roles.includes('president') || roles.includes('presidente') || roles.includes('secretary_general2') || roles.includes('secretary_general')) return 'gradient-institutional';
+    if (roles.includes('vice_president') || roles.includes('vice_presidente') || roles.includes('communication_manager2') || roles.includes('communication_manager')) return 'gradient-gold';
     return 'gradient-institutional';
   };
 
   const getPrimaryRole = (roles: string[]): string => {
-    const priority = ['president', 'vice_president', 'secretary_general', 'communication_manager', 'bdl_member'];
+    const priority = [
+      'president', 'president',
+      'vice_president', 'vice_presidente',
+      'secretary_general', 'secretary_general',
+      'communication_manager', 'communication_manager2',
+      'bdl_member'];
     for (const role of priority) {
       if (roles.includes(role)) return role;
     }

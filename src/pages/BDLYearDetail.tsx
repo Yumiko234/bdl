@@ -80,9 +80,13 @@ document.title = `BDL ${yearInfo.year_label} – Bureau des Lycéens`;
   const getRoleLabel = (role: string): string => {
     const labels: Record<string, string> = {
       president: "Président",
-      vice_president: "Vice-Présidente",
-      secretary_general: "Secrétaire Générale",
-      communication_manager: "Directeur de la Communication",
+      presidente: "Présidente",
+      vice_president: "Vice-Président",
+      vice_presidente: "Vice-Présidente",
+      secretary_general: "Secrétaire Général",
+      secretary_general2: "Secrétaire Générale",
+      communication_manager: "Directeur ComCom",
+      communication_manager2: "Directrice ComCom",
       bdl_member: "Membre BDL",
     };
     return labels[role] || role;
@@ -98,8 +102,8 @@ document.title = `BDL ${yearInfo.year_label} – Bureau des Lycéens`;
   };
 
   const getRoleGradient = (role: string): string => {
-    if (["president", "secretary_general"].includes(role)) return "gradient-institutional";
-    if (["vice_president", "communication_manager"].includes(role)) return "gradient-gold";
+    if (["president", "presidente", "secretary_general", "secretary_general2"].includes(role)) return "gradient-institutional";
+    if (["vice_president", "vice_presidente", "communication_manager", "communication_manager2"].includes(role)) return "gradient-gold";
     return "gradient-institutional";
   };
 

@@ -365,19 +365,6 @@ export const AdminConference = () => {
           )}
         </CardContent>
       </Card>
-
-      {/* ── SQL reminder ──────────────────────────────────────────────────────── */}
-      <Card className="bg-amber-50/60 border-amber-200">
-        <CardContent className="p-4 flex items-start gap-3">
-          <Radio className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
-          <div className="text-sm text-amber-800 space-y-2">
-            <p className="font-semibold">Table Supabase requise</p>
-            <p>Si la table <code className="bg-amber-100 px-1 rounded font-mono text-xs">conferences</code> n'existe pas encore, exécutez ce SQL dans votre éditeur Supabase :</p>
-            <pre className="bg-white border border-amber-200 rounded-lg p-3 text-xs font-mono overflow-auto whitespace-pre-wrap text-slate-700">
-            </pre>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };

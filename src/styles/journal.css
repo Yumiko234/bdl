@@ -7,23 +7,20 @@
 .journal-article {
   font-family: 'Times New Roman', Times, serif;
   font-size: 1.1rem;
-  line-height: 1.6; /* Interligne plus compact et lisible */
+  line-height: 1.6;
   color: #1e1e1e;
   text-align: justify;
 }
 
-/* Paragraphes : Marges réduites pour éviter l'effet "vide" dans l'imbrication */
 .journal-article p {
   margin: 0.4rem 0;
 }
 
-/* Supprime la marge du dernier paragraphe pour ne pas décaler la sous-section suivante */
 .journal-article p:last-child {
   margin-bottom: 0;
 }
 
-/* ====== TITRES (CORRECTION IMBRICATION) ====== */
-/* On neutralise les marges par défaut car le bouton du menu gère l'espacement */
+/* ====== TITRES ====== */
 .journal-article h1,
 .journal-article h2,
 .journal-article h3,
@@ -32,13 +29,12 @@
 .journal-article h6 {
   font-family: 'Times New Roman', Times, serif;
   font-weight: bold;
-  margin: 0 !important; /* IMPORTANT : Empêche le décalage dans le menu */
+  margin: 0 !important;
   padding: 0 !important;
   line-height: 1.2;
   color: #000;
 }
 
-/* Tailles pour l'affichage interne (au cas où ils ne sont pas dans un bouton) */
 .journal-article h1 { font-size: 1.8rem; }
 .journal-article h2 { font-size: 1.6rem; }
 .journal-article h3 { font-size: 1.4rem; }
@@ -60,7 +56,7 @@
 
 /* ====== CITATIONS ====== */
 .journal-article blockquote {
-  border-left: 3px solid #FFD700; /* Rappel de la couleur Or */
+  border-left: 3px solid #FFD700;
   margin: 1rem 0;
   padding: 0.5rem 1rem;
   font-style: italic;
@@ -73,7 +69,6 @@
 .journal-article .ql-align-right { text-align: right; }
 .journal-article .ql-align-justify { text-align: justify; }
 
-/* Interlignes Quill spécifiques */
 .journal-article .ql-lineheight-1 { line-height: 1; }
 .journal-article .ql-lineheight-1\.5 { line-height: 1.5; }
 .journal-article .ql-lineheight-2 { line-height: 2; }
@@ -126,7 +121,6 @@
 
 /* ── Diff inline — suivi de modifications style JO ──────────────────────────── */
 
-/* Texte supprimé : rouge barré */
 del.diff-removed {
   color: #dc2626;
   text-decoration: line-through;
@@ -137,7 +131,6 @@ del.diff-removed {
   font-weight: inherit;
 }
 
-/* Texte ajouté : vert */
 ins.diff-added {
   color: #15803d;
   text-decoration: none;
@@ -148,7 +141,6 @@ ins.diff-added {
   font-weight: inherit;
 }
 
-/* Date de la modification en exposant */
 sup.diff-date {
   font-size: 0.6em;
   color: #2563eb;
@@ -156,4 +148,156 @@ sup.diff-date {
   font-style: italic;
   font-weight: normal;
   vertical-align: super;
+}
+
+/* ======================================================================
+   BLOC DE SIGNATURES — style Journal Officiel de la République Française
+   ====================================================================== */
+
+/**
+ * Conteneur principal du bloc de signatures.
+ * Doit être ajouté à la fin de l'article, après le contenu principal.
+ * Usage dans l'éditeur : insérer un bloc <div class="jo-signatures"> ... </div>
+ */
+.jo-signatures {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid #07419e;
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 1rem;
+  color: #1e1e1e;
+}
+
+/* Titre optionnel de la section signatures */
+.jo-signatures-title {
+  font-size: 0.75rem;
+  font-weight: bold;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #07419e;
+  margin-bottom: 1.25rem;
+}
+
+/* Grille des blocs de signature : jusqu'à 3 colonnes */
+.jo-signatures-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1.5rem 2rem;
+}
+
+/**
+ * Bloc individuel d'une signature.
+ * Structure HTML attendue :
+ *
+ * <div class="jo-sig-block jo-sig-right">   ← ou jo-sig-left / jo-sig-center
+ *   <div class="jo-sig-role">Président</div>
+ *   <div class="jo-sig-name">Alexandre Lejal</div>
+ *   <div class="jo-sig-line"></div>          ← ligne d'émargement
+ *   <div class="jo-sig-date">Fait à Bordeaux, le 12 juin 2026</div>
+ * </div>
+ */
+.jo-sig-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+/* Alignements horizontaux du bloc */
+.jo-sig-left   { align-items: flex-start; text-align: left; }
+.jo-sig-center { align-items: center;     text-align: center; }
+.jo-sig-right  { align-items: flex-end;   text-align: right; }
+
+/* Rôle / fonction du signataire */
+.jo-sig-role {
+  font-size: 0.78rem;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #07419e;
+}
+
+/* Nom complet du signataire */
+.jo-sig-name {
+  font-size: 1rem;
+  font-weight: bold;
+  font-style: italic;
+}
+
+/**
+ * Ligne d'émargement (zone de signature manuscrite).
+ * Représente l'espace réservé à la signature sur le document imprimé.
+ */
+.jo-sig-line {
+  width: 100%;
+  max-width: 160px;
+  height: 42px;
+  border-bottom: 1.5px solid #555;
+  margin-top: 0.4rem;
+  margin-bottom: 0.2rem;
+  /* Légère zone de gribouillis visuelle sur papier */
+  background: repeating-linear-gradient(
+    -35deg,
+    transparent,
+    transparent 18px,
+    rgba(0, 0, 0, 0.04) 18px,
+    rgba(0, 0, 0, 0.04) 19px
+  );
+  border-radius: 0;
+  position: relative;
+}
+
+/* Étiquette discrète "Signature" au-dessus de la ligne */
+.jo-sig-line::before {
+  content: "Signature";
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #aaa;
+  font-family: 'Times New Roman', Times, serif;
+  font-style: normal;
+}
+
+/* Date et lieu de signature */
+.jo-sig-date {
+  font-size: 0.78rem;
+  color: #555;
+  font-style: italic;
+  margin-top: 0.15rem;
+}
+
+/* ── Variante "scellée" : la signature a été apposée (classe supplémentaire) ── */
+.jo-sig-block.jo-sig-sealed .jo-sig-line {
+  background: none;
+  border-bottom-color: #07419e;
+  border-bottom-width: 2px;
+}
+
+.jo-sig-block.jo-sig-sealed .jo-sig-line::after {
+  content: "✓";
+  position: absolute;
+  bottom: 2px;
+  right: 4px;
+  font-size: 0.7rem;
+  color: #15803d;
+  font-style: normal;
+}
+
+/* ── Impression : les lignes d'émargement sont plus nettes sur papier ── */
+@media print {
+  .jo-signatures {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .jo-sig-line {
+    background: none;
+    border-bottom: 1px solid #000;
+  }
+
+  .jo-sig-line::before {
+    display: none;
+  }
 }

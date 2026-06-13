@@ -226,7 +226,7 @@ export default function ConferencePage() {
       const { data: p } = await supabase.from("profiles").select("full_name").eq("id", user.id).single();
       if (p) setUserName((p as any).full_name);
       const { data: r } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
-      const exec = ["administrator", "president", "vice_president", "secretary_general", "communication_manager"];
+      const exec = ["administrator", "president", "presidente", "vice_president", "vice_presidente", "secretary_general", "secretary_general2", "communication_manager", "communication_manager2"];
       setIsBDLExec(r?.some((x) => exec.includes(x.role)) ?? false);
       setCheckingRole(false);
     })();

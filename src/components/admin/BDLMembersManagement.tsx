@@ -54,11 +54,15 @@ interface ProfileOption {
 
 const ROLE_OPTIONS = [
   {value:  "administrator", label : "Administrateur"},
-  { value: "president", label: "Président" },
-  { value: "vice_president", label: "Vice-présidente" },
-  { value: "secretary_general", label: "Secrétaire Générale" },
-  { value: "communication_manager", label: "Responsable Communication" },
-  { value: "bdl_member", label: "Membre BDL" },
+  { value: "Président", label: "Président" },
+  { value: "Présidente", label: "Présidente" },
+  { value: "Vice-Président", label: "Vice-Président" },
+  { value: "Vice-Présidente", label: "Vice-Présidente" },
+  { value: "Secrétaire Général", label: "Secrétaire Général" },
+  { value: "Secrétaire Générale", label: "Secrétaire Générale" },
+  { value: "Directeur de la Communauté et de la Communication", label: "Dir. Communauté & Communication (H)" },
+  { value: "Directrice de la Communauté et de la Communication", label: "Dir. Communauté & Communication (F)" },
+  { value: "Membre du Bureau", label: "Membre du Bureau" },
 ];
 
 const getRoleLabel = (role: string) =>

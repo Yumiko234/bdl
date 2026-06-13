@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Link } from "react-router-dom";
-import { ChevronRight, FileText, Users, MessageCircle, AlertCircle, Vote, X, Headphones } from "lucide-react";
+import { ChevronRight, FileText, Users, MessageCircle, AlertCircle, Vote, X, Headphones, Instagram, ExternalLink, Pin, BookUser } from "lucide-react";
 import logo from "@/assets/logo-bdl.jpeg";
 import { supabase } from "@/integrations/supabase/client";
 import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
@@ -20,15 +20,161 @@ import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 // Fonction pour traduire les rôles
 const translateRole = (role: string): string => {
   const roleTranslations: { [key: string]: string } = {
-    administrator: "Administrateur",
-    president: "Président",
-    vice_president: "Vice-Présidente",
-    secretary_general: "Secrétaire Générale",
-    community_manager: "Directeur de la Communauté et de la Communication",
+  administrator: "Administrateur",
+  president: "Président",
+  presidente: "Présidente",
+  vice_president: "Vice-Président",
+  vice_presidente: "Vice-Présidente",
+  secretary_general: "Secrétaire Général",
+  secretary_general2: "Secrétaire Générale",
+  communication_manager: "Directeur de la Communication et de la Communauté",
+  communication_manager2: "Directrice de la Communication et de la Communauté",
+  bdl_member: "Membre du BDL",
   };
 
   return roleTranslations[role] || "Membre du BDL";
 };
+
+// ─── Instagram embed ──────────────────────────────────────────────────────────
+
+interface InstagramPost {
+  url: string;
+  isPinned?: boolean;
+}
+
+const INSTAGRAM_POSTS: InstagramPost[] = [
+  {
+    url: "https://www.instagram.com/bdllgsaintandre/",  // ← Remplacer par l'URL du dernier post
+    isPinned: false,
+  },
+  {
+    url: "https://www.instagram.com/bdllgsaintandre/",  // ← Remplacer par l'URL du post épinglé
+    isPinned: true,
+  },
+];
+
+const InstagramEmbed = ({ post }: { post: InstagramPost }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const processEmbeds = () => {
+      if (typeof (window as any).instgrm !== "undefined") {
+        (window as any).instgrm.Embeds.process();
+        // Délai pour laisser l'iframe se monter
+        const t = setTimeout(() => {
+          if (cancelled) return;
+          const iframe = containerRef.current?.querySelector("iframe");
+          if (iframe) setLoaded(true);
+          else setError(true);
+        }, 3500);
+        return () => clearTimeout(t);
+      }
+    };
+
+    const existingScript = document.querySelector(
+      'script[src="https://www.instagram.com/embed.js"]'
+    );
+
+    if (!existingScript) {
+      const script = document.createElement("script");
+      script.src = "https://www.instagram.com/embed.js";
+      script.async = true;
+      script.defer = true;
+      script.onload = () => { if (!cancelled) processEmbeds(); };
+      script.onerror = () => { if (!cancelled) setError(true); };
+      document.body.appendChild(script);
+    } else {
+      processEmbeds();
+    }
+
+    return () => { cancelled = true; };
+  }, [post.url]);
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-3 py-8 text-center rounded-xl bg-muted/30 border border-dashed min-h-[200px]">
+        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 flex items-center justify-center">
+          <Instagram className="h-6 w-6 text-white" />
+        </div>
+        <p className="text-sm text-muted-foreground">Aperçu indisponible</p>
+        <a
+          href={post.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-primary hover:underline flex items-center gap-1"
+        >
+          Voir sur Instagram <ExternalLink className="h-3 w-3" />
+        </a>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative min-h-[480px]">
+      {/* Skeleton */}
+      {!loaded && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-full rounded-xl bg-muted/40 animate-pulse h-[460px] border" />
+        </div>
+      )}
+
+      <div
+        ref={containerRef}
+        className={`transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
+      >
+        <blockquote
+          className="instagram-media"
+          data-instgrm-captioned
+          data-instgrm-permalink={post.url}
+          data-instgrm-version="14"
+          style={{
+            background: "#FFF",
+            border: "0",
+            borderRadius: "12px",
+            boxShadow: "0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15)",
+            margin: "0 auto",
+            maxWidth: "100%",
+            minWidth: "326px",
+            padding: "0",
+            width: "100%",
+          }}
+        >
+          <div style={{ padding: "16px" }}>
+            <a
+              href={post.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ display: "block", textAlign: "center", textDecoration: "none" }}
+            >
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <div style={{ backgroundColor: "#F4F4F4", borderRadius: "50%", height: 40, marginRight: 14, width: 40 }} />
+                <div style={{ display: "flex", flexDirection: "column", flexGrow: 1 }}>
+                  <div style={{ backgroundColor: "#F4F4F4", borderRadius: 4, height: 14, marginBottom: 6, width: 100 }} />
+                  <div style={{ backgroundColor: "#F4F4F4", borderRadius: 4, height: 14, width: 60 }} />
+                </div>
+              </div>
+              <div style={{ padding: "19% 0" }} />
+              <p style={{ color: "#3897f0", fontFamily: "Arial,sans-serif", fontSize: 14, fontWeight: 550, lineHeight: "18px", paddingTop: 8 }}>
+                Voir cette publication sur Instagram
+              </p>
+            </a>
+            <p style={{ color: "#c9c8cd", fontFamily: "Arial,sans-serif", fontSize: 14, lineHeight: "17px", marginTop: 8, overflow: "hidden", padding: "8px 0 7px", textAlign: "center", whiteSpace: "nowrap" }}>
+              <a href={post.url} target="_blank" rel="noopener noreferrer" style={{ color: "#c9c8cd", fontFamily: "Arial,sans-serif", fontSize: 14, fontWeight: "normal", lineHeight: "17px", textDecoration: "none" }}>
+                Une publication partagée par BDL Lycée Saint-André (@bdllgsaintandre)
+              </a>
+            </p>
+          </div>
+        </blockquote>
+      </div>
+    </div>
+  );
+};
+
+// ─── Page principale ──────────────────────────────────────────────────────────
 
 const Index = () => {
   const [presidentMessage, setPresidentMessage] = useState("");
@@ -78,7 +224,7 @@ const Index = () => {
 
   const closeModal = () => {
     setIsModalOpen(false);
-    setTimeout(() => setSelectedItem(null), 200); // Reset after animation
+    setTimeout(() => setSelectedItem(null), 200);
   };
 
   return (
@@ -161,8 +307,6 @@ const Index = () => {
                         Alexandre Lejal, Président du BDL
                       </p>
                     </div>
-
-                    {/* Render HTML properly */}
                     <div
                       className="prose prose-lg max-w-none text-foreground leading-relaxed"
                       dangerouslySetInnerHTML={{ __html: presidentMessage }}
@@ -204,12 +348,10 @@ const Index = () => {
                             </span>
                           </div>
                           <h3 className="text-xl font-bold">{article.title}</h3>
-
                           <div
                             className="text-muted-foreground line-clamp-2"
                             dangerouslySetInnerHTML={{ __html: article.content }}
                           />
-
                           {article.author_name && (
                             <div className="flex items-center gap-2 pt-2 border-t">
                               <Avatar className="h-6 w-6">
@@ -228,7 +370,6 @@ const Index = () => {
                     ))}
                   </div>
 
-                  {/* Section Events */}
                   {latestEvents.length > 0 && (
                     <>
                       <h3 className="text-2xl font-bold mt-12 mb-4">Évènements</h3>
@@ -247,12 +388,10 @@ const Index = () => {
                                 </span>
                               </div>
                               <h3 className="text-xl font-bold">{event.title}</h3>
-
                               <div
                                 className="text-muted-foreground line-clamp-2"
                                 dangerouslySetInnerHTML={{ __html: event.description }}
                               />
-
                               {event.author_name && (
                                 <div className="flex items-center gap-2 pt-2 border-t">
                                   <Avatar className="h-6 w-6">
@@ -291,6 +430,104 @@ const Index = () => {
           </div>
         </section>
 
+        {/* ── Instagram Section ─────────────────────────────────────────────── */}
+        <section className="py-16 bg-gradient-to-b from-muted/30 to-background">
+          <div className="container mx-auto px-4">
+            <div className="max-w-4xl mx-auto space-y-8">
+
+              {/* Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 flex items-center justify-center shadow-sm flex-shrink-0">
+                      <Instagram className="h-5 w-5 text-white" />
+                    </div>
+                    <h2 className="text-3xl font-bold">Sur Instagram</h2>
+                  </div>
+                  <p className="text-muted-foreground text-sm pl-12">
+                    Suivez-nous sur{" "}
+                    <a
+                      href="https://www.instagram.com/bdllgsaintandre"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary font-semibold hover:underline"
+                    >
+                      @bdllgsaintandre
+                    </a>
+                  </p>
+                </div>
+
+                <a
+                  href="https://www.instagram.com/bdllgsaintandre"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 border-pink-200 hover:border-pink-400 hover:bg-pink-50 transition-colors"
+                  >
+                    <div className="w-4 h-4 rounded bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 flex items-center justify-center">
+                      <Instagram className="h-2.5 w-2.5 text-white" />
+                    </div>
+                    Voir le profil
+                    <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                  </Button>
+                </a>
+              </div>
+
+              {/* Info sur les bloqueurs */}
+              <div className="flex items-start gap-2.5 p-3 rounded-lg bg-blue-50 border border-blue-100 text-xs text-blue-700">
+                <Instagram className="h-4 w-4 flex-shrink-0 mt-0.5 text-blue-500" />
+                <p>
+                  Les publications sont chargées directement depuis Instagram. Si elles n'apparaissent pas,
+                  vérifiez que votre bloqueur de publicités est désactivé ou{" "}
+                  <a
+                    href="https://www.instagram.com/bdllgsaintandre"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold underline"
+                  >
+                    consultez notre profil directement
+                  </a>
+                  .
+                </p>
+              </div>
+
+              {/* Grille des deux posts */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {INSTAGRAM_POSTS.map((post, index) => (
+                  <Card key={index} className="shadow-card overflow-hidden">
+                    <CardContent className="p-5 space-y-3">
+                      {/* Badge */}
+                      <div className="flex items-center gap-2">
+                        {post.isPinned ? (
+                          <Badge className="gap-1.5 bg-accent text-secondary font-semibold shadow-sm">
+                            <Pin className="h-3 w-3" />
+                            Post épinglé
+                          </Badge>
+                        ) : (
+                          <Badge
+                            variant="secondary"
+                            className="gap-1.5 border border-pink-100 bg-pink-50 text-pink-700"
+                          >
+                            <Instagram className="h-3 w-3" />
+                            Dernier post
+                          </Badge>
+                        )}
+                      </div>
+
+                      {/* Embed */}
+                      <InstagramEmbed post={post} />
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+            </div>
+          </div>
+        </section>
+
         {/* Quick Access */}
         <section className="py-16 bg-muted/30">
           <div className="container mx-auto px-4">
@@ -319,10 +556,10 @@ const Index = () => {
                   gradient: "gradient-institutional",
                 },
                 {
-                  title: "Contact",
-                  description: "Contactez-nous ou demandez une audience",
-                  icon: MessageCircle,
-                  link: "/contact",
+                  title: "Certificat",
+                  description: "Vérifiez la validité d'un certificat émis par le Bureau",
+                  icon: BookUser,
+                  link: "/certificat-verif",
                   gradient: "gradient-gold",
                 },
               ].map((item, index) => (
@@ -385,7 +622,6 @@ const Index = () => {
               </DialogHeader>
 
               <div className="space-y-4 pt-4">
-                {/* Contenu */}
                 <div
                   className="prose prose-sm max-w-none dark:prose-invert"
                   dangerouslySetInnerHTML={{ 
@@ -395,7 +631,6 @@ const Index = () => {
                   }}
                 />
 
-                {/* Auteur */}
                 {selectedItem.author_name && (
                   <div className="flex items-center gap-3 pt-4 border-t">
                     <Avatar className="h-10 w-10">
@@ -415,7 +650,6 @@ const Index = () => {
                   </div>
                 )}
 
-                {/* Info supplémentaire pour les événements */}
                 {selectedItem.type === 'event' && selectedItem.end_date && selectedItem.start_date !== selectedItem.end_date && (
                   <div className="bg-muted/50 rounded-lg p-4">
                     <p className="text-sm text-muted-foreground">

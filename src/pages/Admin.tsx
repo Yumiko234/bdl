@@ -44,25 +44,42 @@ import {
 // ─── Role helpers ─────────────────────────────────────────────────────────────
 const ROLE_KEYS = [
   "administrator",
-  "president", "vice_president", "secretary_general",
-  "communication_manager", "bdl_member", "vie_scolaire","student",
+  "president", "presidente",
+  "vice_president", "vice_presidente",
+  "secretary_general", "secretary_general2",
+  "communication_manager", "communication_manager2",
+  "bdl_member", "vie_scolaire",
+  "student",
 ] as const;
 type RoleKey = typeof ROLE_KEYS[number];
 
 const rolePrecedence: Record<RoleKey, number> = {
   administrator: 1,
-  president: 2, vice_president: 3, secretary_general: 4,
-  communication_manager: 5, bdl_member: 6, vie_scolaire: 7, student: 8,
+  president: 2,
+  presidente: 2,
+  vice_president: 3,
+  vice_presidente: 3,
+  secretary_general: 4,
+  secretary_general2: 4,
+  communication_manager: 5,
+  communication_manager2: 5,
+  vie_scolaire: 6,
+  bdl_member: 7,
+  student: 8,
 };
 
 const roleLabel = (r: string) =>
-  r === "administrator"          ? "Administrateur"          :
-  r === "president"              ? "Président"               :
-  r === "vice_president"         ? "Vice-Présidente"         :
-  r === "secretary_general"      ? "Secrétaire Générale"     :
-  r === "communication_manager"  ? "Dir. Communication"      :
-  r === "vie_scolaire"           ? "Vie Scolaire"            :
-  r === "bdl_member"             ? "Membre BDL"              : "Étudiant";
+  r === "administrator"          ? "Administrateur" :
+  r === "president"              ? "Président" :
+  r === "presidente"             ? "Présidente" :
+  r === "vice_president"         ? "Vice-président" :
+  r === "vice_presidente"        ? "Vice-présidente" :
+  r === "secretary_general"      ? "Secrétaire Général" :
+  r === "secretary_general2"     ? "Secrétaire Générale" :
+  r === "communication_manager"  ? "Dir. ComCom" :
+  r === "communication_manager2" ? "Dir. ComCom" :
+  r === "vie_scolaire"           ? "Vie Scolaire" :
+  r === "bdl_member"             ? "Membre BDL" : "Étudiant";
 
 const getPrimaryRole = (roles: string[]): RoleKey => {
   if (!roles.length) return "student";
@@ -154,7 +171,7 @@ const Admin = () => {
 
       // administrator + tous les rôles BDL ont accès
       const isBDLStaff = roles.some((r: any) =>
-        ['administrator', 'president', 'vice_president', 'secretary_general', 'communication_manager', 'bdl_member'].includes(r)
+        ['administrator', 'president', 'presidente', 'vice_president', 'vice_presidente', 'secretary_general', 'secretary_general2', 'communication_manager', 'communication_manager2', 'bdl_member'].includes(r)
       );
 
       if (!isBDLStaff) {

@@ -56,12 +56,16 @@ export default function Events() {
 
   const getRoleLabel = (role: string | null): string => {
     const roleLabels: { [key: string]: string } = {
-      administrator: "Administrateur",
-      president: "Président",
-      vice_president: "Vice-Présidente",
-      secretary_general: "Secrétaire Générale",
-      communication_manager: "Directeur de la Communication et de la Communauté",
-      bdl_member: "Membre du BDL",
+  administrator: "Administrateur",
+  president: "Président",
+  presidente: "Présidente",
+  vice_president: "Vice-Président",
+  vice_presidente: "Vice-Présidente",
+  secretary_general: "Secrétaire Général",
+  secretary_general2: "Secrétaire Générale",
+  communication_manager: "Directeur de la Communication et de la Communauté",
+  communication_manager2: "Directrice de la Communication et de la Communauté",
+  bdl_member: "Membre du BDL",
     };
     return role ? roleLabels[role] || "BDL" : "BDL";
   };

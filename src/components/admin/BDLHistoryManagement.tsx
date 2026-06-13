@@ -214,11 +214,11 @@ export const BDLHistoryManagement = () => {
 
   const getRoleLabel = (role: string): string => {
     const labels: Record<string, string> = {
-      president: "Président",
-      vice_president: "Vice-Présidente",
-      secretary_general: "Secrétaire Générale",
-      communication_manager: "Directeur de la Communication",
-      bdl_member: "Membre BDL",
+  president: "Le Président", presidente: "La Présidente", 
+  vice_president: "Le Vice-Président", vice_presidente: "La Vice-Présidente", 
+  secretary_general: "Le Secrétaire Général", secretary_general2: "La Secrétaire Générale",
+  communication_manager: "Le Directeur de la Communauté et de la Communication", communication_manager2: "La Directrice de la Communauté et de la Communication",
+  bdl_member: "Membre BDL",
     };
     return labels[role] || role;
   };
@@ -419,11 +419,13 @@ export const BDLHistoryManagement = () => {
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="president">Président</SelectItem>
-                              <SelectItem value="vice_president">Vice-Présidente</SelectItem>
-                              <SelectItem value="secretary_general">Secrétaire Générale</SelectItem>
-                              <SelectItem value="communication_manager">
-                                Directeur de la Communication
-                              </SelectItem>
+                              <SelectItem value="presidente">Présidente</SelectItem>
+                              <SelectItem value="vice_president">Vice-Président</SelectItem>
+                              <SelectItem value="vice_presidente">Vice-Présidente</SelectItem>
+                              <SelectItem value="secretary_general">Secrétaire Général</SelectItem>
+                              <SelectItem value="secretary_general2">Secrétaire Générale</SelectItem>
+                              <SelectItem value="communication_manager">Directeur de la Communication</SelectItem>
+                              <SelectItem value="communication_manager2">Directrice de la Communication</SelectItem>
                               <SelectItem value="bdl_member">Membre BDL</SelectItem>
                             </SelectContent>
                           </Select>

@@ -230,35 +230,13 @@ sup.diff-date {
 .jo-sig-line {
   width: 100%;
   max-width: 160px;
-  height: 42px;
+  height: 10px;
   border-bottom: 1.5px solid #555;
   margin-top: 0.4rem;
   margin-bottom: 0.2rem;
-  /* Légère zone de gribouillis visuelle sur papier */
-  background: repeating-linear-gradient(
-    -35deg,
-    transparent,
-    transparent 18px,
-    rgba(0, 0, 0, 0.04) 18px,
-    rgba(0, 0, 0, 0.04) 19px
-  );
-  border-radius: 0;
-  position: relative;
 }
 
-/* Étiquette discrète "Signature" au-dessus de la ligne */
-.jo-sig-line::before {
-  content: "Signature";
-  position: absolute;
-  top: 4px;
-  left: 4px;
-  font-size: 0.6rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #aaa;
-  font-family: 'Times New Roman', Times, serif;
-  font-style: normal;
-}
+
 
 /* Date et lieu de signature */
 .jo-sig-date {

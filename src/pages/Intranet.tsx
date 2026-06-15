@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 import {
   Newspaper, Calendar, FileText, Vote, BarChart3,
-  BookMarked, Headphones, UserCircle, Building2,
+  BookMarked, BookUser, Headphones, UserCircle, Building2,
   LogOut, Shield, Loader2, ChevronRight,
   CalendarDays, BookOpen, Lock,
 } from "lucide-react";
@@ -90,15 +90,16 @@ interface QuickCard {
 }
 
 const PUBLIC_CARDS: QuickCard[] = [
-  { title: "Actualités",              description: "Les dernières nouvelles du lycée et du BDL.",                  icon: <Newspaper    className="h-6 w-6" />, href: "/actualites", color: "bg-blue-100 text-blue-700" },
-  { title: "Événements",              description: "Agenda des événements à venir.",                               icon: <Calendar     className="h-6 w-6" />, href: "/events",     color: "bg-violet-100 text-violet-700" },
-  { title: "Calendrier",              description: "Calendrier scolaire et dates importantes.",                    icon: <CalendarDays className="h-6 w-6" />, href: "/calendrier", color: "bg-indigo-100 text-indigo-700" },
-  { title: "Documents",               description: "Règlements, formulaires et comptes-rendus.",                   icon: <FileText     className="h-6 w-6" />, href: "/documents",  color: "bg-amber-100 text-amber-700" },
-  { title: "Scrutins",                description: "Votes et scrutins ouverts.",                                   icon: <Vote         className="h-6 w-6" />, href: "/scrutin",    color: "bg-emerald-100 text-emerald-700" },
-  { title: "Sondages",                description: "Donnez votre avis sur les projets du BDL.",                    icon: <BarChart3    className="h-6 w-6" />, href: "/sondage",    color: "bg-pink-100 text-pink-700" },
-  { title: "Journal Officiel",        description: "Publications officielles du Bureau des Lycéens.",              icon: <BookMarked className="h-6 w-6" />, href: "/jo",        color: "bg-yellow-100 text-yellow-700" },
-  { title: "Le BDL",                  description: "Découvrez les membres et la mission du BDL.",                  icon: <BookOpen     className="h-6 w-6" />, href: "/bdl",        color: "bg-cyan-100 text-cyan-700" },
-  { title: "Salle de Conférence",     description: "Conférence du BDL concernant la vie de l'établissement.",      icon: <Headphones className="h-6 w-6" />, href: "/conference", color: "bg-indigo-100 text-indigo-700" },
+  { title: "Actualités",              description: "Les dernières nouvelles du lycée et du BDL.",                  icon: <Newspaper    className="h-6 w-6" />, href: "/actualites",       color: "bg-blue-100 text-blue-700" },
+  { title: "Événements",              description: "Agenda des événements à venir.",                               icon: <Calendar     className="h-6 w-6" />, href: "/events",           color: "bg-violet-100 text-violet-700" },
+  { title: "Calendrier",              description: "Calendrier scolaire et dates importantes.",                    icon: <CalendarDays className="h-6 w-6" />, href: "/calendrier",       color: "bg-indigo-100 text-indigo-700" },
+  { title: "Documents",               description: "Règlements, formulaires et comptes-rendus.",                   icon: <FileText     className="h-6 w-6" />, href: "/documents",        color: "bg-amber-100 text-amber-700" },
+  { title: "Scrutins",                description: "Votes et scrutins ouverts.",                                   icon: <Vote         className="h-6 w-6" />, href: "/scrutin",          color: "bg-emerald-100 text-emerald-700" },
+  { title: "Sondages",                description: "Donnez votre avis sur les projets du BDL.",                    icon: <BarChart3    className="h-6 w-6" />, href: "/sondage",          color: "bg-pink-100 text-pink-700" },
+  { title: "Journal Officiel",        description: "Publications officielles du Bureau des Lycéens.",              icon: <BookMarked   className="h-6 w-6" />, href: "/jo",               color: "bg-yellow-100 text-yellow-700" },
+  { title: "Le BDL",                  description: "Découvrez les membres et la mission du BDL.",                  icon: <BookOpen     className="h-6 w-6" />, href: "/bdl",              color: "bg-cyan-100 text-cyan-700" },
+  { title: "Salle de Conférence",     description: "Conférence du BDL concernant la vie de l'établissement.",      icon: <Headphones   className="h-6 w-6" />, href: "/conference",       color: "bg-indigo-100 text-indigo-700" },
+  { title: "Certificat BDL",          description: "Vérifiez la validité d'un certificat émis par le Bureau.",     icon: <BookUser     className="h-6 w-6" />, href: "/certificat-verif", color: "bg-emerald-100 text-emerald-700" },
 ];
 
 const Intranet = () => {

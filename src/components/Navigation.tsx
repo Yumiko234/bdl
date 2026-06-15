@@ -103,8 +103,6 @@ const Navigation = () => {
           )}
         </div>
       </nav>
-
-      {/* Bandeau Global - Il suit la navigation grâce au header sticky */}
       <GlobalBanner />
     </header>
   );

@@ -123,7 +123,6 @@ const extractSegments = (node: Node, bold = false, italic = false): Segment[] =>
   const tag = node.tagName.toLowerCase();
   const isBold = bold || ["strong","b","h1","h2","h3","h4"].includes(tag);
   const isItalic = italic || ["em","i"].includes(tag);
-  // ins/del : on garde le texte mais on ignore la balise (le diff est déjà aplati)
   return Array.from(node.childNodes).flatMap((c) => extractSegments(c, isBold, isItalic));
 };
 
@@ -132,7 +131,6 @@ const getAlign = (el: HTMLElement): "left" | "center" | "right" | "justify" => {
   if (el.classList.contains("ql-align-center")) return "center";
   if (el.classList.contains("ql-align-right"))  return "right";
   if (el.classList.contains("ql-align-justify")) return "justify";
-  // style inline (Quill l'injecte parfois)
   const s = el.getAttribute("style") || "";
   if (s.includes("text-align: center") || s.includes("text-align:center")) return "center";
   if (s.includes("text-align: right")  || s.includes("text-align:right"))  return "right";
@@ -187,12 +185,7 @@ const exportToPDF = async (entry: JournalEntry, bodyHTML: string): Promise<void>
   pdf.text(`NOR : ${entry.nor_number} — ${pubDate}`, PAGE_W / 2, y, { align: "center" });
   y += 4; hRule(0.3, "#cccccc"); y += 6;
 
-  // ── Moteur de rendu inline : écrit une ligne de segments mixed-style ─────
-  /**
-   * Prend un tableau de segments et les écrit sur une ou plusieurs lignes,
-   * en respectant la largeur disponible et l'alignement.
-   * Gère le retour à la ligne mot par mot avec changement de fonte mid-ligne.
-   */
+  // ── Moteur de rendu inline ────────────────────────────────────────────────
   const renderInlineSegments = (
     segments: Segment[],
     fontSize: number,
@@ -201,7 +194,6 @@ const exportToPDF = async (entry: JournalEntry, bodyHTML: string): Promise<void>
     indentX: number,
     availW: number,
   ) => {
-    // 1. Tokeniser en mots avec leur style
     interface Word { word: string; bold: boolean; italic: boolean; }
     const words: Word[] = [];
     for (const seg of segments) {
@@ -209,7 +201,6 @@ const exportToPDF = async (entry: JournalEntry, bodyHTML: string): Promise<void>
       for (const p of parts) {
         if (!p) continue;
         if (/^\s+$/.test(p)) {
-          // espace — on l'attache au mot précédent
           if (words.length) words[words.length - 1].word += " ";
         } else {
           words.push({ word: p, bold: seg.bold, italic: seg.italic });
@@ -219,7 +210,6 @@ const exportToPDF = async (entry: JournalEntry, bodyHTML: string): Promise<void>
 
     if (!words.length) return;
 
-    // 2. Mesure la largeur d'un mot avec sa fonte
     const measureWord = (w: Word): number => {
       const style = w.bold && w.italic ? "bolditalic" : w.bold ? "bold" : w.italic ? "italic" : "normal";
       pdf.setFontSize(fontSize);
@@ -227,7 +217,6 @@ const exportToPDF = async (entry: JournalEntry, bodyHTML: string): Promise<void>
       return (pdf.getStringUnitWidth(w.word) * fontSize * MM_PT);
     };
 
-    // 3. Agréger en lignes
     interface LineWord extends Word { width: number; }
     const lineWords: LineWord[] = words.map((w) => ({ ...w, width: measureWord(w) }));
     const lines: LineWord[][] = [];
@@ -247,7 +236,6 @@ const exportToPDF = async (entry: JournalEntry, bodyHTML: string): Promise<void>
     }
     if (current.length) lines.push(current);
 
-    // 4. Dessiner chaque ligne
     for (const line of lines) {
       checkPage(fontSize * MM_PT * 1.6);
       const totalW = line.reduce((s, w) => s + w.width, 0);
@@ -255,7 +243,7 @@ const exportToPDF = async (entry: JournalEntry, bodyHTML: string): Promise<void>
       let startX: number;
       if (align === "center") startX = indentX + (availW - totalW) / 2;
       else if (align === "right") startX = indentX + availW - totalW;
-      else startX = indentX; // left / justify
+      else startX = indentX;
 
       let cx = startX;
       for (const lw of line) {
@@ -278,7 +266,6 @@ const exportToPDF = async (entry: JournalEntry, bodyHTML: string): Promise<void>
     if (!(node instanceof HTMLElement)) return;
     const tag = node.tagName.toLowerCase();
 
-    // Titres h1–h4
     if (["h1","h2","h3","h4"].includes(tag)) {
       const lv = parseInt(tag[1]);
       const sz = [14, 12, 11, 10.5][lv - 1];
@@ -291,7 +278,6 @@ const exportToPDF = async (entry: JournalEntry, bodyHTML: string): Promise<void>
       return;
     }
 
-    // Paragraphes
     if (tag === "p") {
       const segs = extractSegments(node);
       const fullText = segs.map(s => s.text).join("").trim();
@@ -302,16 +288,13 @@ const exportToPDF = async (entry: JournalEntry, bodyHTML: string): Promise<void>
       return;
     }
 
-    // Listes
     if (tag === "ul" || tag === "ol") {
       const items = Array.from(node.children).filter(c => c.tagName.toLowerCase() === "li");
       items.forEach((li, i) => {
         const bullet = tag === "ul" ? "•" : `${i + 1}.`;
-        // bullet
         pdf.setFontSize(10); pdf.setFont("times", "normal"); setColor(BLACK);
         checkPage(5);
         pdf.text(bullet, MX + 1, y);
-        // contenu de la li avec formatage inline
         const segs = extractSegments(li);
         renderInlineSegments(segs, 10, BLACK, "left", MX + 6, CW - 6);
       });
@@ -319,7 +302,6 @@ const exportToPDF = async (entry: JournalEntry, bodyHTML: string): Promise<void>
       return;
     }
 
-    // Citation
     if (tag === "blockquote") {
       const segs = extractSegments(node);
       const startY = y;
@@ -331,24 +313,25 @@ const exportToPDF = async (entry: JournalEntry, bodyHTML: string): Promise<void>
       return;
     }
 
-    // Séparateur
     if (tag === "hr") {
       y += 2; hRule(0.3, "#cccccc"); y += 2;
       return;
     }
 
-    // Conteneurs génériques : descendre
     Array.from(node.childNodes).forEach(walk);
   };
 
   Array.from(wrap.childNodes).forEach(walk);
 
-  // ── Signatures ──
+  // ── Signatures PDF (Accord singulier/pluriel automatique) ──
   if (entry.signatures && entry.signatures.length > 0) {
     y += 4; checkPage(44);
     hRule(0.8); y += 4;
     pdf.setFontSize(7); pdf.setFont("times", "bold"); setColor(BLUE);
-    pdf.text("SIGNATURES", MX, y); y += 5;
+    
+    // Modification ici pour le PDF :
+    const pdfSigTitle = entry.signatures.length > 1 ? "SIGNATURES" : "SIGNATURE";
+    pdf.text(pdfSigTitle, MX, y); y += 5;
 
     const sigs = entry.signatures;
     const cols = Math.min(sigs.length, 3);
@@ -389,7 +372,7 @@ const exportToPDF = async (entry: JournalEntry, bodyHTML: string): Promise<void>
     pdf.text(`${getRoleLabel(entry.author_role)} : ${entry.author_name}`, PAGE_W - MX, y, { align: "right" });
   }
 
-  // ── Pied de page (toujours en bas) ──
+  // ── Pied de page ──
   const fy = PAGE_H - 10;
   setDraw("#e5e7eb"); pdf.setLineWidth(0.3); pdf.line(MX, fy - 3, PAGE_W - MX, fy - 3);
   pdf.setFontSize(7); pdf.setFont("times", "normal"); setColor(GRAY);
@@ -398,7 +381,6 @@ const exportToPDF = async (entry: JournalEntry, bodyHTML: string): Promise<void>
 
   pdf.save(`NOR_${entry.nor_number.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`);
 };
-
 
 // ─── Composant ArticleContent ─────────────────────────────────────────────────
 
@@ -580,10 +562,13 @@ const JobdlArticle = () => {
 
               <ArticleContent entry={entry} />
 
-              {/* ── Bloc signatures ── */}
+              {/* ── Bloc signatures (Accord du pluriel appliqué ici) ── */}
               {entry.signatures && entry.signatures.length > 0 && (
                 <div className="jo-signatures">
-                  <div className="jo-signatures-title">Signatures</div>
+                  {/* Modification ici pour l'affichage de la page web */}
+                  <div className="jo-signatures-title">
+                    {entry.signatures.length > 1 ? "Signatures" : "Signature"}
+                  </div>
                   <div className="jo-signatures-grid">
                     {entry.signatures.map((s) => (
                       <div key={s.uid} className={`jo-sig-block ${s.align}`}>

@@ -294,9 +294,16 @@ const Index = () => {
               <CardContent className="p-8 md:p-12">
                 <div className="flex flex-col md:flex-row gap-8 items-start">
                   <div className="flex-shrink-0">
-                    <div className="w-24 h-24 rounded-full bg-gradient-institutional flex items-center justify-center text-gold text-3xl font-bold shadow-elegant">
-                      AL
-                    </div>
+                    <Avatar className="w-24 h-24 shadow-elegant">
+  <AvatarImage
+    src="https://ppmlhjcwdyaarbqpngla.supabase.co/storage/v1/object/public/avatars/avatars/13017c3d-e4bb-4e30-aed1-721e321512d7-1772204554404.jpg"
+    alt="Alexandre Lejal"
+    className="object-cover"
+  />
+  <AvatarFallback className="bg-gradient-institutional text-gold text-3xl font-bold">
+    AL
+  </AvatarFallback>
+                    </Avatar>
                   </div>
                   <div className="flex-1 space-y-4">
                     <div>

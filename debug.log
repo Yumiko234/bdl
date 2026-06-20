@@ -2,3 +2,7 @@
 [0126/110830.346:ERROR:third_party\crashpad\crashpad\util\win\registration_protocol_win.cc:108] CreateFile: Le fichier spécifié est introuvable. (0x2)
 [0610/091705.937:ERROR:third_party\crashpad\crashpad\util\win\registration_protocol_win.cc:108] CreateFile: Le fichier spécifié est introuvable. (0x2)
 [0610/091717.106:ERROR:third_party\crashpad\crashpad\util\win\registration_protocol_win.cc:108] CreateFile: Le fichier spécifié est introuvable. (0x2)
+[0618/091916.233:ERROR:third_party\crashpad\crashpad\util\win\registration_protocol_win.cc:108] CreateFile: Le fichier spécifié est introuvable. (0x2)
+[0618/091917.237:ERROR:third_party\crashpad\crashpad\util\win\registration_protocol_win.cc:108] CreateFile: Le fichier spécifié est introuvable. (0x2)
+[0618/100250.091:ERROR:third_party\crashpad\crashpad\util\win\registration_protocol_win.cc:108] CreateFile: Le fichier spécifié est introuvable. (0x2)
+[0618/100301.022:ERROR:third_party\crashpad\crashpad\util\win\registration_protocol_win.cc:108] CreateFile: Le fichier spécifié est introuvable. (0x2)

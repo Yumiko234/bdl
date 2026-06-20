@@ -38,7 +38,8 @@ import Conference from "./pages/Conference";
 import CertificatVerif from "./pages/CertificatVerif";
 
 import ResetPassword from "./pages/ResetPassword";
-import Profile from "./pages/Profile";
+import Profile from "src/pages/profile/Profile";
+import ProfileBDLSuivi from "./pages/profile/ProfileBDLSuivi";
 
 const queryClient = new QueryClient();
 
@@ -72,6 +73,7 @@ const App = () => {
           <Route path="/conference" element={<Conference />} />
           <Route path="/sondage" element={<Sondage />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/bdl-profile" element={<ProfileBDLSuivi />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

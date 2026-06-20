@@ -292,6 +292,58 @@ const Intranet = () => {
               </section>
             )}
 
+                        {/* Suivi actions */}
+            {isBDLMember && (
+              <section>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold flex items-center gap-2">
+                    <Shield className="h-5 w-5 text-primary" />
+                    Suivi de mes actions
+                  </h2>
+                </div>
+
+                <Link to="/bdl-profile">
+                  <div className={`group relative overflow-hidden rounded-2xl border-2 hover:shadow-elegant transition-all duration-300 cursor-pointer ${
+                    primaryRole === 'administrator'
+                      ? 'border-red-300/50 bg-gradient-to-br from-red-50 to-red-100/50 hover:border-green-400/70'
+                      : 'border-green-300/40 bg-gradient-to-br from-emerald-50 to-emerald-50 hover:border-emerald-400/70'
+                  }`}>
+                    <div className="p-6 flex items-center gap-5">
+                      <div className={`h-14 w-14 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${
+                        primaryRole === 'administrator'
+                          ? 'bg-red-100 group-hover:bg-red-200'
+                          : 'bg-emerald-100 group-hover:bg-green-200'
+                      }`}>
+                        <Lock className={`h-7 w-7 ${primaryRole === 'administrator' ? 'text-red-700' : 'text-amber-700'}`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className={`text-lg font-bold text-foreground transition-colors ${
+                          primaryRole === 'administrator' ? 'group-hover:text-red-800' : 'group-hover:text-emerald-800'
+                        }`}>
+                          Voir mes actions
+                        </h3>
+                        <p className="text-sm text-muted-foreground mt-0.5">
+                          {primaryRole === 'administrator'
+                            ? "T'es plus là fréro."
+                            : "Accéder au suivi des mes actions et notes de l'Exécutif."}
+                        </p>
+                        <Badge className={`mt-3 ${
+                          primaryRole === 'administrator'
+                            ? 'bg-red-100 text-red-800 border-red-300'
+                            : 'bg-green-100 text-amber-800 border-emerald-300'
+                        }`}>
+                          {primaryRole === 'administrator' && '👑 '}{roleLabel(primaryRole)}
+                        </Badge>
+                      </div>
+                      <ChevronRight className={`h-6 w-6 text-muted-foreground group-hover:translate-x-1 transition-all flex-shrink-0 ${
+                        primaryRole === 'administrator' ? 'group-hover:text-red-700' : 'group-hover:text-emerald-700'
+                      }`} />
+                    </div>
+                  </div>
+                </Link>
+              </section>
+            )}
+
             {/* Quick access grid */}
             <section>
               <h2 className="text-xl font-bold mb-5">Accès rapide</h2>

@@ -24,6 +24,7 @@ import { MaintenanceManagement }    from "@/components/admin/MaintenanceManageme
 import { UserManagement }           from "@/components/admin/UserManagement";
 import { AdminManagement } from "@/components/admin/AdminManagament";
 import { SupportManagement }        from "@/components/admin/SupportManagement";
+import { SuiviActionsManagement } from "@/components/admin/AdminSuiviActions";
 import { CertificateManagement } from "@/components/admin/CertificatManagement";
 import { AdminConference }     from "@/components/admin/AdminConference";
 import { RichTextEditor }           from "@/components/RichTextEditor";
@@ -100,7 +101,7 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { id: "news",          label: "Actualités",         icon:  <Newspaper    className="h-4 w-4" />, group: "Contenu" },
+  { id: "news",          label: "Actualités",          icon:  <Newspaper    className="h-4 w-4" />, group: "Contenu" },
   { id: "events",        label: "Événements",          icon: <Calendar     className="h-4 w-4" />, group: "Contenu" },
   { id: "calendar",      label: "Calendrier",          icon: <CalendarDays className="h-4 w-4" />, group: "Contenu" },
   { id: "documents",     label: "Documents",           icon: <FileText     className="h-4 w-4" />, group: "Contenu" },
@@ -112,6 +113,7 @@ const NAV_ITEMS: NavItem[] = [
   
   { id: "scrutin",       label: "Scrutins",            icon: <Vote         className="h-4 w-4" />, group: "Participation", minRank: 3 },
   { id: "surveys",       label: "Sondages",            icon: <BarChart3    className="h-4 w-4" />, group: "Participation" },
+  { id: "actions",       label: "Suivi Actions",       icon: <BarChart3    className="h-4 w-4" />, group: "Participation", minRank: 5 },
   { id: "certificat",    label: "Certificat BDL",      icon: <BookUser     className="h-4 w-4" />, group: "Participation", minRank : 3 },
   
   { id: "support",       label: "Support & Audiences", icon: <Headphones   className="h-4 w-4" />, group: "Assistance" },
@@ -323,6 +325,7 @@ const Admin = () => {
       case "bdl-history":   return <BDLHistoryManagement />;
       case "scrutin":       return <ScrutinManagement />;
       case "surveys":       return <SurveyManagement />;
+      case "actions":       return <SuiviActionsManagement />;
       case "certificat":    return <CertificateManagement />;
       case "conference":    return <AdminConference />;
       case "support":       return renderSupportSection();

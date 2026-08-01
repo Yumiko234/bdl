@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { UserCircle, Plus, Trash2, Edit, Eye, Upload } from "lucide-react";
@@ -26,6 +27,8 @@ interface MemberProfile {
   user_id: string;
   full_name: string;
   slug: string;
+  person_slug: string;
+  year_id: string | null;
   photo_url: string | null;
   age: number | null;
   role: string | null;
@@ -36,15 +39,26 @@ interface MemberProfile {
   anecdote: string | null;
   display_order: number;
   is_published: boolean;
+  bdl_years?: { year_label: string } | null;
 }
+
+interface BDLYearOption {
+  id: string;
+  year_label: string;
+}
+
+// Valeur "sentinelle" utilisée par le Select pour représenter la fiche globale (year_id = null)
+const GLOBAL_YEAR_VALUE = "global";
 
 export const BDLProfileManagement = () => {
   const [profiles, setProfiles] = useState<MemberProfile[]>([]);
+  const [years, setYears] = useState<BDLYearOption[]>([]);
   const [editingProfile, setEditingProfile] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     user_id: "",
     full_name: "",
     slug: "",
+    year_id: GLOBAL_YEAR_VALUE,
     photo_url: "",
     age: "",
     role: "",
@@ -61,13 +75,14 @@ export const BDLProfileManagement = () => {
 
   useEffect(() => {
     loadProfiles();
+    loadYears();
   }, []);
 
   const loadProfiles = async () => {
     try {
       const { data, error } = await supabase
         .from("bdl_member_profiles")
-        .select("*")
+        .select("*, bdl_years(year_label)")
         .order("display_order", { ascending: true });
 
       if (error) throw error;
@@ -75,6 +90,20 @@ export const BDLProfileManagement = () => {
     } catch (error) {
       console.error("Error loading profiles:", error);
       toast.error("Erreur lors du chargement des profils");
+    }
+  };
+
+  const loadYears = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("bdl_years")
+        .select("id, year_label")
+        .order("start_year", { ascending: false });
+
+      if (error) throw error;
+      setYears(data || []);
+    } catch (error) {
+      console.error("Error loading years:", error);
     }
   };
 
@@ -89,11 +118,30 @@ export const BDLProfileManagement = () => {
       .replace(/\s+/g, "_"); // Remplace les espaces par des underscores
   };
 
+  // Suggère un slug d'URL : identique au nom pour une fiche globale, ou suffixé par
+  // l'année pour une fiche spécifique (ex : jean_dupont-2024-2025), afin que les deux
+  // fiches d'une même personne puissent coexister avec des URL distinctes.
+  const suggestSlug = (fullName: string, yearId: string): string => {
+    const base = generateSlug(fullName);
+    if (yearId === GLOBAL_YEAR_VALUE) return base;
+    const year = years.find((y) => y.id === yearId);
+    if (!year) return base;
+    return `${base}-${generateSlug(year.year_label)}`;
+  };
+
   const handleFullNameChange = (name: string) => {
     setFormData({
       ...formData,
       full_name: name,
-      slug: generateSlug(name),
+      slug: suggestSlug(name, formData.year_id),
+    });
+  };
+
+  const handleYearChange = (yearId: string) => {
+    setFormData({
+      ...formData,
+      year_id: yearId,
+      slug: suggestSlug(formData.full_name, yearId),
     });
   };
 
@@ -157,6 +205,8 @@ export const BDLProfileManagement = () => {
       const profileData = {
         full_name: formData.full_name,
         slug: formData.slug,
+        person_slug: generateSlug(formData.full_name),
+        year_id: formData.year_id === GLOBAL_YEAR_VALUE ? null : formData.year_id,
         photo_url: formData.photo_url || null,
         age: formData.age ? parseInt(formData.age) : null,
         role: formData.role || null,
@@ -207,6 +257,7 @@ export const BDLProfileManagement = () => {
       user_id: profile.user_id,
       full_name: profile.full_name,
       slug: profile.slug,
+      year_id: profile.year_id || GLOBAL_YEAR_VALUE,
       photo_url: profile.photo_url || "",
       age: profile.age?.toString() || "",
       role: profile.role || "",
@@ -241,6 +292,7 @@ export const BDLProfileManagement = () => {
       user_id: "",
       full_name: "",
       slug: "",
+      year_id: GLOBAL_YEAR_VALUE,
       photo_url: "",
       age: "",
       role: "",
@@ -295,6 +347,31 @@ export const BDLProfileManagement = () => {
               />
               <p className="text-xs text-muted-foreground">
                 URL : /bdl/{formData.slug || "prenom_nom"}
+              </p>
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="year">Portée de la fiche</Label>
+              <Select value={formData.year_id} onValueChange={handleYearChange}>
+                <SelectTrigger id="year">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={GLOBAL_YEAR_VALUE}>
+                    Fiche globale (toutes les années)
+                  </SelectItem>
+                  {years.map((y) => (
+                    <SelectItem key={y.id} value={y.id}>
+                      Spécifique à {y.year_label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Une fiche spécifique à une année permet de distinguer, pour une même
+                personne, un rôle de simple membre en Seconde d'un rôle de président en
+                Terminale par exemple. Créez une fiche par année où le rôle a changé, en
+                plus (ou à la place) de la fiche globale.
               </p>
             </div>
 
@@ -459,6 +536,13 @@ export const BDLProfileManagement = () => {
                             <Badge className="bg-green-600">Publié</Badge>
                           ) : (
                             <Badge variant="secondary">Brouillon</Badge>
+                          )}
+                          {profile.year_id ? (
+                            <Badge variant="outline">
+                              {profile.bdl_years?.year_label ?? "Année spécifique"}
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline">Fiche globale</Badge>
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground">

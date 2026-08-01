@@ -7,13 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ChevronLeft, Mail, MessageCircle, Calendar, GraduationCap, Lightbulb, Award } from "lucide-react";
+import { ChevronLeft, Mail, MessageCircle, Calendar, GraduationCap, Lightbulb, Award, History } from "lucide-react";
 import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 
 interface MemberProfile {
   id: string;
   full_name: string;
   slug: string;
+  person_slug: string;
+  year_id: string | null;
   photo_url: string | null;
   age: number | null;
   role: string | null;
@@ -22,11 +24,19 @@ interface MemberProfile {
   biography: string | null;
   career_path: string | null;
   anecdote: string | null;
+  bdl_years?: { year_label: string } | null;
+}
+
+interface SiblingProfile {
+  slug: string;
+  year_id: string | null;
+  year_label: string | null;
 }
 
 const BDLMemberProfile = () => {
   const { slug } = useParams<{ slug: string }>();
   const [profile, setProfile] = useState<MemberProfile | null>(null);
+  const [siblings, setSiblings] = useState<SiblingProfile[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -39,7 +49,7 @@ const BDLMemberProfile = () => {
     try {
       const { data, error } = await supabase
         .from("bdl_member_profiles")
-        .select("*")
+        .select("*, bdl_years(year_label)")
         .eq("slug", slug)
         .eq("is_published", true)
         .single();
@@ -47,11 +57,42 @@ const BDLMemberProfile = () => {
       if (error) throw error;
       setProfile(data);
       document.title = `${data.full_name} – Bureau des Lycéens`;
+      loadSiblingProfiles(data.person_slug);
     } catch (error) {
       console.error("Error loading profile:", error);
       toast.error("Profil introuvable");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Récupère les autres fiches publiées de la même personne (fiche globale + autres
+  // années), pour proposer un sélecteur permettant de naviguer entre elles.
+  const loadSiblingProfiles = async (personSlug: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("bdl_member_profiles")
+        .select("slug, year_id, bdl_years(year_label)")
+        .eq("person_slug", personSlug)
+        .eq("is_published", true);
+
+      if (error) throw error;
+
+      const list: SiblingProfile[] = (data || []).map((p: any) => ({
+        slug: p.slug,
+        year_id: p.year_id,
+        year_label: p.bdl_years?.year_label ?? null,
+      }));
+
+      list.sort((a, b) => {
+        if (a.year_id === null) return -1;
+        if (b.year_id === null) return 1;
+        return (a.year_label || "").localeCompare(b.year_label || "");
+      });
+
+      setSiblings(list);
+    } catch (error) {
+      console.error("Error loading sibling profiles:", error);
     }
   };
 
@@ -137,6 +178,12 @@ const BDLMemberProfile = () => {
 
               {/* Badges d'informations */}
               <div className="flex flex-wrap justify-center gap-2">
+                {profile.bdl_years?.year_label && (
+                  <Badge className="bg-white/20 text-white border-white/30 text-base py-1 px-3">
+                    <History className="h-4 w-4 mr-1" />
+                    Fiche {profile.bdl_years.year_label}
+                  </Badge>
+                )}
                 {profile.role && (
                   <Badge className="bg-white/20 text-white border-white/30 text-base py-1 px-3">
                     <Award className="h-4 w-4 mr-1" />
@@ -156,6 +203,26 @@ const BDLMemberProfile = () => {
                   </Badge>
                 )}
               </div>
+
+              {/* Sélecteur entre les différentes fiches de la même personne (globale + années) */}
+              {siblings.length > 1 && (
+                <div className="flex flex-wrap justify-center items-center gap-2 pt-2">
+                  <span className="text-white/80 text-sm w-full">Voir aussi cette personne :</span>
+                  {siblings.map((s) => (
+                    <Link key={s.slug} to={`/bdl/${s.slug}`}>
+                      <Badge
+                        className={
+                          s.slug === profile.slug
+                            ? "bg-white text-primary border-white text-sm py-1 px-3"
+                            : "bg-white/10 text-white border-white/30 hover:bg-white/20 text-sm py-1 px-3"
+                        }
+                      >
+                        {s.year_label ?? "Vue globale"}
+                      </Badge>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </section>

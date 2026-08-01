@@ -32,6 +32,9 @@ const BDLYearDetail = () => {
   const [yearData, setYearData] = useState<Year | null>(null);
   const [executiveMembers, setExecutiveMembers] = useState<Member[]>([]);
   const [regularMembers, setRegularMembers] = useState<Member[]>([]);
+  // Associe le slug "de base" (dérivé du nom) de chaque membre au slug de la fiche à
+  // afficher : celle spécifique à cette année si elle existe, sinon la fiche globale.
+  const [profileSlugMap, setProfileSlugMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -69,6 +72,42 @@ document.title = `BDL ${yearInfo.year_label} – Bureau des Lycéens`;
 
       setExecutiveMembers(executive);
       setRegularMembers(regular);
+
+      // Résout, pour chaque membre de cette année, la fiche profil vers laquelle pointer :
+      // en priorité la fiche spécifique à cette année, sinon la fiche globale.
+      const baseSlugs = Array.from(
+        new Set((members || []).map((m: Member) => generateMemberSlug(m.full_name)))
+      );
+
+      if (baseSlugs.length > 0) {
+        const { data: relatedProfiles, error: profilesError } = await supabase
+          .from("bdl_member_profiles")
+          .select("slug, person_slug, year_id")
+          .in("person_slug", baseSlugs)
+          .eq("is_published", true)
+          .or(`year_id.eq.${yearInfo.id},year_id.is.null`);
+
+        if (profilesError) {
+          console.error("Error loading related profiles:", profilesError);
+        } else {
+          const map: Record<string, string> = {};
+          // On pose d'abord les fiches globales, puis on les remplace par la fiche
+          // spécifique à cette année quand elle existe, pour que celle-ci soit prioritaire.
+          (relatedProfiles || [])
+            .filter((p) => p.year_id === null)
+            .forEach((p) => {
+              map[p.person_slug] = p.slug;
+            });
+          (relatedProfiles || [])
+            .filter((p) => p.year_id === yearInfo.id)
+            .forEach((p) => {
+              map[p.person_slug] = p.slug;
+            });
+          setProfileSlugMap(map);
+        }
+      } else {
+        setProfileSlugMap({});
+      }
     } catch (error) {
       console.error("Error loading year data:", error);
       toast.error("Erreur lors du chargement des données");
@@ -120,10 +159,13 @@ document.title = `BDL ${yearInfo.year_label} – Bureau des Lycéens`;
 
   const renderMemberCard = (member: Member) => {
     const gradient = getRoleGradient(member.role);
-    const slug = generateMemberSlug(member.full_name); // Ajout (Étape 3.D)
+    const baseSlug = generateMemberSlug(member.full_name);
+    // Priorité à la fiche spécifique à cette année si elle existe, sinon fiche globale,
+    // sinon on retombe sur le slug "de base" comme avant (comportement historique).
+    const linkSlug = profileSlugMap[baseSlug] || baseSlug;
 
     return (
-      <Link to={`/bdl/${slug}`} key={member.id}> {/* Modification (Étape 3.D) */}
+      <Link to={`/bdl/${linkSlug}`} key={member.id}>
         <Card
           className="group hover:shadow-elegant transition-all duration-300 hover:-translate-y-2 cursor-pointer"
         >

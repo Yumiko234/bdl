@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Routes, Route } from "react-router-dom";
 import { Analytics } from "@vercel/analytics/react";
 
+import ScrollToTop from "./components/ScrollToTop";
+
 import Index from "./pages/Index";
 import Etablissement from "./pages/Etablissement";
 
@@ -37,6 +39,7 @@ import Support from "./pages/Support";
 import Conference from "./pages/Conference";
 import CertificatVerif from "./pages/CertificatVerif";
 
+import Confirm from "./pages/Confirm";
 import ResetPassword from "./pages/ResetPassword";
 import Profile from "src/pages/profile/Profile";
 import ProfileBDLSuivi from "./pages/profile/ProfileBDLSuivi";
@@ -49,6 +52,7 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <ScrollToTop />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/admin" element={<Admin />} />
@@ -75,6 +79,7 @@ const App = () => {
           <Route path="/profile" element={<Profile />} />
           <Route path="/bdl-profile" element={<ProfileBDLSuivi />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/confirm" element={<Confirm />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
 

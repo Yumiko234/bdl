@@ -49,7 +49,7 @@ const CGU = () => {
           L'accès et l'utilisation du Site impliquent l'acceptation pleine
           et entière des présentes CGU. Les informations relatives à
           l'éditeur du Site figurent dans les{" "}
-          <Link to="/mentions-legales">Mentions légales</Link>.
+          <Link to="/legal/mentions-legales">Mentions légales</Link>.
         </p>
         <p>Le Site permet notamment :</p>
         <ul className="list-disc pl-5 space-y-1.5">
@@ -151,7 +151,7 @@ const CGU = () => {
           données à tout moment en écrivant à{" "}
           <a href="mailto:contact@bdl-saintandre.fr">contact@bdl-saintandre.fr</a>
           , sous réserve des durées de conservation légalement applicables
-          (voir <Link to="/confidentialite">Politique de confidentialité</Link>).
+          (voir <Link to="/legal/confidentialite">Politique de confidentialité</Link>).
         </p>
       </LegalSection>
 
@@ -250,7 +250,7 @@ const CGU = () => {
         <p>
           Les modalités de ce traitement (finalités, base légale, durées de
           conservation, destinataires, droits des personnes) sont détaillées
-          dans la <Link to="/confidentialite">Politique de confidentialité</Link> du
+          dans la <Link to="/legal/confidentialite">Politique de confidentialité</Link> du
           Site.
         </p>
       </LegalSection>

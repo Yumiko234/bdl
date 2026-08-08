@@ -49,7 +49,7 @@ const MentionsLegales = () => {
           mentions légales.
         </p>
         <p>L'accès et l'utilisation du Site sont soumis à l'acceptation intégrale et sans réserve des présentes mentions légales, ainsi qu'aux{" "}
-          <Link to="/cgu">Conditions Générales d'Utilisation</Link>.</p>
+          <Link to="/legal/cgu">Conditions Générales d'Utilisation</Link>.</p>
 
         <div className="rounded-lg border border-border bg-muted/30 p-5 space-y-2">
           <p>

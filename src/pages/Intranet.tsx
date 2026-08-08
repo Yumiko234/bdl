@@ -14,6 +14,7 @@ import {
   BookMarked, BookUser, Headphones, UserCircle, Building2,
   LogOut, Shield, Loader2, ChevronRight,
   CalendarDays, BookOpen, Lock,
+  Scale,
 } from "lucide-react";
 
 interface UserProfile {
@@ -90,6 +91,7 @@ interface QuickCard {
 }
 
 const PUBLIC_CARDS: QuickCard[] = [
+  { title: "Centre Juridique",              description: "Accédez aux documents légaux.",                                icon: <Scale        className="h-6 w-6" />, href: "/legal",            color: "bg-pink-100 text-pink-700" },
   { title: "Actualités",              description: "Les dernières nouvelles du lycée et du BDL.",                  icon: <Newspaper    className="h-6 w-6" />, href: "/actualites",       color: "bg-blue-100 text-blue-700" },
   { title: "Événements",              description: "Agenda des événements à venir.",                               icon: <Calendar     className="h-6 w-6" />, href: "/events",           color: "bg-violet-100 text-violet-700" },
   { title: "Calendrier",              description: "Calendrier scolaire et dates importantes.",                    icon: <CalendarDays className="h-6 w-6" />, href: "/calendrier",       color: "bg-indigo-100 text-indigo-700" },

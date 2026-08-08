@@ -50,7 +50,9 @@ const JOBDL = () => {
     }
 
     const filtered = entries.filter((entry) =>
-      entry.nor_number.toLowerCase().includes(term) || entry.title.toLowerCase().includes(term) ||     entry.author_name.toLowerCase().includes(term)
+      entry.nor_number.toLowerCase().includes(term) ||
+      entry.title.toLowerCase().includes(term) ||
+      (entry.author_name?.toLowerCase().includes(term) ?? false)
     );
 
     setFilteredEntries(filtered);
@@ -59,13 +61,13 @@ const JOBDL = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navigation />
-      <main className="flex-1 py-16">
+      <main className="flex-1">
         <MaintenanceOverlay>
         <section className="py-16 gradient-institutional text-white">
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center space-y-4">
               <h1 className="text-5xl font-bold">Journal Officiel du Bureau des Lycéens</h1>
-              <p className="text-xl">Communications et décisions officielles du Bureau</p>
+              <p className="text-xl">Communications et décisions du Bureau</p>
             </div>
           </div>
         </section>

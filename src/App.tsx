@@ -7,6 +7,11 @@ import { Analytics } from "@vercel/analytics/react";
 
 import ScrollToTop from "./components/ScrollToTop";
 
+import Legal from "./pages/legals/Legal";
+import CGU from "./pages/legals/CGU";
+import MentionsLegales from "./pages/legals/Mentionslegales";
+import Confidentialite from "./pages/legals/Confidentialite";
+
 import Index from "./pages/Index";
 import Etablissement from "./pages/Etablissement";
 
@@ -55,6 +60,12 @@ const App = () => {
         <ScrollToTop />
         <Routes>
           <Route path="/" element={<Index />} />
+
+          <Route path="/legal" element={<Legal />} />
+          <Route path="/legal/cgu" element={<CGU />} />
+          <Route path="/legal/mentions-legales" element={<MentionsLegales />} />
+          <Route path="/legal/confidentialite" element={<Confidentialite />} />
+
           <Route path="/admin" element={<Admin />} />
           <Route path="/etablissement" element={<Etablissement />} />
           <Route path="/bdl" element={<BDL />} />

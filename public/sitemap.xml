@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
   <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://bdl-saintandre.fr/</loc><changefreq>monthly</changefreq></url>
+
+<url><loc>https://bdl-saintandre.fr/legal/</loc><changefreq>monthly</changefreq></url>
+<url><loc>https://bdl-saintandre.fr/legal/cgu</loc><changefreq>weekly</changefreq></url>
+<url><loc>https://bdl-saintandre.fr/legal/confidentialite</loc><changefreq>weekly</changefreq></url>
+<url><loc>https://bdl-saintandre.fr/legal/mentions-legales</loc><changefreq>weekly</changefreq></url>
+
 <url><loc>https://bdl-saintandre.fr/actualites</loc><changefreq>daily</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/admin</loc><changefreq>monthly</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/auth</loc><changefreq>monthly</changefreq></url>
@@ -18,6 +24,7 @@
 <url><loc>https://bdl-saintandre.fr/profile</loc><changefreq>daily</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/conference</loc><changefreq>daily</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/certificat-verif</loc><changefreq>daily</changefreq></url>
+
 <url><loc>https://bdl-saintandre.fr/jo/</loc><changefreq>daily</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/jo/BDL25DE0001A</loc><changefreq>daily</changefreq></url>
 <url><loc>https://bdl-saintandre.fr/jo/PBDL25DC0001A</loc><changefreq>daily</changefreq></url>

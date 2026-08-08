@@ -1,15 +1,16 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Shield, Lock, UserPlus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client"; // Import direct pour le reset
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 
@@ -21,6 +22,7 @@ const Auth = () => {
     confirmPassword: "",
     fullName: ""
   });
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
@@ -42,14 +44,20 @@ const Auth = () => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (signupCredentials.password !== signupCredentials.confirmPassword) {
       toast.error("Les mots de passe ne correspondent pas");
       return;
     }
+
+    if (!acceptedTerms) {
+      toast.error("Vous devez accepter les CGU et la Politique de confidentialité pour vous inscrire.");
+      return;
+    }
+
     await signUp(signupCredentials.email, signupCredentials.password, signupCredentials.fullName);
   };
 
-  /* ===================== NOUVELLE FONCTION RESET ===================== */
   const handleForgotPassword = async () => {
     if (!loginCredentials.email) {
       toast.error("Veuillez saisir votre email dans le champ ci-dessus.");
@@ -74,154 +82,177 @@ const Auth = () => {
       
       <main className="flex-1">
         <MaintenanceOverlay>
-        <section className="py-16 gradient-institutional text-white">
-          <div className="container mx-auto px-4">
-            <div className="max-w-3xl mx-auto text-center space-y-4">
-              <Shield className="h-20 w-20 mx-auto" />
-              <h1 className="text-5xl font-bold">Authentification</h1>
-              <p className="text-xl">Connectez-vous ou créez un compte pour accéder à l'intranet</p>
+          <section className="py-16 gradient-institutional text-white">
+            <div className="container mx-auto px-4">
+              <div className="max-w-3xl mx-auto text-center space-y-4">
+                <Shield className="h-20 w-20 mx-auto" />
+                <h1 className="text-5xl font-bold">Authentification</h1>
+                <p className="text-xl">Connectez-vous ou créez un compte pour accéder à l'intranet</p>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        <section className="py-16">
-          <div className="container mx-auto px-4">
-            <div className="max-w-md mx-auto">
-              <Tabs defaultValue="login" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="login">Connexion</TabsTrigger>
-                  <TabsTrigger value="signup">Inscription</TabsTrigger>
-                </TabsList>
+          <section className="py-16">
+            <div className="container mx-auto px-4">
+              <div className="max-w-md mx-auto">
+                <Tabs defaultValue="login" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="login">Connexion</TabsTrigger>
+                    <TabsTrigger value="signup">Inscription</TabsTrigger>
+                  </TabsList>
 
-                <TabsContent value="login">
-                  <Card className="shadow-elegant">
-                    <CardContent className="p-8 space-y-6">
-                      <div className="text-center space-y-2">
-                        <div className="w-16 h-16 rounded-full gradient-institutional mx-auto flex items-center justify-center">
-                          <Lock className="h-8 w-8 text-white" />
-                        </div>
-                        <h2 className="text-2xl font-bold">Connexion</h2>
-                        <p className="text-sm text-muted-foreground">
-                          Accédez à votre espace sécurisé
-                        </p>
-                      </div>
-
-                      <form onSubmit={handleLogin} className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="login-email">Email</Label>
-                          <Input
-                            id="login-email"
-                            type="email"
-                            required
-                            value={loginCredentials.email}
-                            onChange={(e) => setLoginCredentials({ ...loginCredentials, email: e.target.value })}
-                            placeholder="votre.email@exemple.com"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <Label htmlFor="login-password">Mot de passe</Label>
-                            {/* BOUTON MOT DE PASSE OUBLIÉ */}
-                            <button
-                              type="button"
-                              onClick={handleForgotPassword}
-                              className="text-xs text-primary hover:underline font-medium"
-                            >
-                              Mot de passe oublié ?
-                            </button>
+                  <TabsContent value="login">
+                    <Card className="shadow-elegant">
+                      <CardContent className="p-8 space-y-6">
+                        <div className="text-center space-y-2">
+                          <div className="w-16 h-16 rounded-full gradient-institutional mx-auto flex items-center justify-center">
+                            <Lock className="h-8 w-8 text-white" />
                           </div>
-                          <Input
-                            id="login-password"
-                            type="password"
-                            required
-                            value={loginCredentials.password}
-                            onChange={(e) => setLoginCredentials({ ...loginCredentials, password: e.target.value })}
-                            placeholder="Votre mot de passe"
-                          />
+                          <h2 className="text-2xl font-bold">Connexion</h2>
+                          <p className="text-sm text-muted-foreground">
+                            Accédez à votre espace sécurisé
+                          </p>
                         </div>
 
-                        <Button type="submit" className="w-full" size="lg">
-                          Se connecter
-                        </Button>
-                      </form>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
+                        <form onSubmit={handleLogin} className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="login-email">Email</Label>
+                            <Input
+                              id="login-email"
+                              type="email"
+                              required
+                              value={loginCredentials.email}
+                              onChange={(e) => setLoginCredentials({ ...loginCredentials, email: e.target.value })}
+                              placeholder="votre.email@exemple.com"
+                            />
+                          </div>
 
-                <TabsContent value="signup">
-                  {/* ... (Reste du code Inscription identique) */}
-                  <Card className="shadow-elegant">
-                    <CardContent className="p-8 space-y-6">
-                      <div className="text-center space-y-2">
-                        <div className="w-16 h-16 rounded-full gradient-institutional mx-auto flex items-center justify-center">
-                          <UserPlus className="h-8 w-8 text-white" />
-                        </div>
-                        <h2 className="text-2xl font-bold">Inscription</h2>
-                        <p className="text-sm text-muted-foreground">
-                          Créez votre compte pour accéder à l'intranet
-                        </p>
-                      </div>
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <Label htmlFor="login-password">Mot de passe</Label>
+                              <button
+                                type="button"
+                                onClick={handleForgotPassword}
+                                className="text-xs text-primary hover:underline font-medium"
+                              >
+                                Mot de passe oublié ?
+                              </button>
+                            </div>
+                            <Input
+                              id="login-password"
+                              type="password"
+                              required
+                              value={loginCredentials.password}
+                              onChange={(e) => setLoginCredentials({ ...loginCredentials, password: e.target.value })}
+                              placeholder="Votre mot de passe"
+                            />
+                          </div>
 
-                      <form onSubmit={handleSignup} className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="signup-name">Nom complet</Label>
-                          <Input
-                            id="signup-name"
-                            required
-                            value={signupCredentials.fullName}
-                            onChange={(e) => setSignupCredentials({ ...signupCredentials, fullName: e.target.value })}
-                            placeholder="Votre Prénom et Nom complet"
-                          />
-                        </div>
+                          <Button type="submit" className="w-full" size="lg">
+                            Se connecter
+                          </Button>
+                        </form>
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
 
-                        <div className="space-y-2">
-                          <Label htmlFor="signup-email">Email</Label>
-                          <Input
-                            id="signup-email"
-                            type="email"
-                            required
-                            value={signupCredentials.email}
-                            onChange={(e) => setSignupCredentials({ ...signupCredentials, email: e.target.value })}
-                            placeholder="votre.email@exemple.fr"
-                          />
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="signup-password">Mot de passe</Label>
-                          <Input
-                            id="signup-password"
-                            type="password"
-                            required
-                            value={signupCredentials.password}
-                            onChange={(e) => setSignupCredentials({ ...signupCredentials, password: e.target.value })}
-                            placeholder="Choisissez un mot de passe"
-                          />
+                  <TabsContent value="signup">
+                    <Card className="shadow-elegant">
+                      <CardContent className="p-8 space-y-6">
+                        <div className="text-center space-y-2">
+                          <div className="w-16 h-16 rounded-full gradient-institutional mx-auto flex items-center justify-center">
+                            <UserPlus className="h-8 w-8 text-white" />
+                          </div>
+                          <h2 className="text-2xl font-bold">Inscription</h2>
+                          <p className="text-sm text-muted-foreground">
+                            Créez votre compte pour accéder à l'intranet
+                          </p>
                         </div>
 
-                        <div className="space-y-2">
-                          <Label htmlFor="signup-confirm">Confirmer le mot de passe</Label>
-                          <Input
-                            id="signup-confirm"
-                            type="password"
-                            required
-                            value={signupCredentials.confirmPassword}
-                            onChange={(e) => setSignupCredentials({ ...signupCredentials, confirmPassword: e.target.value })}
-                            placeholder="Confirmez votre mot de passe"
-                          />
-                        </div>
+                        <form onSubmit={handleSignup} className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="signup-name">Nom complet</Label>
+                            <Input
+                              id="signup-name"
+                              required
+                              value={signupCredentials.fullName}
+                              onChange={(e) => setSignupCredentials({ ...signupCredentials, fullName: e.target.value })}
+                              placeholder="Votre Prénom et Nom complet"
+                            />
+                          </div>
 
-                        <Button type="submit" className="w-full" size="lg">
-                          S'inscrire
-                        </Button>
-                      </form>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-              </Tabs>
+                          <div className="space-y-2">
+                            <Label htmlFor="signup-email">Email</Label>
+                            <Input
+                              id="signup-email"
+                              type="email"
+                              required
+                              value={signupCredentials.email}
+                              onChange={(e) => setSignupCredentials({ ...signupCredentials, email: e.target.value })}
+                              placeholder="votre.email@exemple.fr"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="signup-password">Mot de passe</Label>
+                            <Input
+                              id="signup-password"
+                              type="password"
+                              required
+                              value={signupCredentials.password}
+                              onChange={(e) => setSignupCredentials({ ...signupCredentials, password: e.target.value })}
+                              placeholder="Choisissez un mot de passe"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="signup-confirm">Confirmer le mot de passe</Label>
+                            <Input
+                              id="signup-confirm"
+                              type="password"
+                              required
+                              value={signupCredentials.confirmPassword}
+                              onChange={(e) => setSignupCredentials({ ...signupCredentials, confirmPassword: e.target.value })}
+                              placeholder="Confirmez votre mot de passe"
+                            />
+                          </div>
+
+                          {/* CASE À COCHER CGU / PRIVACY / MENTIONS LÉGALES */}
+                          <div className="flex items-start space-x-3 pt-2">
+                            <Checkbox
+                              id="terms"
+                              checked={acceptedTerms}
+                              onCheckedChange={(checked) => setAcceptedTerms(checked === true)}
+                              className="mt-1"
+                            />
+                            <Label htmlFor="terms" className="text-xs text-muted-foreground leading-normal font-normal cursor-pointer">
+                              J'accepte les{" "}
+                              <Link to="/legal/cgu" target="_blank" rel="noopener noreferrer" className="text-primary underline font-medium hover:text-primary/80">
+                                CGU
+                              </Link>
+                              , la{" "}
+                              <Link to="/legal/confidentialite" target="_blank" rel="noopener noreferrer" className="text-primary underline font-medium hover:text-primary/80">
+                                Politique de confidentialité
+                              </Link>{" "}
+                              et j'ai pris connaissance des{" "}
+                              <Link to="/legal/mentions-legales" target="_blank" rel="noopener noreferrer" className="text-primary underline font-medium hover:text-primary/80">
+                                Mentions légales
+                              </Link>
+                              .
+                            </Label>
+                          </div>
+
+                          <Button type="submit" className="w-full" size="lg">
+                            S'inscrire
+                          </Button>
+                        </form>
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                </Tabs>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
         </MaintenanceOverlay>
       </main>
 

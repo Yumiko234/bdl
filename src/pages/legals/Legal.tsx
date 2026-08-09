@@ -106,7 +106,7 @@ const Legal = () => {
                         Conformément au Règlement Général sur la Protection des Données (RGPD n° 2016/679) et à la loi Informatique et Libertés modifiée, vous disposez d'un droit d'accès, de rectification, de limitation et de suppression des données vous concernant.
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        Pour toute question ou demande d'exercice de vos droits, vous pouvez contacter la direction à l'adresse suivante :{" "}
+                        Pour toute question ou demande d'exercice de vos droits, vous pouvez contacter le Délégué à la Protection des Données (DPO) à l'adresse suivante :{" "}
                         <a href="mailto:admin@bdl-saintandre.fr" className="text-primary font-medium underline hover:text-primary/80">
                           admin@bdl-saintandre.fr
                         </a>.

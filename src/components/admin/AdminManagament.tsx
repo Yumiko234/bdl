@@ -266,16 +266,6 @@ export const AdminManagement = () => {
       <CardContent className="space-y-5">
 
         {/* Warning */}
-        <div className="flex items-start gap-3 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
-          <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
-          <div className="text-sm">
-            <p className="font-semibold text-destructive">Zone sensible</p>
-            <p className="text-muted-foreground">
-              Les actions ci-dessous modifient <strong>réellement</strong> les comptes
-              (email d'auth, mot de passe, bannissement Supabase). Nécessite la Edge Function <code>admin-users</code> déployée.
-            </p>
-          </div>
-        </div>
 
         {/* Search */}
         <div className="relative">

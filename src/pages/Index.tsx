@@ -296,22 +296,22 @@ const Index = () => {
                   <div className="flex-shrink-0">
                     <Avatar className="w-24 h-24 shadow-elegant">
   <AvatarImage
-    src="https://ppmlhjcwdyaarbqpngla.supabase.co/storage/v1/object/public/avatars/avatars/13017c3d-e4bb-4e30-aed1-721e321512d7-1772204554404.jpg"
-    alt="Alexandre Lejal"
+    src="https://ppmlhjcwdyaarbqpngla.supabase.co/storage/v1/object/public/avatars/avatars/91535532-1c9b-4323-a88a-dc874fff777d-1783874240713.jpeg"
+    alt="Elodie ROTH"
     className="object-cover"
   />
   <AvatarFallback className="bg-gradient-institutional text-gold text-3xl font-bold">
-    AL
+    ER
   </AvatarFallback>
                     </Avatar>
                   </div>
                   <div className="flex-1 space-y-4">
                     <div>
                       <h2 className="text-3xl font-bold mb-2">
-                        Message du Président
+                        Message de la Présidente
                       </h2>
                       <p className="text-muted-foreground font-medium">
-                        Alexandre Lejal, Président du BDL
+                        Elodie ROTH, Présidentes du BDL
                       </p>
                     </div>
                     <div

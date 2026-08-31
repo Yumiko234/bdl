@@ -1,0 +1,62 @@
+<div style="
+        width: 1120px; 
+        height: 790px; 
+        padding: 60px; 
+        box-sizing: border-box; 
+        border: 15px double #1e3a8a; 
+        font-family: 'Times New Roman', Times, serif; 
+        position: relative; 
+        background: #ffffff;
+      ">
+        <!-- En-tête -->
+        <div style="text-align: center; margin-bottom: 40px;">
+          <h1 style="font-size: 26px; text-transform: uppercase; letter-spacing: 2px; margin: 0; color: #1e3a8a;">
+            Collège Épiscopal Saint-André
+          </h1>
+          <h2 style="font-size: 18px; text-transform: uppercase; letter-spacing: 1px; margin: 5px 0 0 0; color: #4b5563;">
+            Bureau des Lycéens
+          </h2>
+          <div style="width: 150px; height: 2px; background: #1e3a8a; margin: 15px auto;"></div>
+          <h3 style="font-size: 22px; font-style: italic; font-weight: 500; margin: 20px 0 0 0;">
+            Certificat de Participation au BDL
+          </h3>
+          <p style="font-size: 14px; color: #6b7280; margin: 5px 0 0 0;">
+            Année scolaire ${certData.year_label}
+          </p>
+        </div>
+
+        <!-- Corps du texte -->
+        <div style="text-align: center; padding: 0 40px; line-height: 1.8; font-size: 16px;">
+          <p style="margin: 0 0 15px 0;">Le Bureau des Lycéens du Collège Épiscopal Saint-André certifie que</p>
+          <p style="font-size: 24px; font-weight: bold; margin: 0 0 15px 0; color: #111827;">
+            ${certData.civilite} ${certData.last_name.toUpperCase()} ${certData.first_name}
+          </p>
+          <p style="margin: 0;">
+            a activement pris part aux activités et projets organisés par le Bureau des Lycéens au cours de l’année scolaire 
+            <strong>${certData.year_label}</strong>, contribuant de manière significative à la vie associative et au dynamisme de l’établissement.
+          </p>
+        </div>
+
+        <!-- Section basse : ID & QR Code (Gauche) | Signatures (Droite) -->
+        <div style="position: absolute; bottom: 60px; left: 60px; right: 60px; display: flex; justify-content: space-between; align-items: flex-end;">
+          
+          <!-- Bloc de gauche : Identification -->
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <img src="${qrDataUrl}" style="width: 100px; height: 100px; border: 1px solid #e5e7eb;" alt="QR Code" />
+            <div style="font-family: monospace; font-size: 12px; font-weight: bold; color: #1e3a8a;">
+              N° ${certData.certificate_id}
+            </div>
+          </div>
+
+          <!-- Bloc de droite : Signatures -->
+          <div style="text-align: right; width: 400px; font-size: 13px; line-height: 1.4;">
+            <p style="font-style: italic; margin: 0 0 5px 0;">Pour le Responsable de Vie Scolaire et par délégation,</p>
+            <p style="font-weight: bold; margin: 0 0 40px 0;">La Présidente du Bureau des Lycéens</p>
+            <p style="font-weight: bold; margin: 0 0 25px 0;">Elodie ROTH</p>
+            <p style="font-size: 11px; color: #9ca3af; border-top: 1px dashed #d1d5db; display: inline-block; width: 180px; padding-top: 5px; text-align: center;">
+              Signature du titulaire
+            </p>
+          </div>
+
+        </div>
+      </div>

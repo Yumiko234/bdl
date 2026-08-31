@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import {
   Target, CheckCircle2, Clock, AlertCircle,
   Star, ArrowLeft, StickyNote, Calendar, TrendingUp,
-  Award, Loader2,
+  Award, Loader2, CalendarClock,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -41,6 +41,12 @@ interface Note {
   author_name?: string;
 }
 
+interface MeetingAttendance {
+  id: string;
+  status: "present" | "absent" | "excuse";
+  meeting: { title: string; meeting_date: string } | null;
+}
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const CATEGORY_CONFIG = {
@@ -55,6 +61,12 @@ const STATUS_CONFIG = {
   terminee: { label: "Terminée", color: "bg-green-100 text-green-700",  icon: <CheckCircle2 className="h-3 w-3" /> },
 };
 
+const ATTENDANCE_CONFIG = {
+  present: { label: "Présent",  color: "bg-green-100 text-green-700 border-green-200" },
+  absent:  { label: "Absent",   color: "bg-red-100 text-red-700 border-red-200" },
+  excuse:  { label: "Excusé",   color: "bg-amber-100 text-amber-700 border-amber-200" },
+};
+
 const fmtDate = (iso: string) =>
   new Date(iso).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
 
@@ -66,6 +78,7 @@ const ProfileBDLSuivi = () => {
 
   const [actions, setActions] = useState<Action[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
+  const [meetingAttendance, setMeetingAttendance] = useState<MeetingAttendance[]>([]);
   const [profile, setProfile] = useState<{ full_name: string; avatar_url: string | null } | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"all" | "a_faire" | "en_cours" | "terminee">("all");
@@ -111,6 +124,17 @@ const ProfileBDLSuivi = () => {
         author_name: note.profiles?.full_name ?? "Inconnu",
       }));
       setNotes(mappedNotes);
+
+      // Présences aux réunions
+      const { data: att, error: attErr } = await supabase
+        .from("bdl_meeting_attendance" as any)
+        .select("id, status, meeting:bdl_meetings(title, meeting_date)")
+        .eq("member_id", user!.id);
+      if (attErr) throw attErr;
+      const sortedAttendance = ((att || []) as unknown as MeetingAttendance[]).sort(
+        (a, b) => (b.meeting?.meeting_date ?? "").localeCompare(a.meeting?.meeting_date ?? "")
+      );
+      setMeetingAttendance(sortedAttendance);
     } catch (err) {
       console.error(err);
       toast.error("Erreur lors du chargement du suivi.");
@@ -126,6 +150,13 @@ const ProfileBDLSuivi = () => {
   const completionRate = actions.length > 0 ? Math.round((doneActions.length / actions.length) * 100) : 0;
 
   const filteredActions = activeTab === "all" ? actions : actions.filter((a) => a.status === activeTab);
+
+  const presentCount = meetingAttendance.filter((a) => a.status === "present").length;
+  const absentCount = meetingAttendance.filter((a) => a.status === "absent").length;
+  const excusedCount = meetingAttendance.filter((a) => a.status === "excuse").length;
+  const attendanceRate = presentCount + absentCount > 0
+    ? Math.round((presentCount / (presentCount + absentCount)) * 100)
+    : null;
 
   const monthlyData = (() => {
     const map: Record<string, number> = {};
@@ -299,6 +330,54 @@ const ProfileBDLSuivi = () => {
             </div>
           )}
 
+          {/* ── Présence aux réunions ── */}
+          {meetingAttendance.length > 0 && (
+            <Card className="shadow-card">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <CalendarClock className="h-4 w-4 text-primary" />
+                  Ma présence aux réunions
+                  {attendanceRate !== null && (
+                    <span className={`ml-auto text-sm font-bold ${attendanceRate >= 75 ? "text-green-600" : attendanceRate >= 50 ? "text-amber-600" : "text-red-600"}`}>
+                      {attendanceRate}%
+                    </span>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="rounded-lg border bg-green-50 border-green-200 p-3 text-center">
+                    <p className="text-xl font-bold text-green-700">{presentCount}</p>
+                    <p className="text-xs text-green-700/80">Présent(e)</p>
+                  </div>
+                  <div className="rounded-lg border bg-amber-50 border-amber-200 p-3 text-center">
+                    <p className="text-xl font-bold text-amber-700">{excusedCount}</p>
+                    <p className="text-xs text-amber-700/80">Excusé(e)</p>
+                  </div>
+                  <div className="rounded-lg border bg-red-50 border-red-200 p-3 text-center">
+                    <p className="text-xl font-bold text-red-700">{absentCount}</p>
+                    <p className="text-xs text-red-700/80">Absent(e)</p>
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  {meetingAttendance.map((a) => (
+                    <div key={a.id} className="flex items-center justify-between gap-3 p-2.5 rounded-lg bg-muted/20 text-sm">
+                      <div className="min-w-0">
+                        <p className="font-medium truncate">{a.meeting?.title ?? "Réunion"}</p>
+                        {a.meeting?.meeting_date && (
+                          <p className="text-xs text-muted-foreground">{fmtDate(a.meeting.meeting_date)}</p>
+                        )}
+                      </div>
+                      <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold flex-shrink-0 ${ATTENDANCE_CONFIG[a.status].color}`}>
+                        {ATTENDANCE_CONFIG[a.status].label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* ── Actions list ── */}
           <Card className="shadow-card">
             <CardHeader className="pb-3">
@@ -405,7 +484,7 @@ const ProfileBDLSuivi = () => {
           )}
 
           {/* Empty state */}
-          {actions.length === 0 && notes.length === 0 && (
+          {actions.length === 0 && notes.length === 0 && meetingAttendance.length === 0 && (
             <Card className="shadow-card">
               <CardContent className="py-16 text-center space-y-4">
                 <Award className="h-16 w-16 mx-auto text-muted-foreground/30" />

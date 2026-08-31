@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 // ─── Admin sub-components ─────────────────────────────────────────────────────
+import { AdminInternalNotes } from "@/components/admin/AdminInternalNotes";
 import { NewsManagement }           from "@/components/admin/NewsManagement";
 import { EventManagement }          from "@/components/admin/EventManagement";
 import { DocumentManagement }       from "@/components/admin/DocumentManagement";
@@ -110,6 +111,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "bdl-members",   label: "Membres BDL",         icon: <Users        className="h-4 w-4" />, group: "BDL" },
   { id: "bdl-profiles",  label: "Profils détaillés",   icon: <UserCircle   className="h-4 w-4" />, group: "BDL", minRank: 5 },
   { id: "bdl-history",   label: "Historique BDL",      icon: <History      className="h-4 w-4" />, group: "BDL", minRank: 5 },
+  { id: "bdl-int-notes", label: "Notes Internes",      icon: <BookMarked   className="h-4 w-4" />, group: "BDL", minRank: 5},
   
   { id: "scrutin",       label: "Scrutins",            icon: <Vote         className="h-4 w-4" />, group: "Participation", minRank: 3 },
   { id: "surveys",       label: "Sondages",            icon: <BarChart3    className="h-4 w-4" />, group: "Participation" },
@@ -324,6 +326,7 @@ const Admin = () => {
       case "bdl-members":   return <BDLMembersManagement />;
       case "bdl-profiles":  return <BDLProfileManagement />;
       case "bdl-history":   return <BDLHistoryManagement />;
+      case "bdl-int-notes": return <AdminInternalNotes />;
       case "scrutin":       return <ScrutinManagement />;
       case "surveys":       return <SurveyManagement />;
       case "actions":       return <SuiviActionsManagement />;

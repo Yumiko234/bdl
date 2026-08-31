@@ -13,6 +13,7 @@ import {
   Plus, Trash2, Edit2, CheckCircle2, Clock, AlertCircle,
   Star, TrendingUp, Users, Target, StickyNote, X, Save,
   ChevronDown, ChevronUp, Award, BarChart2, Calendar,
+  UserCheck, UserX, UserMinus, CalendarClock, ClipboardList,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -61,6 +62,23 @@ interface Note {
   author_name?: string;
 }
 
+interface Meeting {
+  id: string;
+  title: string;
+  meeting_date: string;
+  description: string | null;
+  created_at: string;
+}
+
+type AttendanceStatus = "present" | "absent" | "excuse";
+
+interface Attendance {
+  id: string;
+  meeting_id: string;
+  member_id: string;
+  status: AttendanceStatus;
+}
+
 interface MemberStats {
   member: BDLMember;
   totalPoints: number;
@@ -70,6 +88,10 @@ interface MemberStats {
   todo: number;
   actions: Action[];
   notes: Note[];
+  meetingsPresent: number;
+  meetingsExcused: number;
+  meetingsAbsent: number;
+  attendanceRate: number; // % de présence sur (présent + absent), excusés exclus du calcul
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -87,6 +109,12 @@ const STATUS_CONFIG = {
 };
 
 const POINTS_BY_CATEGORY = { petite: 0.5, normale: 1.0, grande: 2.0 };
+
+const ATTENDANCE_CONFIG = {
+  present: { label: "Présent",  color: "bg-green-100 text-green-700 border-green-200",  icon: <UserCheck className="h-3 w-3" /> },
+  absent:  { label: "Absent",   color: "bg-red-100 text-red-700 border-red-200",        icon: <UserX className="h-3 w-3" /> },
+  excuse:  { label: "Excusé",   color: "bg-amber-100 text-amber-700 border-amber-200",  icon: <UserMinus className="h-3 w-3" /> },
+};
 
 const BAR_COLORS = [
   "#3B82F6","#8B5CF6","#10B981","#F59E0B","#EF4444",
@@ -125,6 +153,8 @@ export const SuiviActionsManagement = () => {
   const [members, setMembers] = useState<BDLMember[]>([]);
   const [actions, setActions] = useState<Action[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [attendance, setAttendance] = useState<Attendance[]>([]);
   const [currentUser, setCurrentUser] = useState<{ id: string; name: string } | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -134,6 +164,9 @@ export const SuiviActionsManagement = () => {
   const [editingAction, setEditingAction] = useState<Action | null>(null);
   const [showNoteForm, setShowNoteForm] = useState<string | null>(null); // member id
   const [expandedMembers, setExpandedMembers] = useState<Set<string>>(new Set());
+  const [showMeetingForm, setShowMeetingForm] = useState(false);
+  const [expandedMeeting, setExpandedMeeting] = useState<string | null>(null);
+  const [meetingForm, setMeetingForm] = useState({ title: "", meeting_date: "", description: "" });
 
   // Forms
   const [actionForm, setActionForm] = useState({
@@ -156,7 +189,7 @@ export const SuiviActionsManagement = () => {
         const { data: p } = await supabase.from("profiles").select("full_name").eq("id", user.id).single();
         setCurrentUser({ id: user.id, name: (p as any)?.full_name ?? "Staff" });
       }
-      await Promise.all([loadMembers(), loadActions(), loadNotes()]);
+      await Promise.all([loadMembers(), loadActions(), loadNotes(), loadMeetings(), loadAttendance()]);
       setLoading(false);
     })();
   }, []);
@@ -201,6 +234,21 @@ export const SuiviActionsManagement = () => {
     }
   };
 
+  const loadMeetings = async () => {
+    const { data, error } = await supabase
+      .from("bdl_meetings" as any)
+      .select("*")
+      .order("meeting_date", { ascending: false });
+    if (!error && data) setMeetings(data as unknown as Meeting[]);
+  };
+
+  const loadAttendance = async () => {
+    const { data, error } = await supabase
+      .from("bdl_meeting_attendance" as any)
+      .select("id, meeting_id, member_id, status");
+    if (!error && data) setAttendance(data as unknown as Attendance[]);
+  };
+
   // ── Stats computation ────────────────────────────────────────────────────────
 
   const getMemberStats = (): MemberStats[] => {
@@ -209,6 +257,14 @@ export const SuiviActionsManagement = () => {
       const memberNotes = notes.filter((n) => n.member_id === member.id);
       const doneActions = memberActions.filter((a) => a.status === "terminee");
       const totalPoints = doneActions.reduce((sum, a) => sum + a.points, 0);
+
+      const memberAttendance = attendance.filter((a) => a.member_id === member.id);
+      const meetingsPresent = memberAttendance.filter((a) => a.status === "present").length;
+      const meetingsAbsent = memberAttendance.filter((a) => a.status === "absent").length;
+      const meetingsExcused = memberAttendance.filter((a) => a.status === "excuse").length;
+      const attendanceBase = meetingsPresent + meetingsAbsent; // excusés hors calcul du taux
+      const attendanceRate = attendanceBase > 0 ? Math.round((meetingsPresent / attendanceBase) * 100) : 0;
+
       return {
         member,
         totalPoints,
@@ -218,6 +274,10 @@ export const SuiviActionsManagement = () => {
         todo: memberActions.filter((a) => a.status === "a_faire").length,
         actions: memberActions,
         notes: memberNotes,
+        meetingsPresent,
+        meetingsAbsent,
+        meetingsExcused,
+        attendanceRate,
       };
     });
   };
@@ -329,6 +389,73 @@ export const SuiviActionsManagement = () => {
     const { error } = await (supabase.from("bdl_member_notes" as any).delete().eq("id", id));
     if (error) toast.error("Erreur suppression");
     else { toast.success("Note supprimée."); await loadNotes(); }
+  };
+
+  // ── Meeting CRUD ─────────────────────────────────────────────────────────────
+
+  const openCreateMeeting = () => {
+    setMeetingForm({ title: "", meeting_date: new Date().toISOString().slice(0, 10), description: "" });
+    setShowMeetingForm(true);
+  };
+
+  const handleSaveMeeting = async () => {
+    if (!meetingForm.title.trim() || !meetingForm.meeting_date) {
+      toast.error("Titre et date requis.");
+      return;
+    }
+    const { data, error } = await (supabase.from("bdl_meetings" as any).insert({
+      title: meetingForm.title.trim(),
+      meeting_date: meetingForm.meeting_date,
+      description: meetingForm.description.trim() || null,
+      created_by: currentUser?.id ?? null,
+    }).select().single());
+
+    if (error) {
+      toast.error("Erreur : " + error.message);
+      return;
+    }
+    toast.success("Réunion créée !");
+    setShowMeetingForm(false);
+    await loadMeetings();
+    if (data) setExpandedMeeting((data as any).id); // ouvre direct la feuille de présence
+  };
+
+  const handleDeleteMeeting = async (id: string) => {
+    const { error } = await (supabase.from("bdl_meetings" as any).delete().eq("id", id));
+    if (error) toast.error("Erreur suppression");
+    else {
+      toast.success("Réunion supprimée.");
+      await Promise.all([loadMeetings(), loadAttendance()]);
+    }
+  };
+
+  // ── Attendance CRUD (upsert du statut d'un membre pour une réunion) ────────
+
+  const setMemberAttendance = async (meetingId: string, memberId: string, status: AttendanceStatus) => {
+    const existing = attendance.find((a) => a.meeting_id === meetingId && a.member_id === memberId);
+
+    // Mise à jour optimiste de l'UI
+    if (existing) {
+      setAttendance((prev) => prev.map((a) => (a.id === existing.id ? { ...a, status } : a)));
+    } else {
+      setAttendance((prev) => [...prev, { id: `temp-${meetingId}-${memberId}`, meeting_id: meetingId, member_id: memberId, status }]);
+    }
+
+    const { error } = await (supabase.from("bdl_meeting_attendance" as any).upsert(
+      {
+        meeting_id: meetingId,
+        member_id: memberId,
+        status,
+        recorded_by: currentUser?.id ?? null,
+        recorded_at: new Date().toISOString(),
+      },
+      { onConflict: "meeting_id,member_id" }
+    ));
+
+    if (error) {
+      toast.error("Erreur : " + error.message);
+      await loadAttendance(); // rollback en rechargeant l'état réel
+    }
   };
 
   // ── Chart data ───────────────────────────────────────────────────────────────
@@ -507,6 +634,121 @@ export const SuiviActionsManagement = () => {
         </CardContent>
       </Card>
 
+      {/* ── Réunions et présences ── */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <CalendarClock className="h-5 w-5 text-primary" />
+            Présence aux réunions
+          </h3>
+          <Button size="sm" onClick={openCreateMeeting} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Nouvelle réunion
+          </Button>
+        </div>
+
+        {meetings.length === 0 ? (
+          <Card className="shadow-card">
+            <CardContent className="py-8 text-center text-sm text-muted-foreground">
+              Aucune réunion enregistrée pour le moment.
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-2">
+            {meetings.map((meeting) => {
+              const meetingAttendance = attendance.filter((a) => a.meeting_id === meeting.id);
+              const presentCount = meetingAttendance.filter((a) => a.status === "present").length;
+              const isOpen = expandedMeeting === meeting.id;
+
+              return (
+                <Card key={meeting.id} className="shadow-card overflow-hidden">
+                  <button
+                    type="button"
+                    className="w-full text-left"
+                    onClick={() => setExpandedMeeting(isOpen ? null : meeting.id)}
+                  >
+                    <div className="flex items-center gap-4 p-4 hover:bg-muted/20 transition-colors">
+                      <div className="h-10 w-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+                        <ClipboardList className="h-5 w-5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm">{meeting.title}</p>
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5 flex-wrap">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {fmtDate(meeting.meeting_date)}
+                          </span>
+                          <span>{presentCount}/{members.length} présent(s)</span>
+                        </div>
+                      </div>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            size="sm" variant="ghost"
+                            className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive flex-shrink-0"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Supprimer cette réunion ?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Les présences enregistrées pour « {meeting.title} » seront aussi supprimées.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Annuler</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteMeeting(meeting.id)}>Supprimer</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                      {isOpen
+                        ? <ChevronUp className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        : <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />}
+                    </div>
+                  </button>
+
+                  {isOpen && (
+                    <div className="border-t px-4 pb-4 pt-3 space-y-1.5">
+                      {members.map((member) => {
+                        const current = meetingAttendance.find((a) => a.member_id === member.id)?.status;
+                        return (
+                          <div key={member.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/20">
+                            <Avatar className="h-7 w-7 flex-shrink-0">
+                              {member.avatar_url && <img src={member.avatar_url} alt={member.full_name} className="h-7 w-7 rounded-full object-cover" />}
+                              <AvatarFallback className="text-[10px] bg-primary text-primary-foreground">{getInitials(member.full_name)}</AvatarFallback>
+                            </Avatar>
+                            <span className="flex-1 min-w-0 text-sm truncate">{member.full_name}</span>
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              {(["present", "excuse", "absent"] as const).map((status) => (
+                                <button
+                                  key={status}
+                                  onClick={() => setMemberAttendance(meeting.id, member.id, status)}
+                                  className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs font-semibold transition-all ${
+                                    current === status
+                                      ? ATTENDANCE_CONFIG[status].color + " ring-1 ring-offset-1 ring-current"
+                                      : "bg-background text-muted-foreground border-border hover:bg-muted/50"
+                                  }`}
+                                >
+                                  {ATTENDANCE_CONFIG[status].icon}
+                                  <span className="hidden sm:inline">{ATTENDANCE_CONFIG[status].label}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       {/* ── Member detail cards ── */}
       <div className="space-y-4">
         <h3 className="text-lg font-semibold flex items-center gap-2">
@@ -543,6 +785,12 @@ export const SuiviActionsManagement = () => {
                       <span>{s.inProgress} en cours</span>
                       <span>{s.todo} à faire</span>
                       <span>{s.notes.length} note(s)</span>
+                      {(s.meetingsPresent + s.meetingsAbsent) > 0 && (
+                        <span className={`flex items-center gap-1 font-medium ${s.attendanceRate >= 75 ? "text-green-600" : s.attendanceRate >= 50 ? "text-amber-600" : "text-red-600"}`}>
+                          <CalendarClock className="h-3 w-3" />
+                          {s.attendanceRate}% de présence ({s.meetingsPresent}/{s.meetingsPresent + s.meetingsAbsent})
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
@@ -577,6 +825,24 @@ export const SuiviActionsManagement = () => {
                           className="h-full bg-green-500 rounded-full transition-all"
                           style={{ width: `${(s.done / s.totalActions) * 100}%` }}
                         />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Présences aux réunions */}
+                  {(s.meetingsPresent + s.meetingsAbsent + s.meetingsExcused) > 0 && (
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="rounded-lg border bg-green-50 border-green-200 p-2.5 text-center">
+                        <p className="text-lg font-bold text-green-700">{s.meetingsPresent}</p>
+                        <p className="text-xs text-green-700/80">Présent(s)</p>
+                      </div>
+                      <div className="rounded-lg border bg-amber-50 border-amber-200 p-2.5 text-center">
+                        <p className="text-lg font-bold text-amber-700">{s.meetingsExcused}</p>
+                        <p className="text-xs text-amber-700/80">Excusé(s)</p>
+                      </div>
+                      <div className="rounded-lg border bg-red-50 border-red-200 p-2.5 text-center">
+                        <p className="text-lg font-bold text-red-700">{s.meetingsAbsent}</p>
+                        <p className="text-xs text-red-700/80">Absent(s)</p>
                       </div>
                     </div>
                   )}
@@ -844,6 +1110,54 @@ export const SuiviActionsManagement = () => {
               <Button onClick={handleSaveAction}>
                 {editingAction ? "Mettre à jour" : "Créer l'action"}
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Meeting Form Modal ── */}
+      {showMeetingForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-background border rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h2 className="text-lg font-bold">Nouvelle réunion</h2>
+              <Button variant="ghost" size="icon" onClick={() => setShowMeetingForm(false)}>
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="space-y-2">
+                <Label>Titre de la réunion *</Label>
+                <Input
+                  value={meetingForm.title}
+                  onChange={(e) => setMeetingForm({ ...meetingForm, title: e.target.value })}
+                  placeholder="Ex : Réunion hebdomadaire du Bureau"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Date *</Label>
+                <Input
+                  type="date"
+                  value={meetingForm.meeting_date}
+                  onChange={(e) => setMeetingForm({ ...meetingForm, meeting_date: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Description (optionnel)</Label>
+                <Textarea
+                  rows={3}
+                  value={meetingForm.description}
+                  onChange={(e) => setMeetingForm({ ...meetingForm, description: e.target.value })}
+                  placeholder="Ordre du jour, contexte…"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Une fois créée, vous pourrez pointer la présence de chaque membre directement depuis la liste des réunions.
+              </p>
+            </div>
+            <div className="flex items-center justify-end gap-3 p-6 border-t">
+              <Button variant="outline" onClick={() => setShowMeetingForm(false)}>Annuler</Button>
+              <Button onClick={handleSaveMeeting}>Créer la réunion</Button>
             </div>
           </div>
         </div>

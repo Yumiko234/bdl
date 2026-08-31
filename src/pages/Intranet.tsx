@@ -13,14 +13,22 @@ import {
   Newspaper, Calendar, FileText, Vote, BarChart3,
   BookMarked, BookUser, Headphones, UserCircle, Building2,
   LogOut, Shield, Loader2, ChevronRight,
-  CalendarDays, BookOpen, Lock,
-  Scale,
+  CalendarDays, BookOpen, Lock, Pin, Scale
 } from "lucide-react";
 
 interface UserProfile {
   full_name: string;
   email: string;
   avatar_url: string | null;
+}
+
+interface InternalNote {
+  id: string;
+  title: string;
+  content: string;
+  is_pinned: boolean;
+  created_at: string;
+  author_name?: string;
 }
 
 const ROLE_KEYS = [
@@ -91,7 +99,7 @@ interface QuickCard {
 }
 
 const PUBLIC_CARDS: QuickCard[] = [
-  { title: "Centre Juridique",              description: "Accédez aux documents légaux.",                                icon: <Scale        className="h-6 w-6" />, href: "/legal",            color: "bg-pink-100 text-pink-700" },
+  { title: "Centre Juridique",        description: "Accédez aux documents légaux.",                                icon: <Scale        className="h-6 w-6" />, href: "/legal",            color: "bg-pink-100 text-pink-700" },
   { title: "Actualités",              description: "Les dernières nouvelles du lycée et du BDL.",                  icon: <Newspaper    className="h-6 w-6" />, href: "/actualites",       color: "bg-blue-100 text-blue-700" },
   { title: "Événements",              description: "Agenda des événements à venir.",                               icon: <Calendar     className="h-6 w-6" />, href: "/events",           color: "bg-violet-100 text-violet-700" },
   { title: "Calendrier",              description: "Calendrier scolaire et dates importantes.",                    icon: <CalendarDays className="h-6 w-6" />, href: "/calendrier",       color: "bg-indigo-100 text-indigo-700" },
@@ -112,6 +120,7 @@ const Intranet = () => {
   const [userRoles,   setUserRoles]   = useState<string[]>([]);
   const [primaryRole, setPrimaryRole] = useState<RoleKey>("student");
   const [loading,     setLoading]     = useState(true);
+  const [internalNotes, setInternalNotes] = useState<InternalNote[]>([]);
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -134,13 +143,45 @@ const Intranet = () => {
 
       const roles = (rolesData || []).map((r: any) => r.role);
       setUserRoles(roles);
-      setPrimaryRole(getPrimaryRole(roles));
+      const primary = getPrimaryRole(roles);
+      setPrimaryRole(primary);
+
+      const bdlMember = rolePrecedence[primary] <= 6 && primary !== "student";
+      if (bdlMember) await loadInternalNotes();
     } catch (err) {
       console.error(err);
       toast.error("Erreur lors du chargement du profil");
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadInternalNotes = async () => {
+    const { data, error } = await supabase
+      .from("bdl_internal_notes" as any)
+      .select("id, title, content, is_pinned, created_at, author_id")
+      .order("is_pinned", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(5);
+
+    if (error) {
+      console.error("loadInternalNotes:", error);
+      return;
+    }
+
+    const rows = (data || []) as any[];
+    const authorIds = Array.from(new Set(rows.map((n) => n.author_id).filter(Boolean)));
+
+    let namesById: Record<string, string> = {};
+    if (authorIds.length > 0) {
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .in("id", authorIds);
+      namesById = Object.fromEntries((profs || []).map((p: any) => [p.id, p.full_name]));
+    }
+
+    setInternalNotes(rows.map((n) => ({ ...n, author_name: namesById[n.author_id] ?? "Exécutif" })));
   };
 
   // administrator est considéré comme BDL member (rang 0 ≤ 5)
@@ -241,6 +282,37 @@ const Intranet = () => {
                 </div>
               </Link>
             </section>
+
+            {/* Notes internes de l'Exécutif */}
+            {isBDLMember && internalNotes.length > 0 && (
+              <section>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold flex items-center gap-2">
+                    <Pin className="h-5 w-5 text-primary" />
+                    Annonces de l'Exécutif
+                  </h2>
+                </div>
+                <div className="space-y-3">
+                  {internalNotes.map((note) => (
+                    <Card key={note.id} className={note.is_pinned ? "border-primary/40 bg-primary/5 shadow-card" : "shadow-card"}>
+                      <CardContent className="p-5">
+                        <div className="flex items-start justify-between gap-3 mb-1.5">
+                          <h3 className="font-semibold text-sm flex items-center gap-2">
+                            {note.is_pinned && <Pin className="h-3.5 w-3.5 text-primary flex-shrink-0" />}
+                            {note.title}
+                          </h3>
+                          <span className="text-xs text-muted-foreground flex-shrink-0">
+                            {new Date(note.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
+                          </span>
+                        </div>
+                        <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">{note.content}</p>
+                        <p className="text-xs text-muted-foreground/70 mt-2">— {note.author_name}</p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </section>
+            )}
 
             {/* Admin access (BDL staff + administrator) */}
             {isBDLMember && (

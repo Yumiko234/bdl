@@ -66,7 +66,7 @@ const Auth = () => {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(loginCredentials.email, {
-        redirectTo: 'https://bdl-saintandre.fr/reset-password',
+        redirectTo: `${window.location.origin}/reset-password`,
       });
 
       if (error) throw error;

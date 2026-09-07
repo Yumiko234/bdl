@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -14,11 +14,17 @@ const Confirm = () => {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const done = useRef(false);
 
   useEffect(() => {
     document.title = "Confirmation d'email – Bureau des Lycéens";
 
     const confirmEmail = async () => {
+      // Évite un second appel (StrictMode / re-render) qui écraserait
+      // une confirmation réussie par un écran d'erreur.
+      if (done.current) return;
+      done.current = true;
+
       const tokenHash = searchParams.get("token_hash");
       const type = searchParams.get("type");
 

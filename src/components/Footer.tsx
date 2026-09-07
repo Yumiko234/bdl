@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import logoBdl from "@/assets/logo-bdl.jpeg";
 import { supabase } from "@/integrations/supabase/client";
+import { safeHtml } from "@/lib/sanitize";
 
 const Footer = () => {
   const [content, setContent] = useState<Record<string, string>>({});
@@ -14,15 +15,11 @@ const Footer = () => {
             <img src={logoBdl} alt="Logo BDL" className="h-16 w-16 rounded-full" />
             <p 
               className="text-sm"
-              dangerouslySetInnerHTML={{ 
-                __html: content.about || 'Bureau des Lycéens<br />Lycée Saint-André' 
-              }}
+              dangerouslySetInnerHTML={safeHtml(content.about || 'Bureau des Lycéens<br />Lycée Saint-André')}
             />
             <p 
               className="text-xs italic text-accent"
-              dangerouslySetInnerHTML={{ 
-                __html: content.quote || '"Là où naît l\'ambition, s\'élève la grandeur."' 
-              }}
+              dangerouslySetInnerHTML={safeHtml(content.quote || '"Là où naît l\'ambition, s\'élève la grandeur."')}
             />
           </div>
 
@@ -63,15 +60,11 @@ const Footer = () => {
             <div className="text-sm space-y-1">
               <span 
                 className="block"
-                dangerouslySetInnerHTML={{ 
-                  __html: content.contact_address || 'Lycée Saint-André' 
-                }}
+                dangerouslySetInnerHTML={safeHtml(content.contact_address || 'Lycée Saint-André')}
               />
               <span 
                 className="block text-muted-foreground"
-                dangerouslySetInnerHTML={{ 
-                  __html: content.contact_email || 'contact@bdl-saintandre.fr' 
-                }}
+                dangerouslySetInnerHTML={safeHtml(content.contact_email || 'contact@bdl-saintandre.fr')}
               />
               <a 
                 href="https://www.instagram.com/bdllgsaintandre"

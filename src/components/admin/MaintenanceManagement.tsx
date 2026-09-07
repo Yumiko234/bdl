@@ -101,25 +101,29 @@ export const MaintenanceManagement = () => {
   };
 
   const handleSave = async () => {
-    if (!config) return;
     setSaving(true);
 
     const affected_paths =
       mode === "specific" && selectedPaths.length > 0 ? selectedPaths : null;
 
-    const { error } = await supabase
-      .from("maintenance_mode" as any)
-      .update({
-        is_active: form.is_active,
-        message: form.message,
-        submessage: form.submessage || null,
-        estimated_end: form.estimated_end
-          ? new Date(form.estimated_end).toISOString()
-          : null,
-        affected_paths,
-        updated_by: user?.id,
-      })
-      .eq("id", config.id);
+    const payload = {
+      is_active: form.is_active,
+      message: form.message,
+      submessage: form.submessage || null,
+      estimated_end: form.estimated_end
+        ? new Date(form.estimated_end).toISOString()
+        : null,
+      affected_paths,
+      updated_by: user?.id,
+    };
+
+    // Si aucune ligne de config n'existe encore, on la crée.
+    const { error } = config
+      ? await supabase
+          .from("maintenance_mode" as any)
+          .update(payload)
+          .eq("id", config.id)
+      : await supabase.from("maintenance_mode" as any).insert(payload);
 
     if (error) {
       toast.error("Erreur lors de la sauvegarde");

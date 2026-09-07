@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Calendar, Pin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
+import { safeHtml } from "@/lib/sanitize";
 
 interface NewsArticle {
   id: string;
@@ -114,7 +115,7 @@ const Actualites = () => {
                       <h3 className="text-2xl font-bold">{item.title}</h3>
                       <div
                         className="prose prose-sm max-w-none dark:prose-invert"
-                        dangerouslySetInnerHTML={{ __html: item.content }}
+                        dangerouslySetInnerHTML={safeHtml(item.content)}
                       />
 
                       {item.author_name && (

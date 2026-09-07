@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Calendar, Pin, Edit, Trash2 } from "lucide-react";
+import { safeHtml } from "@/lib/sanitize";
 
 interface Event {
   id: string;
@@ -288,7 +289,7 @@ export const EventManagement = ({ isPresident }: EventManagementProps) => {
                       </div>
                       <div 
                         className="prose prose-sm max-w-none dark:prose-invert line-clamp-2"
-                        dangerouslySetInnerHTML={{ __html: event.description }}
+                        dangerouslySetInnerHTML={safeHtml(event.description)}
                       />
                       <div className="flex gap-4 text-xs text-muted-foreground">
                         <span>

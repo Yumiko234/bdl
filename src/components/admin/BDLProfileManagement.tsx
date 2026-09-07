@@ -217,10 +217,11 @@ export const BDLProfileManagement = () => {
         anecdote: formData.anecdote || null,
         display_order: formData.display_order,
         is_published: formData.is_published,
-        user_id: user?.id || null,
       };
 
       if (editingProfile) {
+        // NB : on ne touche pas à user_id en modification, sinon la fiche
+        // serait réattribuée à l'admin qui édite.
         const { error } = await supabase
           .from("bdl_member_profiles")
           .update(profileData)
@@ -231,7 +232,7 @@ export const BDLProfileManagement = () => {
       } else {
         const { error } = await supabase
           .from("bdl_member_profiles")
-          .insert(profileData);
+          .insert({ ...profileData, user_id: user?.id || null });
 
         if (error) throw error;
         toast.success("Profil créé avec succès");

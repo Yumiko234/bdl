@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { RichTextEditor } from "@/components/RichTextEditor";
+import { safeHtml } from "@/lib/sanitize";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -248,7 +249,7 @@ export const CalendarManagement = () => {
                     {evt.description && (
                       <p
                         className="text-sm text-muted-foreground line-clamp-2 mt-1"
-                        dangerouslySetInnerHTML={{ __html: evt.description }}
+                        dangerouslySetInnerHTML={safeHtml(evt.description)}
                       />
                     )}
                   </div>

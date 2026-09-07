@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Newspaper, Pin, Edit, Trash2 } from "lucide-react";
+import { safeHtml } from "@/lib/sanitize";
 
 interface NewsArticle {
   id: string;
@@ -283,7 +284,7 @@ export const NewsManagement = ({ isPresident }: NewsManagementProps) => {
                       </div>
                       <div 
                         className="prose prose-sm max-w-none dark:prose-invert line-clamp-2"
-                        dangerouslySetInnerHTML={{ __html: article.content }}
+                        dangerouslySetInnerHTML={safeHtml(article.content)}
                       />
                       <p className="text-xs text-muted-foreground">
                         {new Date(article.published_at).toLocaleDateString('fr-FR')}

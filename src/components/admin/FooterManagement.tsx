@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Pencil, Save, X } from "lucide-react";
+import { safeHtml } from "@/lib/sanitize";
 
 interface FooterContent {
   id: string;
@@ -137,7 +138,7 @@ export const FooterManagement = () => {
               ) : (
                 <div
                   className="text-sm"
-                  dangerouslySetInnerHTML={{ __html: content.content }}
+                  dangerouslySetInnerHTML={safeHtml(content.content)}
                 />
               )}
             </CardContent>

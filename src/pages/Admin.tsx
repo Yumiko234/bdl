@@ -185,7 +185,7 @@ const Admin = () => {
         return;
       }
 
-      const { data: profileData } = await supabase.from("profiles").select("full_name").eq("id", user!.id).single();
+      const { data: profileData } = await supabase.from("profiles").select("full_name").eq("id", user!.id).maybeSingle();
       if (profileData) setUserProfile(profileData as any);
     } catch (err) {
       console.error(err);

@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
+import { safeHtml } from "@/lib/sanitize";
 
 interface Member {
   id: string;
@@ -191,9 +192,7 @@ const BDL = () => {
                     <h2 className="text-3xl font-bold mb-6">{content.mission_title || 'Notre Mission'}</h2>
                     <div 
                       className="prose prose-lg max-w-none"
-                      dangerouslySetInnerHTML={{ 
-                        __html: content.mission_content || "<p>Le Bureau des Lycéens (BDL) du Lycée Saint-André est l'instance associative des élèves. Il a pour mission de favoriser l'expression, la participation et l'engagement des lycéens dans la vie de l'établissement, d'assurer le lien permanent entre les élèves, la communauté éducative et la direction, et de promouvoir les valeurs d'initiative, de respect et de responsabilité.</p>" 
-                      }}
+                      dangerouslySetInnerHTML={safeHtml(content.mission_content || "<p>Le Bureau des Lycéens (BDL) du Lycée Saint-André est l'instance associative des élèves. Il a pour mission de favoriser l'expression, la participation et l'engagement des lycéens dans la vie de l'établissement, d'assurer le lien permanent entre les élèves, la communauté éducative et la direction, et de promouvoir les valeurs d'initiative, de respect et de responsabilité.</p>")}
                     />
                   </CardContent>
                 </Card>

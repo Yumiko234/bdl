@@ -16,6 +16,7 @@ import { ChevronRight, FileText, Users, MessageCircle, AlertCircle, Vote, X, Hea
 import logo from "@/assets/logo-bdl.jpeg";
 import { supabase } from "@/integrations/supabase/client";
 import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
+import { safeHtml } from "@/lib/sanitize";
 
 // Fonction pour traduire les rôles
 const translateRole = (role: string): string => {
@@ -316,7 +317,7 @@ const Index = () => {
                     </div>
                     <div
                       className="prose prose-lg max-w-none text-foreground leading-relaxed"
-                      dangerouslySetInnerHTML={{ __html: presidentMessage }}
+                      dangerouslySetInnerHTML={safeHtml(presidentMessage)}
                     />
                   </div>
                 </div>
@@ -357,7 +358,7 @@ const Index = () => {
                           <h3 className="text-xl font-bold">{article.title}</h3>
                           <div
                             className="text-muted-foreground line-clamp-2"
-                            dangerouslySetInnerHTML={{ __html: article.content }}
+                            dangerouslySetInnerHTML={safeHtml(article.content)}
                           />
                           {article.author_name && (
                             <div className="flex items-center gap-2 pt-2 border-t">
@@ -397,7 +398,7 @@ const Index = () => {
                               <h3 className="text-xl font-bold">{event.title}</h3>
                               <div
                                 className="text-muted-foreground line-clamp-2"
-                                dangerouslySetInnerHTML={{ __html: event.description }}
+                                dangerouslySetInnerHTML={safeHtml(event.description)}
                               />
                               {event.author_name && (
                                 <div className="flex items-center gap-2 pt-2 border-t">
@@ -631,11 +632,9 @@ const Index = () => {
               <div className="space-y-4 pt-4">
                 <div
                   className="prose prose-sm max-w-none dark:prose-invert"
-                  dangerouslySetInnerHTML={{ 
-                    __html: selectedItem.type === 'news' 
+                  dangerouslySetInnerHTML={safeHtml(selectedItem.type === 'news' 
                       ? selectedItem.content 
-                      : selectedItem.description 
-                  }}
+                      : selectedItem.description)}
                 />
 
                 {selectedItem.author_name && (

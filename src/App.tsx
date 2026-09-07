@@ -6,6 +6,7 @@ import { Routes, Route } from "react-router-dom";
 import { Analytics } from "@vercel/analytics/react";
 
 import ScrollToTop from "./components/ScrollToTop";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 import Legal from "./pages/legals/Legal";
 import CGU from "./pages/legals/CGU";
@@ -58,6 +59,7 @@ const App = () => {
         <Toaster />
         <Sonner />
         <ScrollToTop />
+        <ErrorBoundary>
         <Routes>
           <Route path="/" element={<Index />} />
 
@@ -93,6 +95,7 @@ const App = () => {
           <Route path="/confirm" element={<Confirm />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </ErrorBoundary>
 
         {/* Suivi Vercel Analytics */}
         <Analytics />

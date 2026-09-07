@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,31 +17,78 @@ const ResetPassword = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  /* ===================== HANDLE RECOVERY SESSION ===================== */
+  // Évite de relancer verifyOtp deux fois (StrictMode) ou de repasser à "invalide"
+  // une fois le lien validé.
+  const settled = useRef(false);
+
+  /* ===================== VALIDATION DU LIEN DE RÉCUPÉRATION ===================== */
 
   useEffect(() => {
-    // On écoute les changements d'état d'authentification
-    // PASSWORD_RECOVERY est l'événement déclenché par le lien du mail
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === "PASSWORD_RECOVERY" || session) {
-        setValidLink(true);
-        setLoading(false);
-      } else {
-        // Si après 2 secondes on n'a rien, on considère le lien invalide
-        const timeout = setTimeout(() => {
-          if (!validLink) setLoading(false);
-        }, 2000);
-        return () => clearTimeout(timeout);
+    let timeout: ReturnType<typeof setTimeout>;
+
+    const markValid = () => {
+      if (settled.current) return;
+      settled.current = true;
+      clearTimeout(timeout);
+      setValidLink(true);
+      setLoading(false);
+    };
+
+    const markInvalid = () => {
+      if (settled.current) return;
+      settled.current = true;
+      clearTimeout(timeout);
+      setValidLink(false);
+      setLoading(false);
+    };
+
+    // 1) Nouveau format de lien : ?token_hash=...&type=recovery
+    //    (indépendant du navigateur/appareil, robuste aux pré-chargements de lien)
+    const params = new URLSearchParams(window.location.search);
+    const tokenHash = params.get("token_hash");
+    const type = params.get("type");
+
+    if (tokenHash && type === "recovery") {
+      supabase.auth
+        .verifyOtp({ type: "recovery", token_hash: tokenHash })
+        .then(({ error }) => {
+          if (error) markInvalid();
+          else {
+            // Nettoie l'URL pour éviter une reconsommation au rechargement
+            window.history.replaceState({}, "", "/reset-password");
+            markValid();
+          }
+        });
+      return () => clearTimeout(timeout);
+    }
+
+    // 2) Ancien format : #access_token=... (flux implicite) ou ?code=... (PKCE)
+    //    supabase-js les traite automatiquement (detectSessionInUrl) et émet
+    //    PASSWORD_RECOVERY / SIGNED_IN.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN" || session) {
+        markValid();
       }
     });
 
-    return () => subscription.unsubscribe();
-  }, [validLink]);
+    // 3) Filet de sécurité : une session de récupération est peut-être déjà là.
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) markValid();
+    });
 
-  /* ===================== CHANGE PASSWORD ===================== */
+    // 4) Rien après 5 s → lien invalide/expiré.
+    timeout = setTimeout(markInvalid, 5000);
+
+    return () => {
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  /* ===================== CHANGEMENT DU MOT DE PASSE ===================== */
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); // Empêche le rechargement de la page
+    e.preventDefault();
 
     if (password.length < 6) {
       toast.error("Le mot de passe doit contenir au moins 6 caractères");
@@ -55,16 +102,10 @@ const ResetPassword = () => {
 
     setSubmitting(true);
     try {
-      // Pas besoin d'ID, Supabase utilise la session actuelle du lien
-      const { error } = await supabase.auth.updateUser({
-        password: password
-      });
-
+      const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
 
       toast.success("Mot de passe mis à jour avec succès");
-      
-      // On attend un peu pour que l'utilisateur voit le toast
       setTimeout(() => navigate("/auth"), 2000);
     } catch (error: any) {
       console.error(error);
@@ -142,11 +183,7 @@ const ResetPassword = () => {
               />
             </div>
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={submitting}
-            >
+            <Button type="submit" className="w-full" disabled={submitting}>
               {submitting ? "Mise à jour en cours..." : "Changer le mot de passe"}
             </Button>
           </form>

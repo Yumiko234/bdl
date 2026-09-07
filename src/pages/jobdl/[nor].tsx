@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ChevronDown, ChevronRight, Download, Loader2 } from "lucide-react";
 import "@/styles/journal.css";
 import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
+import { safeHtml } from "@/lib/sanitize";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -446,7 +447,7 @@ const ArticleContent = ({ entry }: { entry: JournalEntry }) => {
           {!isCollapsed && (
             <div className={isHeader ? "mt-1 ml-6" : ""}>
               <div className="text-justify font-normal journal-article prose-sm max-w-none last:[&_p]:mb-0"
-                dangerouslySetInnerHTML={{ __html: section.htmlContent }} />
+                dangerouslySetInnerHTML={safeHtml(section.htmlContent)} />
               {section.children.length > 0 && (
                 <div className="mt-1 space-y-1 font-normal">{renderTree(section.children)}</div>
               )}
@@ -456,7 +457,7 @@ const ArticleContent = ({ entry }: { entry: JournalEntry }) => {
       );
     });
 
-    if (tree.length === 0) return <div className="journal-article font-normal" dangerouslySetInnerHTML={{ __html: content }} />;
+    if (tree.length === 0) return <div className="journal-article font-normal" dangerouslySetInnerHTML={safeHtml(content)} />;
     return <div className="space-y-1 font-normal">{renderTree(tree)}</div>;
   };
 
@@ -479,16 +480,20 @@ const JobdlArticle = () => {
 
   useEffect(() => {
     const fetchEntry = async () => {
-      if (!nor) return;
+      if (!nor) {
+        setError("Publication introuvable.");
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       setError(null);
       const { data, error } = await supabase
         .from("official_journal")
         .select("*")
         .eq("nor_number", nor)
-        .single();
-      if (error) {
-        console.error("Erreur Supabase :", error);
+        .maybeSingle();
+      if (error || !data) {
+        if (error) console.error("Erreur Supabase :", error);
         setError("Impossible de charger la publication officielle demandée. Si vous pensez qu'il s'agit d'une erreur, veuillez contacter la Secrétaire Générale.");
       } else {
         setEntry(data as JournalEntry);

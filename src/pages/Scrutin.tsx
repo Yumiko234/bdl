@@ -93,8 +93,11 @@ const Scrutin = () => {
   useEffect(() => {
     if (user) {
       checkVotingRights();
+      // Si la liste s'est chargée avant que la session soit résolue,
+      // on récupère maintenant le vote de l'utilisateur pour chaque scrutin.
+      scrutins.forEach((s) => loadMyVote(s.id));
     }
-  }, [user]);
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     document.title = "Scrutins – Bureau des Lycéens";
@@ -141,13 +144,17 @@ const Scrutin = () => {
   const loadScrutins = async () => {
     setLoading(true);
 
+    // Neutralise les caractères qui permettraient d'injecter des filtres
+    // PostgREST supplémentaires via .or() ( , ( ) et le méta-caractère * ).
+    const term = searchQuery.trim().replace(/[,()*\\]/g, " ").trim();
+
     let countQuery = supabase
       .from("scrutins")
       .select("*", { count: "exact", head: true });
 
-    if (searchQuery.trim()) {
+    if (term) {
       countQuery = countQuery.or(
-        `title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`
+        `title.ilike.%${term}%,description.ilike.%${term}%`
       );
     }
 
@@ -163,9 +170,9 @@ const Scrutin = () => {
       .order("created_at", { ascending: false })
       .range(from, to);
 
-    if (searchQuery.trim()) {
+    if (term) {
       dataQuery = dataQuery.or(
-        `title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`
+        `title.ilike.%${term}%,description.ilike.%${term}%`
       );
     }
 

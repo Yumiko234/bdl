@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { toast } from "sonner";
 import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
+import { safeHtml } from "@/lib/sanitize";
 
 interface Event {
   id: number;
@@ -158,7 +159,7 @@ export default function Events() {
                     <CardContent>
                       <div
                         className="prose prose-sm max-w-none dark:prose-invert mb-4"
-                        dangerouslySetInnerHTML={{ __html: event.description }}
+                        dangerouslySetInnerHTML={safeHtml(event.description)}
                       />
                       {event.author_name && (
                         <div className="flex items-center gap-2 mt-4 pt-4 border-t">

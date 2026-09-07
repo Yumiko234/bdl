@@ -135,7 +135,7 @@ export const AdminManagement = () => {
 
     const { data: profiles, error } = await supabase
       .from("profiles")
-      .select("id, full_name, email");
+      .select("id, full_name, email, is_banned");
 
     if (error) {
       toast.error("Erreur lors du chargement");

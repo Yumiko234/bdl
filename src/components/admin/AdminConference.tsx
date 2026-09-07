@@ -102,7 +102,7 @@ export const AdminConference = () => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", user.id).single();
+        const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle();
         setCurrentUser({ id: user.id, name: (profile as any)?.full_name ?? "Admin" });
       }
     })();

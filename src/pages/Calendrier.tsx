@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight, CalendarDays, Download, ExternalLink, Clock, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { safeHtml } from "@/lib/sanitize";
 import {
   startOfMonth,
   endOfMonth,
@@ -525,7 +526,7 @@ export default function Calendrier() {
                           {evt.description && (
                             <div
                               className="prose prose-sm max-w-none dark:prose-invert"
-                              dangerouslySetInnerHTML={{ __html: evt.description }}
+                              dangerouslySetInnerHTML={safeHtml(evt.description)}
                             />
                           )}
                         </div>

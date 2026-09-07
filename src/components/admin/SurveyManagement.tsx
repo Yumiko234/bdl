@@ -520,10 +520,23 @@ export const SurveyManagement = () => {
   };
 
   // ── option CRUD ─────────────────────────────────────────────────────────────
-  const handleUpdateOption = async (optionId: string, newText: string) => {
+  // Met à jour l'état local à chaque frappe (sinon le champ paraît figé).
+  const handleUpdateOption = (optionId: string, newText: string) => {
+    setQuestions((prev) =>
+      prev.map((q) => ({
+        ...q,
+        options: q.options.map((o) =>
+          o.id === optionId ? { ...o, option_text: newText } : o
+        ),
+      }))
+    );
+  };
+
+  // Persiste en base une seule fois, à la perte du focus.
+  const persistOption = async (optionId: string, text: string) => {
     await supabase
       .from("survey_options")
-      .update({ option_text: newText })
+      .update({ option_text: text })
       .eq("id", optionId);
   };
 
@@ -1070,7 +1083,7 @@ export const SurveyManagement = () => {
                                             handleUpdateOption(opt.id, e.target.value)
                                           }
                                           onBlur={() =>
-                                            handleUpdateOption(opt.id, opt.option_text)
+                                            persistOption(opt.id, opt.option_text)
                                           }
                                         />
                                         <Button

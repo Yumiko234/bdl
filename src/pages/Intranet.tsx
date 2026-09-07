@@ -135,7 +135,7 @@ const Intranet = () => {
     setLoading(true);
     try {
       const [{ data: profileData }, { data: rolesData }] = await Promise.all([
-        supabase.from("profiles").select("full_name, email, avatar_url").eq("id", user!.id).single(),
+        supabase.from("profiles").select("full_name, email, avatar_url").eq("id", user!.id).maybeSingle(),
         supabase.from("user_roles").select("role").eq("user_id", user!.id),
       ]);
 
@@ -388,7 +388,7 @@ const Intranet = () => {
                           ? 'bg-red-100 group-hover:bg-red-200'
                           : 'bg-emerald-100 group-hover:bg-green-200'
                       }`}>
-                        <Lock className={`h-7 w-7 ${primaryRole === 'administrator' ? 'text-red-700' : 'text-amber-700'}`} />
+                        <Lock className={`h-7 w-7 ${primaryRole === 'administrator' ? 'text-red-700' : 'text-emerald-700'}`} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className={`text-lg font-bold text-foreground transition-colors ${
@@ -404,7 +404,7 @@ const Intranet = () => {
                         <Badge className={`mt-3 ${
                           primaryRole === 'administrator'
                             ? 'bg-red-100 text-red-800 border-red-300'
-                            : 'bg-green-100 text-amber-800 border-emerald-300'
+                            : 'bg-emerald-100 text-emerald-800 border-emerald-300'
                         }`}>
                           {primaryRole === 'administrator' && '👑 '}{roleLabel(primaryRole)}
                         </Badge>

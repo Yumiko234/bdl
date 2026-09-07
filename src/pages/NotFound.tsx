@@ -1,4 +1,4 @@
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -66,7 +66,9 @@ const NotFound = () => {
                   size="lg"
                   variant="outline"
                   className="gap-2"
-                  onClick={() => navigate(-1)}
+                  onClick={() =>
+                    window.history.length > 1 ? navigate(-1) : navigate("/")
+                  }
                 >
                   <ArrowLeft className="h-4 w-4" />
                   Page précédente
@@ -80,13 +82,13 @@ const NotFound = () => {
                   </p>
                   <div className="grid grid-cols-2 gap-2.5">
                     {QUICK_LINKS.map((link) => (
-                      <a
+                      <Link
                         key={link.href}
-                        href={link.href}
+                        to={link.href}
                         className="text-sm rounded-lg border border-border px-3.5 py-2.5 text-muted-foreground hover:text-primary hover:border-primary/40 hover:bg-primary/5 transition-colors"
                       >
                         {link.label}
-                      </a>
+                      </Link>
                     ))}
                   </div>
                 </CardContent>
@@ -95,9 +97,9 @@ const NotFound = () => {
               <p className="text-center text-sm text-muted-foreground flex items-center justify-center gap-1.5">
                 <MessageCircle className="h-4 w-4" />
                 Si vous pensez qu'il s'agit d'une erreur, contactez la{" "}
-                <a href="/contact" className="text-primary underline underline-offset-2">
+                <Link to="/contact" className="text-primary underline underline-offset-2">
                   Secrétaire Générale
-                </a>
+                </Link>
                 .
               </p>
             </div>

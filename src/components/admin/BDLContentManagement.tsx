@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { Pencil, Save, X } from "lucide-react";
+import { safeHtml } from "@/lib/sanitize";
 
 interface BDLContent {
   id: string;
@@ -160,7 +161,7 @@ export const BDLContentManagement = () => {
                   {content.section_key === "mission_content" ? (
                     <div
                       className="prose max-w-none text-sm"
-                      dangerouslySetInnerHTML={{ __html: content.content }}
+                      dangerouslySetInnerHTML={safeHtml(content.content)}
                     />
                   ) : (
                     <p className="text-sm">{content.content}</p>

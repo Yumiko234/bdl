@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
+import { safeHtml } from "@/lib/sanitize";
 
 interface EstablishmentSection {
   id: string;
@@ -71,7 +72,7 @@ const Etablissement = () => {
                       <CardContent>
                         <div 
                           className="prose prose-sm max-w-none dark:prose-invert text-muted-foreground"
-                          dangerouslySetInnerHTML={{ __html: section.content }}
+                          dangerouslySetInnerHTML={safeHtml(section.content)}
                         />
                       </CardContent>
                     </Card>

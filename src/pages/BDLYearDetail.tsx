@@ -40,6 +40,8 @@ const BDLYearDetail = () => {
   useEffect(() => {
     if (year) {
       loadYearData();
+    } else {
+      setLoading(false);
     }
   }, [year]);
 
@@ -50,9 +52,10 @@ const BDLYearDetail = () => {
         .from("bdl_years")
         .select("*")
         .eq("year_label", year)
-        .single();
+        .maybeSingle();
 
       if (yearError) throw yearError;
+      if (!yearInfo) throw new Error("not-found");
       setYearData(yearInfo);
 
 document.title = `BDL ${yearInfo.year_label} – Bureau des Lycéens`;

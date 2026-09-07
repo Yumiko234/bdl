@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { diffWords } from "diff";
 import "@/styles/journal.css";
+import { safeHtml } from "@/lib/sanitize";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -293,7 +294,7 @@ const ArticleRenderer = ({ entry }: { entry: JournalEntry }) => {
           )}
           {!collapsed && (
             <div className={isH ? "mt-2 ml-4" : ""}>
-              <div className="text-justify leading-relaxed prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: sec.htmlContent }} />
+              <div className="text-justify leading-relaxed prose-sm max-w-none" dangerouslySetInnerHTML={safeHtml(sec.htmlContent)} />
               {sec.children.length > 0 && <div className="mt-2 space-y-2">{renderTree(sec.children)}</div>}
             </div>
           )}
@@ -346,6 +347,7 @@ export const OfficialJournalManagement = () => {
   const [previewEntry, setPreviewEntry] = useState<JournalEntry | null>(null);
   const [originalContent, setOriginalContent] = useState<string>("");
   const [formData, setFormData] = useState({ title: "", nor_number: "", content: "", publication_date: "" });
+  const [submitting, setSubmitting] = useState(false);
   const [signatories, setSignatories] = useState<Signatory[]>([]);
 
   useEffect(() => { loadEntries(); }, []);
@@ -364,12 +366,15 @@ export const OfficialJournalManagement = () => {
   };
 
   const handleSubmit = async () => {
+    if (submitting) return;
     if (!formData.title || !formData.nor_number || !formData.content || !formData.publication_date) {
       toast.error("Veuillez remplir tous les champs"); return;
     }
+    setSubmitting(true);
+    try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { toast.error("Vous devez être connecté"); return; }
-    const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", user.id).single();
+    const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle();
     const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
     const userRole = roles?.[0]?.role || "bdl_member";
 
@@ -391,6 +396,9 @@ export const OfficialJournalManagement = () => {
       });
       if (error) { toast.error("Erreur lors de la publication"); console.error(error); }
       else { toast.success("Entrée publiée avec succès"); resetForm(); loadEntries(); }
+    }
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -464,7 +472,7 @@ export const OfficialJournalManagement = () => {
             <SignatureZone signatories={signatories} onChange={setSignatories} />
 
             <div className="flex justify-end gap-2 mt-6">
-              <Button onClick={handleSubmit}>{editingEntry ? "Mettre à jour" : "Publier"}</Button>
+              <Button onClick={handleSubmit} disabled={submitting}>{submitting ? "Enregistrement…" : editingEntry ? "Mettre à jour" : "Publier"}</Button>
               {editingEntry && <Button variant="outline" onClick={resetForm}>Annuler</Button>}
               {formData.content && <Button variant="secondary" onClick={handlePreview}>Prévisualiser</Button>}
             </div>

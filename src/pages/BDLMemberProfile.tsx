@@ -42,6 +42,8 @@ const BDLMemberProfile = () => {
   useEffect(() => {
     if (slug) {
       loadProfile();
+    } else {
+      setLoading(false);
     }
   }, [slug]);
 
@@ -52,9 +54,10 @@ const BDLMemberProfile = () => {
         .select("*, bdl_years(year_label)")
         .eq("slug", slug)
         .eq("is_published", true)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
+      if (!data) throw new Error("not-found");
       setProfile(data);
       document.title = `${data.full_name} – Bureau des Lycéens`;
       loadSiblingProfiles(data.person_slug);

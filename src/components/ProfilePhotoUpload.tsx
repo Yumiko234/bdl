@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Pencil, ZoomIn } from "lucide-react";
+import { Pencil, ZoomIn, MoveHorizontal, MoveVertical } from "lucide-react";
 
 interface ProfilePhotoUploadProps {
   userId: string;
@@ -15,8 +15,10 @@ interface ProfilePhotoUploadProps {
   onPhotoUpdate?: (newUrl: string) => void;
 }
 
-const CROP_PX = 240;
-const EXPORT_PX = 400;
+// Taille du preview dans la modale (px)
+const PREVIEW = 220;
+// Taille exportée vers Supabase (px)
+const EXPORT = 400;
 
 export const ProfilePhotoUpload = ({
   userId,
@@ -26,123 +28,107 @@ export const ProfilePhotoUpload = ({
 }: ProfilePhotoUploadProps) => {
   const [uploading, setUploading] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState(currentAvatarUrl);
-  const [cropOpen, setCropOpen] = useState(false);
+
+  // État de la modale
+  const [open, setOpen] = useState(false);
   const [imgSrc, setImgSrc] = useState("");
-  const [pos, setPos] = useState({ x: 0, y: 0 });
+  // zoom : 1 = image remplit le cercle, >1 = agrandissement
   const [zoom, setZoom] = useState(1);
-  const [naturalDims, setNaturalDims] = useState({ w: 0, h: 0 });
+  // offsetX/Y en % : 0 = centré, -50 = décalé au max à gauche/haut
+  const [offsetX, setOffsetX] = useState(0);
+  const [offsetY, setOffsetY] = useState(0);
 
   const imgRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const dragRef = useRef<{ sx: number; sy: number; px: number; py: number } | null>(null);
 
   const getInitials = (name: string) =>
     name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
-
-  const clamp = useCallback((x: number, y: number, z: number, w: number, h: number) => {
-    if (!w || !h) return { x, y };
-    const base = CROP_PX / Math.min(w, h);
-    const dw = w * base * z;
-    const dh = h * base * z;
-    return {
-      x: Math.min(0, Math.max(CROP_PX - dw, x)),
-      y: Math.min(0, Math.max(CROP_PX - dh, y)),
-    };
-  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
     if (!file.type.startsWith("image/")) { toast.error("Fichier image requis"); return; }
-    if (file.size > 10 * 1024 * 1024) { toast.error("Image trop grande (max 10 MB)"); return; }
+    if (file.size > 15 * 1024 * 1024) { toast.error("Image trop grande (max 15 MB)"); return; }
     const reader = new FileReader();
     reader.onload = (ev) => {
       setImgSrc(ev.target?.result as string);
-      setPos({ x: 0, y: 0 });
       setZoom(1);
-      setNaturalDims({ w: 0, h: 0 });
-      setCropOpen(true);
+      setOffsetX(0);
+      setOffsetY(0);
+      setOpen(true);
     };
     reader.readAsDataURL(file);
   };
 
-  const handleImgLoad = () => {
+  // Calcule les paramètres CSS pour afficher l'image dans le cercle
+  const getPreviewStyle = useCallback((): React.CSSProperties => {
     const img = imgRef.current;
-    if (!img) return;
+    if (!img || !img.naturalWidth) return {};
     const { naturalWidth: w, naturalHeight: h } = img;
-    setNaturalDims({ w, h });
-    const base = CROP_PX / Math.min(w, h);
-    setPos({
-      x: -(w * base - CROP_PX) / 2,
-      y: -(h * base - CROP_PX) / 2,
-    });
-  };
-
-  const handlePointerDown = (e: React.PointerEvent) => {
-    e.currentTarget.setPointerCapture(e.pointerId);
-    dragRef.current = { sx: e.clientX, sy: e.clientY, px: pos.x, py: pos.y };
-  };
-
-  const handlePointerMove = (e: React.PointerEvent) => {
-    if (!dragRef.current) return;
-    const { sx, sy, px, py } = dragRef.current;
-    const nx = px + (e.clientX - sx);
-    const ny = py + (e.clientY - sy);
-    setPos(clamp(nx, ny, zoom, naturalDims.w, naturalDims.h));
-  };
-
-  const handlePointerUp = () => { dragRef.current = null; };
-
-  const handleZoomChange = (val: number[]) => {
-    const z = val[0];
-    const { w, h } = naturalDims;
-    if (!w) { setZoom(z); return; }
-    const oldBase = CROP_PX / Math.min(w, h);
-    const oldScale = oldBase * zoom;
-    const newScale = oldBase * z;
-    // Keep image point under container center fixed
-    const ix = (CROP_PX / 2 - pos.x) / oldScale;
-    const iy = (CROP_PX / 2 - pos.y) / oldScale;
-    const newPx = CROP_PX / 2 - ix * newScale;
-    const newPy = CROP_PX / 2 - iy * newScale;
-    setZoom(z);
-    setPos(clamp(newPx, newPy, z, w, h));
-  };
+    // Echelle de base : remplir le côté le plus court
+    const base = PREVIEW / Math.min(w, h);
+    const dw = w * base * zoom;
+    const dh = h * base * zoom;
+    // Espace disponible pour le décalage
+    const spaceX = Math.max(0, dw - PREVIEW);
+    const spaceY = Math.max(0, dh - PREVIEW);
+    const left = (PREVIEW - dw) / 2 + (offsetX / 100) * spaceX;
+    const top  = (PREVIEW - dh) / 2 + (offsetY / 100) * spaceY;
+    return {
+      position: "absolute",
+      width:  dw,
+      height: dh,
+      left,
+      top,
+      pointerEvents: "none",
+      userSelect: "none",
+    };
+  }, [zoom, offsetX, offsetY]);
 
   const handleConfirm = async () => {
     const img = imgRef.current;
     const canvas = canvasRef.current;
     if (!img || !canvas) return;
     setUploading(true);
+
     const { naturalWidth: w, naturalHeight: h } = img;
-    const base = CROP_PX / Math.min(w, h);
-    const displayScale = base * zoom;
-    const cropX = -pos.x / displayScale;
-    const cropY = -pos.y / displayScale;
-    const cropW = CROP_PX / displayScale;
-    canvas.width = EXPORT_PX;
-    canvas.height = EXPORT_PX;
-    canvas.getContext("2d")!.drawImage(img, cropX, cropY, cropW, cropW, 0, 0, EXPORT_PX, EXPORT_PX);
+    const base = PREVIEW / Math.min(w, h);
+    const scale = base * zoom;
+    const dw = w * scale;
+    const dh = h * scale;
+    const spaceX = Math.max(0, dw - PREVIEW);
+    const spaceY = Math.max(0, dh - PREVIEW);
+    const left = (PREVIEW - dw) / 2 + (offsetX / 100) * spaceX;
+    const top  = (PREVIEW - dh) / 2 + (offsetY / 100) * spaceY;
+
+    // Recadrage en coordonnées naturelles
+    const cropX = -left / scale;
+    const cropY = -top  / scale;
+    const cropW =  PREVIEW / scale;
+
+    canvas.width  = EXPORT;
+    canvas.height = EXPORT;
+    canvas.getContext("2d")!.drawImage(img, cropX, cropY, cropW, cropW, 0, 0, EXPORT, EXPORT);
+
     canvas.toBlob(async (blob) => {
       if (!blob) { toast.error("Erreur de recadrage"); setUploading(false); return; }
       try {
-        const fileName = `${userId}-${Date.now()}.jpg`;
-        const filePath = `avatars/${fileName}`;
+        const path = `avatars/${userId}-${Date.now()}.jpg`;
         if (avatarUrl) {
-          const oldName = avatarUrl.split("/").pop();
-          if (oldName) await supabase.storage.from("avatars").remove([`avatars/${oldName}`]);
+          const old = avatarUrl.split("/").pop();
+          if (old) await supabase.storage.from("avatars").remove([`avatars/${old}`]);
         }
-        const { error: uploadError } = await supabase.storage
-          .from("avatars").upload(filePath, blob, { contentType: "image/jpeg", cacheControl: "3600", upsert: false });
-        if (uploadError) throw uploadError;
-        const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(filePath);
-        const { error: updateError } = await supabase.from("profiles").update({ avatar_url: publicUrl }).eq("id", userId);
-        if (updateError) throw updateError;
+        const { error: upErr } = await supabase.storage
+          .from("avatars").upload(path, blob, { contentType: "image/jpeg", cacheControl: "3600", upsert: false });
+        if (upErr) throw upErr;
+        const { data: { publicUrl } } = supabase.storage.from("avatars").getPublicUrl(path);
+        const { error: dbErr } = await supabase.from("profiles").update({ avatar_url: publicUrl }).eq("id", userId);
+        if (dbErr) throw dbErr;
         setAvatarUrl(publicUrl);
         onPhotoUpdate?.(publicUrl);
-        toast.success("Photo mise à jour");
-        setCropOpen(false);
+        toast.success("Photo mise à jour ✓");
+        setOpen(false);
       } catch (err) {
         console.error(err);
         toast.error("Erreur lors de l'upload");
@@ -152,22 +138,11 @@ export const ProfilePhotoUpload = ({
     }, "image/jpeg", 0.92);
   };
 
-  const imgStyle = naturalDims.w ? {
-    position: "absolute" as const,
-    left: pos.x,
-    top: pos.y,
-    width: naturalDims.w * (CROP_PX / Math.min(naturalDims.w, naturalDims.h)) * zoom,
-    height: naturalDims.h * (CROP_PX / Math.min(naturalDims.w, naturalDims.h)) * zoom,
-    pointerEvents: "none" as const,
-    userSelect: "none" as const,
-    draggable: false,
-  } : { display: "none" as const };
-
   return (
-    <div className="space-y-4">
-      {/* Avatar avec crayon overlay */}
-      <div className="flex items-center gap-6">
-        <div className="relative inline-block">
+    <>
+      {/* Avatar + crayon */}
+      <div className="flex items-center gap-5">
+        <div className="relative inline-block shrink-0">
           <Avatar className="h-24 w-24 ring-4 ring-background shadow-lg">
             <AvatarImage src={avatarUrl || undefined} alt={fullName} />
             <AvatarFallback className="text-2xl font-bold bg-primary text-primary-foreground">
@@ -177,59 +152,88 @@ export const ProfilePhotoUpload = ({
           <button
             type="button"
             disabled={uploading}
-            onClick={() => document.getElementById("avatar-upload")?.click()}
-            className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md hover:bg-primary/90 transition-colors disabled:opacity-50"
+            onClick={() => document.getElementById("avatar-file-input")?.click()}
             title="Modifier la photo"
+            className="absolute bottom-0 right-0 h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md hover:bg-primary/90 transition-colors disabled:opacity-50 ring-2 ring-background"
           >
-            {uploading
-              ? <div className="animate-spin h-3.5 w-3.5 border-2 border-primary-foreground border-t-transparent rounded-full" />
-              : <Pencil className="h-3.5 w-3.5" />}
+            <Pencil className="h-3 w-3" />
           </button>
-          <input id="avatar-upload" type="file" accept="image/*" onChange={handleFileChange} disabled={uploading} className="hidden" />
         </div>
-        <div>
-          <p className="font-medium">{fullName}</p>
-          <p className="text-xs text-muted-foreground mt-1">Cliquez sur le crayon pour modifier · JPG, PNG, GIF · max 10 MB</p>
+        <div className="text-sm text-muted-foreground">
+          <p>Cliquez sur le <strong>crayon</strong> pour modifier la photo.</p>
+          <p className="mt-0.5 text-xs">JPG · PNG · GIF · max 15 MB</p>
         </div>
       </div>
 
-      <Dialog open={cropOpen} onOpenChange={(o) => { if (!uploading) setCropOpen(o); }}>
-        <DialogContent className="max-w-sm">
+      <input
+        id="avatar-file-input"
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileChange}
+        disabled={uploading}
+      />
+
+      {/* Modale de recadrage */}
+      <Dialog open={open} onOpenChange={(v) => { if (!uploading) setOpen(v); }}>
+        <DialogContent className="max-w-xs sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Recadrer la photo</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">Faites glisser pour positionner votre visage dans le cercle.</p>
+
+          <div className="space-y-5 pt-1">
+            {/* Aperçu circulaire */}
             <div className="flex justify-center">
               <div
-                className="relative overflow-hidden rounded-full cursor-move ring-2 ring-primary bg-muted select-none"
-                style={{ width: CROP_PX, height: CROP_PX }}
-                onPointerDown={handlePointerDown}
-                onPointerMove={handlePointerMove}
-                onPointerUp={handlePointerUp}
-                onPointerCancel={handlePointerUp}
+                className="relative overflow-hidden rounded-full ring-4 ring-primary bg-muted"
+                style={{ width: PREVIEW, height: PREVIEW }}
               >
                 {imgSrc && (
                   <img
                     ref={imgRef}
                     src={imgSrc}
-                    alt="recadrage"
-                    onLoad={handleImgLoad}
-                    style={imgStyle}
+                    alt=""
+                    onLoad={() => {
+                      // Force un re-render pour que getPreviewStyle recalcule
+                      setZoom(z => z);
+                    }}
+                    style={getPreviewStyle()}
+                    draggable={false}
                   />
                 )}
               </div>
             </div>
-            <div className="space-y-2">
-              <Label className="text-sm flex items-center gap-2">
-                <ZoomIn className="h-4 w-4" /> Zoom
-              </Label>
-              <Slider min={1} max={3} step={0.05} value={[zoom]} onValueChange={handleZoomChange} />
+
+            {/* Contrôles */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-xs flex items-center gap-1.5 text-muted-foreground">
+                  <ZoomIn className="h-3.5 w-3.5" /> Zoom
+                </Label>
+                <Slider min={1} max={3} step={0.02} value={[zoom]} onValueChange={([v]) => setZoom(v)} />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs flex items-center gap-1.5 text-muted-foreground">
+                  <MoveHorizontal className="h-3.5 w-3.5" /> Position horizontale
+                </Label>
+                <Slider min={-100} max={100} step={1} value={[offsetX]} onValueChange={([v]) => setOffsetX(v)} />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs flex items-center gap-1.5 text-muted-foreground">
+                  <MoveVertical className="h-3.5 w-3.5" /> Position verticale
+                </Label>
+                <Slider min={-100} max={100} step={1} value={[offsetY]} onValueChange={([v]) => setOffsetY(v)} />
+              </div>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCropOpen(false)} disabled={uploading}>Annuler</Button>
-            <Button onClick={handleConfirm} disabled={uploading || !naturalDims.w}>
+
+          <DialogFooter className="mt-2">
+            <Button variant="outline" onClick={() => setOpen(false)} disabled={uploading}>
+              Annuler
+            </Button>
+            <Button onClick={handleConfirm} disabled={uploading}>
               {uploading ? "Enregistrement..." : "Appliquer"}
             </Button>
           </DialogFooter>
@@ -237,6 +241,6 @@ export const ProfilePhotoUpload = ({
       </Dialog>
 
       <canvas ref={canvasRef} className="hidden" />
-    </div>
+    </>
   );
 };

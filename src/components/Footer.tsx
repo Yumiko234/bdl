@@ -11,26 +11,24 @@ const Footer = () => {
   const { dark, toggle } = useDarkMode();
 
   return (
-    <footer className="bg-secondary text-secondary-foreground mt-8">
-      <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
-          {/* Logo + contact */}
-          <div className="col-span-2 md:col-span-1 space-y-2">
-            <div className="flex items-center gap-2">
-              <img src={logoBdl} alt="Logo BDL" className="h-10 w-10 rounded-full" />
-              <p className="text-sm font-medium leading-tight">Bureau des Lycéens<br /><span className="text-xs font-normal text-muted-foreground">Lycée Saint-André</span></p>
-            </div>
-            <p className="text-xs italic text-accent" dangerouslySetInnerHTML={safeHtml(content.quote || '"Là où naît l\'ambition, s\'élève la grandeur."')} />
-            <div className="text-xs text-muted-foreground space-y-0.5 pt-1">
-              <span className="block" dangerouslySetInnerHTML={safeHtml(content.contact_email || 'contact@bdl-saintandre.fr')} />
-              <a href="https://www.instagram.com/bdllgsaintandre" target="_blank" rel="noopener noreferrer" className="block hover:text-accent transition-colors">@bdllgsaintandre</a>
-              <a href="https://www.st-andre.com" target="_blank" rel="noopener noreferrer" className="block hover:text-accent transition-colors">www.st-andre.com</a>
-            </div>
+    <footer className="bg-secondary text-secondary-foreground mt-20">
+      <div className="container mx-auto px-4 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="space-y-4">
+            <img src={logoBdl} alt="Logo BDL" className="h-16 w-16 rounded-full" />
+            <p 
+              className="text-sm"
+              dangerouslySetInnerHTML={safeHtml(content.about || 'Bureau des Lycéens<br />Lycée Saint-André')}
+            />
+            <p 
+              className="text-xs italic text-accent"
+              dangerouslySetInnerHTML={safeHtml(content.quote || '"Là où naît l\'ambition, s\'élève la grandeur."')}
+            />
           </div>
 
           <div>
-            <h3 className="font-semibold mb-2 text-sm">Navigation</h3>
-            <ul className="space-y-1 text-xs text-muted-foreground">
+            <h3 className="font-semibold mb-4">Navigation</h3>
+            <ul className="space-y-2 text-sm">
               <li><Link to="/" className="hover:text-accent transition-colors">Accueil</Link></li>
               <li><Link to="/etablissement" className="hover:text-accent transition-colors">L'Établissement</Link></li>
               <li><Link to="/bdl" className="hover:text-accent transition-colors">Le BDL</Link></li>
@@ -40,8 +38,8 @@ const Footer = () => {
           </div>
 
           <div>
-            <h3 className="font-semibold mb-2 text-sm">Ressources</h3>
-            <ul className="space-y-1 text-xs text-muted-foreground">
+            <h3 className="font-semibold mb-4">Ressources</h3>
+            <ul className="space-y-2 text-sm">
               <li><Link to="/actualites" className="hover:text-accent transition-colors">Actualités</Link></li>
               <li><Link to="/documents" className="hover:text-accent transition-colors">Documents</Link></li>
               <li><Link to="/events" className="hover:text-accent transition-colors">Évènements</Link></li>
@@ -52,16 +50,46 @@ const Footer = () => {
           </div>
 
           <div>
-            <h3 className="font-semibold mb-2 text-sm">Légal</h3>
-            <ul className="space-y-1 text-xs text-muted-foreground">
-              <li><Link to="/legal/cgu" className="hover:text-accent transition-colors">CGU</Link></li>
+            <h3 className="font-semibold mb-4">Documents légaux</h3>
+            <ul className="space-y-2 text-sm">
+              <li><Link to="/legal/cgu" className="hover:text-accent transition-colors">Conditions Générales d'Utilisation</Link></li>
               <li><Link to="/legal/mentions-legales" className="hover:text-accent transition-colors">Mentions légales</Link></li>
-              <li><Link to="/legal/confidentialite" className="hover:text-accent transition-colors">Confidentialité</Link></li>
+              <li><Link to="/legal/confidentialite" className="hover:text-accent transition-colors">Politique de confidentialité</Link></li>
             </ul>
+          </div>
+
+          <div>
+            <h3 className="font-semibold mb-4">Contact</h3>
+            <div className="text-sm space-y-1">
+              <span 
+                className="block"
+                dangerouslySetInnerHTML={safeHtml(content.contact_address || 'Lycée Saint-André')}
+              />
+              <span 
+                className="block text-muted-foreground"
+                dangerouslySetInnerHTML={safeHtml(content.contact_email || 'contact@bdl-saintandre.fr')}
+              />
+              <a 
+                href="https://www.instagram.com/bdllgsaintandre"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block text-muted-foreground hover:text-accent transition-colors"
+              >
+                Instagram — @bdllgsaintandre
+              </a>
+              <a 
+                href="https://www.st-andre.com" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="block text-muted-foreground hover:text-accent transition-colors"
+              >
+                www.st-andre.com
+              </a>
+            </div>
           </div>
         </div>
 
-        <div className="border-t border-border mt-4 pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
+        <div className="border-t border-border mt-8 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
           <p className="text-center sm:text-left">
             &copy; {new Date().getFullYear()} {content.copyright || 'Bureau des Lycéens - Lycée Saint-André. Tous droits réservés.'}
             <span className="mx-2">—</span>

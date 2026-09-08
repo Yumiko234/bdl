@@ -61,7 +61,7 @@ export const ProfilePhotoUpload = ({
       setDims({ w: 0, h: 0 });
       setZoom(1);
       setOffsetX(0);
-      setOffsetY(0);
+      setOffsetY(-100);
       setOpen(true);
     };
     reader.readAsDataURL(file);

@@ -250,18 +250,11 @@ const Support = () => {
       <MaintenanceOverlay>
         <main className="flex-1">
           {/* Hero */}
-          <section className="gradient-institutional text-white py-12">
+          <section className="py-16 gradient-institutional text-white">
             <div className="container mx-auto px-4">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-white/10 rounded-xl">
-                  <Headphones className="h-8 w-8" />
-                </div>
-                <div>
-                  <h1 className="text-3xl font-bold">Support & Demandes</h1>
-                  <p className="text-white/80 mt-1">
-                    Posez vos questions, demandez une audience ou signalez un problème.
-                  </p>
-                </div>
+              <div className="max-w-3xl mx-auto text-center space-y-4">
+                <h1 className="text-5xl font-bold">Support & Demandes</h1>
+                <p className="text-xl">Posez vos questions, demandez une audience ou signalez un problème.</p>
               </div>
             </div>
           </section>

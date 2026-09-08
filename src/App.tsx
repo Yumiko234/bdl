@@ -69,7 +69,7 @@ const App = () => {
               <Route path="/legal/confidentialite" element={<Confidentialite />} />
 
               {/* Admin : /admin redirige vers la section par défaut */}
-              <Route path="/admin" element={<Navigate to="/admin/support" replace />} />
+              <Route path="/admin" element={<Navigate to="/admin/news" replace />} />
               <Route path="/admin/:section" element={<Admin />} />
 
               <Route path="/etablissement" element={<Etablissement />} />

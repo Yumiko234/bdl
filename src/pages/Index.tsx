@@ -103,8 +103,8 @@ const InstagramEmbed = ({ post }: { post: InstagramPost }) => {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-8 text-center rounded-xl bg-muted/30 border border-dashed min-h-[200px]">
-        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 flex items-center justify-center">
-          <Instagram className="h-6 w-6 text-white" />
+        <div className="w-12 h-12 rounded-full bg-pink-100 flex items-center justify-center">
+          <Instagram className="h-6 w-6 text-pink-500" />
         </div>
         <p className="text-sm text-muted-foreground">Aperçu indisponible</p>
         <a
@@ -460,7 +460,7 @@ const Index = () => {
         </section>
 
         {/* ── Instagram Section ─────────────────────────────────────────────── */}
-        <section className="py-16 bg-gradient-to-b from-muted/30 to-background">
+        <section className="py-16 bg-muted/30">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto space-y-8">
 
@@ -468,8 +468,8 @@ const Index = () => {
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="space-y-1">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 flex items-center justify-center shadow-sm flex-shrink-0">
-                      <Instagram className="h-5 w-5 text-white" />
+                    <div className="w-9 h-9 rounded-xl bg-pink-100 flex items-center justify-center shadow-sm flex-shrink-0">
+                      <Instagram className="h-5 w-5 text-pink-500" />
                     </div>
                     <h2 className="text-3xl font-bold">Sur Instagram</h2>
                   </div>
@@ -494,11 +494,9 @@ const Index = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="gap-2 border-pink-200 hover:border-pink-400 hover:bg-pink-50 transition-colors"
+                    className="gap-2 border-pink-200 hover:border-pink-300 hover:bg-pink-50/50 transition-colors text-pink-600"
                   >
-                    <div className="w-4 h-4 rounded bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 flex items-center justify-center">
-                      <Instagram className="h-2.5 w-2.5 text-white" />
-                    </div>
+                    <Instagram className="h-3.5 w-3.5" />
                     Voir le profil
                     <ExternalLink className="h-3 w-3 text-muted-foreground" />
                   </Button>
@@ -506,8 +504,8 @@ const Index = () => {
               </div>
 
               {/* Info sur les bloqueurs */}
-              <div className="flex items-start gap-2.5 p-3 rounded-lg bg-blue-50 border border-blue-100 text-xs text-blue-700">
-                <Instagram className="h-4 w-4 flex-shrink-0 mt-0.5 text-blue-500" />
+              <div className="flex items-start gap-2.5 p-3 rounded-lg bg-muted/50 border border-border text-xs text-muted-foreground">
+                <Instagram className="h-4 w-4 flex-shrink-0 mt-0.5 text-pink-400" />
                 <p>
                   Les publications sont chargées directement depuis Instagram. Si elles n'apparaissent pas,
                   vérifiez que votre bloqueur de publicités est désactivé ou{" "}
@@ -536,10 +534,7 @@ const Index = () => {
                             Post épinglé
                           </Badge>
                         ) : (
-                          <Badge
-                            variant="secondary"
-                            className="gap-1.5 border border-pink-100 bg-pink-50 text-pink-700"
-                          >
+                          <Badge className="gap-1.5 border border-pink-100 bg-pink-50 text-pink-700 font-medium">
                             <Instagram className="h-3 w-3" />
                             Dernier post
                           </Badge>

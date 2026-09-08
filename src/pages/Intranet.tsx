@@ -99,17 +99,17 @@ interface QuickCard {
 }
 
 const PUBLIC_CARDS: QuickCard[] = [
-  { title: "Centre Juridique",        description: "Accédez aux documents légaux.",                                icon: <Scale        className="h-6 w-6" />, href: "/legal",            color: "bg-pink-100 text-pink-700" },
-  { title: "Actualités",              description: "Les dernières nouvelles du lycée et du BDL.",                  icon: <Newspaper    className="h-6 w-6" />, href: "/actualites",       color: "bg-blue-100 text-blue-700" },
-  { title: "Événements",              description: "Agenda des événements à venir.",                               icon: <Calendar     className="h-6 w-6" />, href: "/events",           color: "bg-violet-100 text-violet-700" },
-  { title: "Calendrier",              description: "Calendrier scolaire et dates importantes.",                    icon: <CalendarDays className="h-6 w-6" />, href: "/calendrier",       color: "bg-indigo-100 text-indigo-700" },
-  { title: "Documents",               description: "Règlements, formulaires et comptes-rendus.",                   icon: <FileText     className="h-6 w-6" />, href: "/documents",        color: "bg-amber-100 text-amber-700" },
-  { title: "Scrutins",                description: "Votes et scrutins ouverts.",                                   icon: <Vote         className="h-6 w-6" />, href: "/scrutin",          color: "bg-emerald-100 text-emerald-700" },
-  { title: "Sondages",                description: "Donnez votre avis sur les projets du BDL.",                    icon: <BarChart3    className="h-6 w-6" />, href: "/sondage",          color: "bg-pink-100 text-pink-700" },
-  { title: "Journal Officiel",        description: "Publications officielles du Bureau des Lycéens.",              icon: <BookMarked   className="h-6 w-6" />, href: "/jo",               color: "bg-yellow-100 text-yellow-700" },
-  { title: "Le BDL",                  description: "Découvrez les membres et la mission du BDL.",                  icon: <BookOpen     className="h-6 w-6" />, href: "/bdl",              color: "bg-cyan-100 text-cyan-700" },
-  { title: "Salle de Conférence",     description: "Conférence du BDL concernant la vie de l'établissement.",      icon: <Headphones   className="h-6 w-6" />, href: "/conference",       color: "bg-indigo-100 text-indigo-700" },
-  { title: "Certificat BDL",          description: "Vérifiez la validité d'un certificat émis par le Bureau.",     icon: <BookUser     className="h-6 w-6" />, href: "/certificat-verif", color: "bg-emerald-100 text-emerald-700" },
+  { title: "Centre Juridique",        description: "Accédez aux documents légaux.",                                icon: <Scale        className="h-6 w-6" />, href: "/legal",            color: "bg-primary/10 text-primary" },
+  { title: "Actualités",              description: "Les dernières nouvelles du lycée et du BDL.",                  icon: <Newspaper    className="h-6 w-6" />, href: "/actualites",       color: "bg-accent/20 text-foreground" },
+  { title: "Événements",              description: "Agenda des événements à venir.",                               icon: <Calendar     className="h-6 w-6" />, href: "/events",           color: "bg-primary/10 text-primary" },
+  { title: "Calendrier",              description: "Calendrier scolaire et dates importantes.",                    icon: <CalendarDays className="h-6 w-6" />, href: "/calendrier",       color: "bg-accent/20 text-foreground" },
+  { title: "Documents",               description: "Règlements, formulaires et comptes-rendus.",                   icon: <FileText     className="h-6 w-6" />, href: "/documents",        color: "bg-primary/10 text-primary" },
+  { title: "Scrutins",                description: "Votes et scrutins ouverts.",                                   icon: <Vote         className="h-6 w-6" />, href: "/scrutin",          color: "bg-accent/20 text-foreground" },
+  { title: "Sondages",                description: "Donnez votre avis sur les projets du BDL.",                    icon: <BarChart3    className="h-6 w-6" />, href: "/sondage",          color: "bg-primary/10 text-primary" },
+  { title: "Journal Officiel",        description: "Publications officielles du Bureau des Lycéens.",              icon: <BookMarked   className="h-6 w-6" />, href: "/jo",               color: "bg-accent/20 text-foreground" },
+  { title: "Le BDL",                  description: "Découvrez les membres et la mission du BDL.",                  icon: <BookOpen     className="h-6 w-6" />, href: "/bdl",              color: "bg-primary/10 text-primary" },
+  { title: "Salle de Conférence",     description: "Conférence du BDL concernant la vie de l'établissement.",      icon: <Headphones   className="h-6 w-6" />, href: "/conference",       color: "bg-accent/20 text-foreground" },
+  { title: "Certificat BDL",          description: "Vérifiez la validité d'un certificat émis par le Bureau.",     icon: <BookUser     className="h-6 w-6" />, href: "/certificat-verif", color: "bg-primary/10 text-primary" },
 ];
 
 const Intranet = () => {
@@ -251,36 +251,27 @@ const Intranet = () => {
 
           <div className="container mx-auto px-4 py-12 max-w-6xl space-y-12">
 
-            {/* Support */}
+            {/* Quick access grid — en premier pour tous les membres */}
             <section>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold flex items-center gap-2">
-                  <Headphones className="h-5 w-5 text-primary" />
-                  Support & Demandes
-                </h2>
-              </div>
-
-              <Link to="/support">
-                <div className="group relative overflow-hidden rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 hover:border-primary/50 hover:shadow-elegant transition-all duration-300 cursor-pointer">
-                  <div className="p-6 flex items-center gap-5">
-                    <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
-                      <Headphones className="h-7 w-7 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">Accéder au support</h3>
-                      <p className="text-sm text-muted-foreground mt-0.5">
-                        Posez une question, signalez un problème ou demandez une audience auprès du BDL.
-                      </p>
-                      <div className="flex flex-wrap gap-2 mt-3">
-                        <span className="inline-flex items-center gap-1 text-xs bg-background rounded-full px-2.5 py-1 border font-medium">💬 Support général</span>
-                        <span className="inline-flex items-center gap-1 text-xs bg-background rounded-full px-2.5 py-1 border font-medium">🎤 Demande d'audience</span>
-                        <span className="inline-flex items-center gap-1 text-xs bg-background rounded-full px-2.5 py-1 border font-medium">📬 Suivi en temps réel</span>
+              <h2 className="text-xl font-bold mb-5">Accès rapide</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {PUBLIC_CARDS.map((card) => (
+                  <Link key={card.href} to={card.href}>
+                    <div className="group h-full rounded-xl border bg-card hover:shadow-card transition-all duration-200 hover:-translate-y-0.5 cursor-pointer p-5 flex flex-col gap-3">
+                      <div className={`h-10 w-10 rounded-lg ${card.color} flex items-center justify-center`}>
+                        {card.icon}
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-sm group-hover:text-primary transition-colors">{card.title}</h3>
+                        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{card.description}</p>
+                      </div>
+                      <div className="flex items-center justify-end">
+                        <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
                       </div>
                     </div>
-                    <ChevronRight className="h-6 w-6 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all flex-shrink-0" />
-                  </div>
-                </div>
-              </Link>
+                  </Link>
+                ))}
+              </div>
             </section>
 
             {/* Notes internes de l'Exécutif */}
@@ -323,122 +314,69 @@ const Intranet = () => {
                     Administration
                   </h2>
                 </div>
-
-                <Link to="/admin">
-                  <div className={`group relative overflow-hidden rounded-2xl border-2 hover:shadow-elegant transition-all duration-300 cursor-pointer ${
-                    primaryRole === 'administrator'
-                      ? 'border-red-300/50 bg-gradient-to-br from-red-50 to-red-100/50 hover:border-red-400/70'
-                      : 'border-amber-300/40 bg-gradient-to-br from-amber-50 to-yellow-50 hover:border-amber-400/70'
-                  }`}>
-                    <div className="p-6 flex items-center gap-5">
-                      <div className={`h-14 w-14 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${
-                        primaryRole === 'administrator'
-                          ? 'bg-red-100 group-hover:bg-red-200'
-                          : 'bg-amber-100 group-hover:bg-amber-200'
-                      }`}>
-                        <Lock className={`h-7 w-7 ${primaryRole === 'administrator' ? 'text-red-700' : 'text-amber-700'}`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className={`text-lg font-bold text-foreground transition-colors ${
-                          primaryRole === 'administrator' ? 'group-hover:text-red-800' : 'group-hover:text-amber-800'
-                        }`}>
-                          Panneau d'administration
-                        </h3>
-                        <p className="text-sm text-muted-foreground mt-0.5">
-                          {primaryRole === 'administrator'
-                            ? "Accès complet à toutes les fonctionnalités d'administration."
-                            : "Gérez les actualités, événements, documents, scrutins, sondages et membres du BDL."}
-                        </p>
-                        <Badge className={`mt-3 ${
-                          primaryRole === 'administrator'
-                            ? 'bg-red-100 text-red-800 border-red-300'
-                            : 'bg-amber-100 text-amber-800 border-amber-300'
-                        }`}>
-                          {primaryRole === 'administrator' && '👑 '}{roleLabel(primaryRole)}
-                        </Badge>
-                      </div>
-                      <ChevronRight className={`h-6 w-6 text-muted-foreground group-hover:translate-x-1 transition-all flex-shrink-0 ${
-                        primaryRole === 'administrator' ? 'group-hover:text-red-700' : 'group-hover:text-amber-700'
-                      }`} />
-                    </div>
-                  </div>
-                </Link>
-              </section>
-            )}
-
-                        {/* Suivi actions */}
-            {isBDLMember && (
-              <section>
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-bold flex items-center gap-2">
-                    <Shield className="h-5 w-5 text-primary" />
-                    Suivi de mes actions
-                  </h2>
-                </div>
-
-                <Link to="/bdl-profile">
-                  <div className={`group relative overflow-hidden rounded-2xl border-2 hover:shadow-elegant transition-all duration-300 cursor-pointer ${
-                    primaryRole === 'administrator'
-                      ? 'border-red-300/50 bg-gradient-to-br from-red-50 to-red-100/50 hover:border-green-400/70'
-                      : 'border-green-300/40 bg-gradient-to-br from-emerald-50 to-emerald-50 hover:border-emerald-400/70'
-                  }`}>
-                    <div className="p-6 flex items-center gap-5">
-                      <div className={`h-14 w-14 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${
-                        primaryRole === 'administrator'
-                          ? 'bg-red-100 group-hover:bg-red-200'
-                          : 'bg-emerald-100 group-hover:bg-green-200'
-                      }`}>
-                        <Lock className={`h-7 w-7 ${primaryRole === 'administrator' ? 'text-red-700' : 'text-emerald-700'}`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className={`text-lg font-bold text-foreground transition-colors ${
-                          primaryRole === 'administrator' ? 'group-hover:text-red-800' : 'group-hover:text-emerald-800'
-                        }`}>
-                          Voir mes actions
-                        </h3>
-                        <p className="text-sm text-muted-foreground mt-0.5">
-                          {primaryRole === 'administrator'
-                            ? "T'es plus là fréro."
-                            : "Accéder au suivi des mes actions et notes de l'Exécutif."}
-                        </p>
-                        <Badge className={`mt-3 ${
-                          primaryRole === 'administrator'
-                            ? 'bg-red-100 text-red-800 border-red-300'
-                            : 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                        }`}>
-                          {primaryRole === 'administrator' && '👑 '}{roleLabel(primaryRole)}
-                        </Badge>
-                      </div>
-                      <ChevronRight className={`h-6 w-6 text-muted-foreground group-hover:translate-x-1 transition-all flex-shrink-0 ${
-                        primaryRole === 'administrator' ? 'group-hover:text-red-700' : 'group-hover:text-emerald-700'
-                      }`} />
-                    </div>
-                  </div>
-                </Link>
-              </section>
-            )}
-
-            {/* Quick access grid */}
-            <section>
-              <h2 className="text-xl font-bold mb-5">Accès rapide</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {PUBLIC_CARDS.map((card) => (
-                  <Link key={card.href} to={card.href}>
-                    <div className="group h-full rounded-xl border bg-card hover:shadow-card transition-all duration-200 hover:-translate-y-0.5 cursor-pointer p-5 flex flex-col gap-3">
-                      <div className={`h-10 w-10 rounded-lg ${card.color} flex items-center justify-center`}>
-                        {card.icon}
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-sm group-hover:text-primary transition-colors">{card.title}</h3>
-                        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{card.description}</p>
-                      </div>
-                      <div className="flex items-center justify-end">
-                        <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                <div className="space-y-4">
+                  <Link to="/admin">
+                    <div className="group relative overflow-hidden rounded-2xl border-2 border-primary/20 bg-primary/5 hover:border-primary/40 hover:shadow-elegant transition-all duration-300 cursor-pointer">
+                      <div className="p-6 flex items-center gap-5">
+                        <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+                          <Lock className="h-7 w-7 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">Panneau d'administration</h3>
+                          <p className="text-sm text-muted-foreground mt-0.5">
+                            Gérez les actualités, événements, documents, scrutins, sondages et membres du BDL.
+                          </p>
+                          <Badge className="mt-3 bg-primary/10 text-primary border-primary/20">
+                            {primaryRole === 'administrator' && '👑 '}{roleLabel(primaryRole)}
+                          </Badge>
+                        </div>
+                        <ChevronRight className="h-6 w-6 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all flex-shrink-0" />
                       </div>
                     </div>
                   </Link>
-                ))}
+
+                  <Link to="/bdl-profile">
+                    <div className="group relative overflow-hidden rounded-2xl border-2 border-accent/30 bg-accent/5 hover:border-accent/50 hover:shadow-elegant transition-all duration-300 cursor-pointer">
+                      <div className="p-6 flex items-center gap-5">
+                        <div className="h-14 w-14 rounded-xl bg-accent/20 flex items-center justify-center flex-shrink-0 group-hover:bg-accent/30 transition-colors">
+                          <Shield className="h-7 w-7 text-foreground" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-lg font-bold text-foreground transition-colors">Suivi de mes actions</h3>
+                          <p className="text-sm text-muted-foreground mt-0.5">Accéder au suivi de mes actions et notes de l'Exécutif.</p>
+                        </div>
+                        <ChevronRight className="h-6 w-6 text-muted-foreground group-hover:translate-x-1 transition-all flex-shrink-0" />
+                      </div>
+                    </div>
+                  </Link>
+                </div>
+              </section>
+            )}
+
+            {/* Support — en dernier, accessible mais pas le premier élément visible */}
+            <section>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  <Headphones className="h-5 w-5 text-primary" />
+                  Support & Demandes
+                </h2>
               </div>
+              <Link to="/support">
+                <div className="group relative overflow-hidden rounded-2xl border border-border hover:border-primary/30 hover:shadow-card transition-all duration-300 cursor-pointer bg-card">
+                  <div className="p-6 flex items-center gap-5">
+                    <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+                      <Headphones className="h-7 w-7 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">Accéder au support</h3>
+                      <p className="text-sm text-muted-foreground mt-0.5">
+                        Posez une question, signalez un problème ou demandez une audience auprès du BDL.
+                      </p>
+                    </div>
+                    <ChevronRight className="h-6 w-6 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all flex-shrink-0" />
+                  </div>
+                </div>
+              </Link>
             </section>
 
           </div>

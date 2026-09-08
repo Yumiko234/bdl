@@ -75,6 +75,7 @@ const Navigation = () => {
     { path: "/scrutin", label: "Scrutins" },
     { path: "/actualites", label: "Actualités" },
     { path: "/events", label: "Événements" },
+    { path: "/documents", label: "Documents" },
     { path: "/jo", label: "Journal Officiel" },
     { path: "/contact", label: "Contact" },
   ];

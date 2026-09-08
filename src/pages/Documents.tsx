@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { FileText, Download, Search, Eye, X } from "lucide-react";
+import { FileText, Download, Search, Eye, X, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
@@ -67,6 +67,7 @@ const Documents = () => {
   const [search, setSearch] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewTitle, setPreviewTitle] = useState("");
+  const [previewLoading, setPreviewLoading] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([
     "reglement",
     "compte-rendu",
@@ -222,7 +223,7 @@ const Documents = () => {
                                       variant="outline"
                                       size="sm"
                                       className="gap-1.5"
-                                      onClick={() => { setPreviewUrl(doc.file_url!); setPreviewTitle(doc.title); }}
+                                      onClick={() => { setPreviewUrl(doc.file_url!); setPreviewTitle(doc.title); setPreviewLoading(true); }}
                                     >
                                       <Eye className="h-4 w-4" />
                                       Aperçu
@@ -279,18 +280,26 @@ const Documents = () => {
       <Footer />
 
       {/* PDF Preview Dialog */}
-      <Dialog open={!!previewUrl} onOpenChange={(open) => { if (!open) setPreviewUrl(null); }}>
+      <Dialog open={!!previewUrl} onOpenChange={(open) => { if (!open) { setPreviewUrl(null); setPreviewLoading(false); } }}>
         <DialogContent className="max-w-4xl w-full h-[85vh] flex flex-col p-0 gap-0">
           <DialogHeader className="px-6 py-4 border-b shrink-0">
             <DialogTitle className="truncate pr-8">{previewTitle}</DialogTitle>
           </DialogHeader>
-          <div className="flex-1 min-h-0">
+          <div className="flex-1 min-h-0 relative">
+            {previewLoading && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background z-10">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-sm text-muted-foreground">Chargement de l'aperçu…</p>
+                <p className="text-xs text-muted-foreground">Le chargement peut prendre quelques secondes.</p>
+              </div>
+            )}
             {previewUrl && (
               <iframe
                 src={`https://docs.google.com/viewer?url=${encodeURIComponent(previewUrl)}&embedded=true`}
                 className="w-full h-full border-0"
                 title={previewTitle}
                 sandbox="allow-scripts allow-same-origin"
+                onLoad={() => setPreviewLoading(false)}
               />
             )}
           </div>

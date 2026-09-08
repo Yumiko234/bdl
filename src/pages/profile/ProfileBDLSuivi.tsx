@@ -202,7 +202,7 @@ const ProfileBDLSuivi = () => {
                 variant="outline"
                 size="sm"
                 className="border-white/40 text-black hover:bg-white/10 gap-1"
-                onClick={() => navigate("/profile")}
+                onClick={() => navigate("/intranet")}
               >
                 <ArrowLeft className="h-4 w-4" />
                 Mon profil

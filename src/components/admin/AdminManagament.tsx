@@ -387,9 +387,7 @@ export const AdminManagement = () => {
                           </div>
                         ) : (
                           <div className="space-y-2">
-                            <p className="text-xs text-muted-foreground">
-                              Stats non disponibles — déployez la Edge Function <code className="bg-muted px-1 rounded">admin-users</code> pour les activer.
-                            </p>
+                            <p className="text-xs text-muted-foreground/50 italic">Stats non disponibles.</p>
                             {/* Affichage minimal sans edge function */}
                             <div className="flex flex-wrap gap-1">
                               {user.roles.length === 0

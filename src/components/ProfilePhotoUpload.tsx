@@ -134,6 +134,7 @@ export const ProfilePhotoUpload = ({
       position: "absolute",
       width: dw,
       height: dh,
+      maxWidth: "none",
       left,
       top,
       pointerEvents: "none",

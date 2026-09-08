@@ -141,16 +141,22 @@ const Admin = () => {
 
   const mainRef = useRef<HTMLElement>(null);
   const activeBtnRef = useRef<HTMLButtonElement>(null);
+  const navRef = useRef<HTMLElement>(null);
   const [userRoles,     setUserRoles]     = useState<string[]>([]);
   const [primaryRole,   setPrimaryRole]   = useState<RoleKey>("student");
   const [userProfile,   setUserProfile]   = useState<{ full_name: string } | null>(null);
   const [rolesLoading,  setRolesLoading]  = useState(true);
   const [mobileOpen,    setMobileOpen]    = useState(false);
 
-  // Scroll main content to top + sidebar to active item on section change
+  // Scroll main content to top + sidebar nav to center active item (sans scroller la page)
   useEffect(() => {
     mainRef.current?.scrollTo({ top: 0, behavior: "instant" });
-    activeBtnRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+    if (activeBtnRef.current && navRef.current) {
+      const nav = navRef.current;
+      const btn = activeBtnRef.current;
+      const targetTop = btn.offsetTop - nav.clientHeight / 2 + btn.clientHeight / 2;
+      nav.scrollTo({ top: targetTop, behavior: "smooth" });
+    }
   }, [activeSection]);
   
   const [presidentMessage, setPresidentMessage] = useState("");
@@ -379,7 +385,7 @@ const Admin = () => {
           </div>
         </div>
       </div>
-      <nav className="flex-1 overflow-y-auto p-3 space-y-4">
+      <nav ref={navRef} className="flex-1 overflow-y-auto p-3 space-y-4">
         {groups.map((group) => (
           <div key={group}>
             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-3 mb-2">{group}</p>

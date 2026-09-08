@@ -1,13 +1,12 @@
 import { useState, useRef, useCallback } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Upload, ZoomIn } from "lucide-react";
+import { Pencil, ZoomIn } from "lucide-react";
 
 interface ProfilePhotoUploadProps {
   userId: string;
@@ -166,24 +165,31 @@ export const ProfilePhotoUpload = ({
 
   return (
     <div className="space-y-4">
+      {/* Avatar avec crayon overlay */}
       <div className="flex items-center gap-6">
-        <Avatar className="h-24 w-24 ring-4 ring-background shadow-lg">
-          <AvatarImage src={avatarUrl || undefined} alt={fullName} />
-          <AvatarFallback className="text-2xl font-bold bg-primary text-primary-foreground">
-            {getInitials(fullName)}
-          </AvatarFallback>
-        </Avatar>
-        <div className="flex-1 space-y-2">
-          <Label htmlFor="avatar-upload" className="text-sm font-medium">Photo de profil</Label>
-          <div className="flex gap-2">
-            <Input id="avatar-upload" type="file" accept="image/*" onChange={handleFileChange} disabled={uploading} className="cursor-pointer" />
-            <Button type="button" variant="outline" size="icon" disabled={uploading} onClick={() => document.getElementById("avatar-upload")?.click()}>
-              {uploading
-                ? <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
-                : <Upload className="h-4 w-4" />}
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground">JPG, PNG ou GIF. Max 10 MB.</p>
+        <div className="relative inline-block">
+          <Avatar className="h-24 w-24 ring-4 ring-background shadow-lg">
+            <AvatarImage src={avatarUrl || undefined} alt={fullName} />
+            <AvatarFallback className="text-2xl font-bold bg-primary text-primary-foreground">
+              {getInitials(fullName)}
+            </AvatarFallback>
+          </Avatar>
+          <button
+            type="button"
+            disabled={uploading}
+            onClick={() => document.getElementById("avatar-upload")?.click()}
+            className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md hover:bg-primary/90 transition-colors disabled:opacity-50"
+            title="Modifier la photo"
+          >
+            {uploading
+              ? <div className="animate-spin h-3.5 w-3.5 border-2 border-primary-foreground border-t-transparent rounded-full" />
+              : <Pencil className="h-3.5 w-3.5" />}
+          </button>
+          <input id="avatar-upload" type="file" accept="image/*" onChange={handleFileChange} disabled={uploading} className="hidden" />
+        </div>
+        <div>
+          <p className="font-medium">{fullName}</p>
+          <p className="text-xs text-muted-foreground mt-1">Cliquez sur le crayon pour modifier · JPG, PNG, GIF · max 10 MB</p>
         </div>
       </div>
 

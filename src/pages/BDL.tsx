@@ -142,7 +142,7 @@ const BDL = () => {
     const primaryRole = getPrimaryRole(member.roles);
     const gradient = getRoleGradient(member.roles);
     const baseSlug = generateMemberSlugStatic(member.full_name);
-    const slug = profileSlugMap[baseSlug] || SLUG_OVERRIDES[baseSlug] || baseSlug;
+    const slug = SLUG_OVERRIDES[baseSlug] || profileSlugMap[baseSlug] || baseSlug;
 
     return (
       <Link to={`/bdl/${slug}`} key={member.id}>

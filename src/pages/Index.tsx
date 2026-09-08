@@ -54,12 +54,17 @@ const INSTAGRAM_POSTS: InstagramPost[] = [
   },
 ];
 
+// Une URL de publication embarquable contient /p/, /reel/ ou /tv/.
+// Une simple URL de profil ne l'est pas.
+const isEmbeddablePost = (url: string) => /\/(p|reel|tv)\//.test(url);
+
 const InstagramEmbed = ({ post }: { post: InstagramPost }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [loaded, setLoaded] = useState(false);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState(!isEmbeddablePost(post.url));
 
   useEffect(() => {
+    if (!isEmbeddablePost(post.url)) return;
     let cancelled = false;
 
     const processEmbeds = () => {
@@ -312,7 +317,7 @@ const Index = () => {
                         Message de la Présidente
                       </h2>
                       <p className="text-muted-foreground font-medium">
-                        Elodie ROTH, Présidentes du BDL
+                        Elodie ROTH, Présidente du BDL
                       </p>
                     </div>
                     <div

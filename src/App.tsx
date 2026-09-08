@@ -69,6 +69,7 @@ const App = () => {
           <Route path="/legal/confidentialite" element={<Confidentialite />} />
 
           <Route path="/admin" element={<Admin />} />
+          <Route path="/admin/:section" element={<Admin />} />
           <Route path="/etablissement" element={<Etablissement />} />
           <Route path="/bdl" element={<BDL />} />
           <Route path="/bdl/historique" element={<BDLHistory />} />

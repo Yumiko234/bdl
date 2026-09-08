@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
@@ -136,13 +136,22 @@ const NAV_ITEMS: NavItem[] = [
 const Admin = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const { section } = useParams<{ section: string }>();
+  const activeSection = section || "support";
 
-  const [activeSection, setActiveSection] = useState("support");
+  const mainRef = useRef<HTMLElement>(null);
+  const activeBtnRef = useRef<HTMLButtonElement>(null);
   const [userRoles,     setUserRoles]     = useState<string[]>([]);
   const [primaryRole,   setPrimaryRole]   = useState<RoleKey>("student");
   const [userProfile,   setUserProfile]   = useState<{ full_name: string } | null>(null);
   const [rolesLoading,  setRolesLoading]  = useState(true);
   const [mobileOpen,    setMobileOpen]    = useState(false);
+
+  // Scroll main content to top + sidebar to active item on section change
+  useEffect(() => {
+    mainRef.current?.scrollTo({ top: 0, behavior: "instant" });
+    activeBtnRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [activeSection]);
   
   const [presidentMessage, setPresidentMessage] = useState("");
   const [audienceRequests, setAudienceRequests] = useState<any[]>([]);
@@ -378,7 +387,8 @@ const Admin = () => {
               {visibleItems.filter((i) => i.group === group).map((item) => (
                 <button
                   key={item.id}
-                  onClick={() => { setActiveSection(item.id); setMobileOpen(false); }}
+                  ref={activeSection === item.id ? activeBtnRef : null}
+                  onClick={() => { navigate("/admin/" + item.id); setMobileOpen(false); }}
                   className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-all ${
                     activeSection === item.id ? "bg-primary text-primary-foreground font-medium shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   }`}
@@ -412,7 +422,7 @@ const Admin = () => {
             <aside className="relative w-72 bg-card h-full shadow-xl"><SidebarContent /></aside>
           </div>
         )}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-8">{renderSection()}</main>
+        <main ref={mainRef} className="flex-1 overflow-y-auto p-4 lg:p-8">{renderSection()}</main>
       </div>
       <Footer />
     </div>

@@ -237,13 +237,13 @@ document.title = `BDL ${yearInfo.year_label} – Bureau des Lycéens`;
         <MaintenanceOverlay>
         <section className="py-16 gradient-institutional text-white">
           <div className="container mx-auto px-4">
+            <Link to="/bdl/historique" className="inline-block mb-8">
+              <Button variant="ghost" size="sm" className="text-white/90 hover:text-white hover:bg-white/10 -ml-2">
+                <ChevronLeft className="h-4 w-4 mr-2" />
+                Retour à l'historique
+              </Button>
+            </Link>
             <div className="max-w-3xl mx-auto text-center space-y-4">
-              <Link to="/bdl/historique">
-                <Button variant="outline" className="mb-4 border-white text-black hover:bg-white hover:text-primary">
-                  <ChevronLeft className="h-4 w-4 mr-2" />
-                  Retour à l'historique
-                </Button>
-              </Link>
               <h1 className="text-5xl font-bold">BDL {yearData.year_label}</h1>
               {yearData.is_current && (
                 <Badge className="text-lg py-2 px-4">Année en cours</Badge>

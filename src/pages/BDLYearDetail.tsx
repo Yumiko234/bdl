@@ -237,6 +237,19 @@ document.title = `BDL ${yearInfo.year_label} – Bureau des Lycéens`;
 
       <main className="flex-1">
         <MaintenanceOverlay>
+        {/* Breadcrumb */}
+        <div className="container mx-auto px-4 pt-4">
+          <nav className="text-xs text-muted-foreground flex items-center gap-1.5 flex-wrap">
+            <Link to="/" className="hover:text-foreground transition-colors">Accueil</Link>
+            <span>/</span>
+            <Link to="/bdl" className="hover:text-foreground transition-colors">Le BDL</Link>
+            <span>/</span>
+            <Link to="/bdl/historique" className="hover:text-foreground transition-colors">Historique</Link>
+            <span>/</span>
+            <span className="text-foreground font-medium">{yearData.year_label}</span>
+          </nav>
+        </div>
+
         <section className="py-16 gradient-institutional text-white">
           <div className="container mx-auto px-4">
             <Link to="/bdl/historique" className="inline-block mb-8">

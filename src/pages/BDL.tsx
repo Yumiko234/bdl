@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSEO } from "@/hooks/useSEO";
 import { Link } from "react-router-dom"; // Modification Étape 3.C
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -19,6 +20,11 @@ interface Member {
 }
 
 const BDL = () => {
+  useSEO({
+    title: "Le BDL – Bureau des Lycéens",
+    description: "Découvrez le Bureau des Lycéens du Lycée Saint-André : mission, équipe exécutive et membres.",
+    url: "/bdl",
+  });
   const [executiveMembers, setExecutiveMembers] = useState<Member[]>([]);
   const [regularMembers, setRegularMembers] = useState<Member[]>([]);
   const [content, setContent] = useState<Record<string, string>>({});

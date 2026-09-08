@@ -20,6 +20,8 @@ Prod : <https://bdl-saintandre.fr> — hébergée sur Vercel, déploiement autom
 - [Structure du projet](#structure-du-projet)
 - [Rôles et permissions](#rôles-et-permissions)
 - [Base de données](#base-de-données)
+- [SEO](#seo)
+- [Dark mode](#dark-mode)
 - [Déploiement](#déploiement)
 - [Scripts](#scripts)
 
@@ -34,15 +36,15 @@ Prod : <https://bdl-saintandre.fr> — hébergée sur Vercel, déploiement autom
 | Accueil | `/` | Hero, message de la présidence, dernières actualités & événements, encart Instagram, accès rapides |
 | L'Établissement | `/etablissement` | Présentation du lycée (contenu éditable depuis l'admin) |
 | Le BDL | `/bdl` | Mission, responsabilités, trombinoscope de l'équipe en cours |
-| Historique | `/bdl/historique`, `/bdl/historique/:année` | Bureaux des années précédentes, membres honorifiques |
-| Fiche membre | `/bdl/:slug` | Profil détaillé d'un membre (bio, parcours, anecdote…) |
-| Clubs | `/clubs` | Section clubs (placeholder, en attente de validation) |
-| Actualités | `/actualites` | Articles publiés par le Bureau, avec niveaux de visibilité |
-| Événements | `/events` | Événements passés et à venir |
-| Calendrier | `/calendrier` | Vue mensuelle, export iCal (`.ics`) et Google Agenda |
-| Documents | `/documents` | Règlements, comptes rendus, formulaires, JO — filtrables, téléchargeables |
-| Journal Officiel | `/jo`, `/jo/:nor` | Décrets et communications officielles, avec suivi des modifications |
-| Contact | `/contact` | Formulaire de contact + demande d'audience |
+| Historique | `/bdl/historique`, `/bdl/historique/:année` | Bureaux des années précédentes avec fil d'Ariane |
+| Fiche membre | `/bdl/:slug` | Profil détaillé d'un membre (bio, parcours, anecdote…) avec fil d'Ariane |
+| Clubs | `/clubs` | Section clubs (en attente de validation) |
+| Actualités | `/actualites` | Articles publiés, filtrables par catégorie, avec temps de lecture estimé |
+| Événements | `/events` | Événements à venir et passés, téléchargement `.ics` (Ajouter au calendrier) |
+| Calendrier | `/calendrier` | Vue mensuelle ou liste, export iCal et Google Agenda |
+| Documents | `/documents` | Règlements, comptes-rendus, formulaires, JO — recherche + aperçu PDF (Google Docs viewer) |
+| Journal Officiel | `/jo`, `/jo/:nor` | Décrets et communications officielles |
+| Contact | `/contact` | Formulaire de contact + demande d'audience (banner support pour les connectés) |
 | Vérification de certificat | `/certificat-verif` | Contrôle de l'authenticité d'un certificat émis par le Bureau |
 | Mentions légales / CGU / Confidentialité | `/legal/*` | Documents juridiques (RGPD) |
 
@@ -50,11 +52,13 @@ Prod : <https://bdl-saintandre.fr> — hébergée sur Vercel, déploiement autom
 
 - **Authentification** e-mail / mot de passe (`/auth`), confirmation d'e-mail
   (`/confirm`), réinitialisation de mot de passe (`/reset-password`).
+- **Tableau de bord** (`/intranet`) : accès rapides, banner d'onboarding si pas de photo de profil.
 - **Profil** (`/profile`) : informations personnelles, photo.
 - **Scrutins** (`/scrutin`) : vote des membres habilités, résultats officiels.
 - **Sondages** (`/sondage`) : formulaires ouverts aux élèves.
 - **Conférence** (`/conference`) : salle de visioconférence WebRTC du Bureau.
-- **Support** (`/support`) : tickets d'assistance et demandes d'audience.
+- **Support** (`/support`) : tickets d'assistance avec badge de messages non lus,
+  marqage automatique comme lu à l'ouverture.
 - **Suivi de mes actions** (`/bdl-profile`) : pour les membres de l'Exécutif,
   points, actions assignées et notes.
 
@@ -85,7 +89,7 @@ L'éditeur de contenu riche est basé sur `react-quill`.
 | Graphiques | `recharts` |
 | Backend | **Supabase** — PostgreSQL, Auth, Row Level Security, Realtime, Storage, Edge Functions (Deno) |
 | Notifications | `sonner` (toasts) |
-| PDF | `jspdf` (certificats) |
+| PDF | `jspdf` (certificats), Google Docs viewer (aperçu documents) |
 | Sécurité | `dompurify` pour tout HTML injecté (`src/lib/sanitize.ts`) |
 | Analytics | `@vercel/analytics` |
 | Hébergement | **Vercel** |
@@ -151,10 +155,18 @@ src/
 │   ├── Navigation.tsx  Footer.tsx  GlobalBanner.tsx
 │   ├── MaintenanceOverlay.tsx  RichTextEditor.tsx  ErrorBoundary.tsx
 │   └── ScrollToTop.tsx  ProfilePhotoUpload.tsx
-├── hooks/                     useAuth, use-mobile, use-toast
+├── hooks/
+│   ├── useAuth.ts             Authentification Supabase
+│   ├── useDarkMode.ts         Dark mode avec persistance localStorage
+│   ├── useSEO.ts              Meta tags dynamiques (title, og:*, twitter:*, canonical)
+│   ├── use-mobile.ts
+│   └── use-toast.ts
 ├── lib/                       utils.ts (cn), sanitize.ts (DOMPurify)
 ├── integrations/supabase/     client.ts + types générés
 └── App.tsx                    Déclaration des routes
+public/
+├── robots.txt                 Indexation : exclut /admin, /intranet, /support…
+└── sitemap.xml                Sitemap statique pour Google
 supabase/
 ├── migrations/                Migrations SQL
 └── functions/admin-users/     Edge Function (création / bannissement de comptes)
@@ -199,6 +211,52 @@ Principales tables : `profiles`, `user_roles`, `bdl_members`,
 `president_message`, `establishment_info`, `contact_info`, `bdl_content`,
 `footer_content`, `global_banners`, `maintenance_mode`, `audience_requests`,
 `class_forums` / `forum_messages`.
+
+---
+
+## SEO
+
+Le SEO est géré à trois niveaux :
+
+1. **`public/robots.txt`** — autorise l'indexation des pages publiques et bloque
+   `/admin`, `/intranet`, `/profile`, `/support`, `/scrutin`, `/sondage`,
+   `/conference`, `/confirm`, `/reset-password`.
+
+2. **`public/sitemap.xml`** — sitemap statique listé dans `robots.txt`, contenant
+   toutes les URLs publiques avec priorité et fréquence de changement. Régénéré
+   automatiquement à chaque `npm run build` via `scripts/generate-sitemap.ts`.
+
+3. **`src/hooks/useSEO.ts`** — hook React injecté dans chaque page publique.
+   Il positionne dynamiquement :
+   - `<title>` du document
+   - `<meta name="description">`
+   - `<meta property="og:title">`, `og:description`, `og:url`, `og:image`
+   - `<meta name="twitter:title">`, `twitter:description`, `twitter:image`
+   - `<link rel="canonical">` avec l'URL canonique (`https://bdl-saintandre.fr/...`)
+
+   **Usage :**
+   ```tsx
+   useSEO({
+     title: "Actualités – Bureau des Lycéens",
+     description: "Toutes les actualités du BDL.",
+     url: "/actualites",         // optionnel — ajoute canonical + og:url
+     image: "https://...",       // optionnel — og:image + twitter:image
+   });
+   ```
+
+---
+
+## Dark mode
+
+Le dark mode suit la préférence système par défaut (`prefers-color-scheme`) et
+peut être basculé manuellement via le bouton dans le pied de page. Le choix est
+persisté dans `localStorage` (clé `theme`).
+
+- **Hook `useDarkMode`** — gère l'état et ajoute/retire la classe `dark` sur
+  `<html>`.
+- **Script anti-flash** dans `index.html` — applique la classe `dark` avant le
+  premier rendu React pour éviter le flash blanc au chargement.
+- **`tailwind.config.ts`** — `darkMode: ["class"]` (activation par classe CSS).
 
 ---
 

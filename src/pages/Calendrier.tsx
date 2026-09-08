@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo } from "react";
+import { useSEO } from "@/hooks/useSEO";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, CalendarDays, Download, ExternalLink, Clock, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, CalendarDays, Download, ExternalLink, Clock, X, List } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { safeHtml } from "@/lib/sanitize";
@@ -158,9 +159,17 @@ const DAYS_FR = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
 // Component
 // ---------------------------------------------------------------------------
 export default function Calendrier() {
+  useSEO({
+    title: "Calendrier – Bureau des Lycéens",
+    description: "Calendrier des événements du Bureau des Lycéens : vue mensuelle et export iCal.",
+    url: "/calendrier",
+  });
   // ---- data ----
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // ---- view toggle ----
+  const [view, setView] = useState<"calendar" | "list">("calendar");
 
   // ---- calendar state ----
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -336,12 +345,27 @@ export default function Calendrier() {
           </div>
         </section>
 
-        {/* ---- Export bar ---- */}
+        {/* ---- Export bar + view toggle ---- */}
         <div className="border-b border-border bg-muted/40">
           <div className="container mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm text-muted-foreground">
-              {events.length} événement{events.length !== 1 ? "s" : ""} au total
-            </p>
+            <div className="flex items-center gap-2">
+              {/* Toggle vue */}
+              <div className="flex rounded-md overflow-hidden border border-border">
+                <button
+                  onClick={() => setView("calendar")}
+                  className={`px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 transition-colors ${view === "calendar" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:text-foreground"}`}
+                >
+                  <CalendarDays className="h-3.5 w-3.5" /> Calendrier
+                </button>
+                <button
+                  onClick={() => setView("list")}
+                  className={`px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 border-l border-border transition-colors ${view === "list" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:text-foreground"}`}
+                >
+                  <List className="h-3.5 w-3.5" /> Liste
+                </button>
+              </div>
+              <span className="text-xs text-muted-foreground">{events.length} événement{events.length !== 1 ? "s" : ""}</span>
+            </div>
             <div className="flex items-center gap-2">
               <Button
                 size="sm"
@@ -366,7 +390,77 @@ export default function Calendrier() {
         </div>
 
         {/* ---- Calendar ---- */}
-        <section className="py-12">
+        {view === "list" && (
+          <section className="py-12">
+            <div className="container mx-auto px-4">
+              <div className="max-w-3xl mx-auto space-y-8">
+                {loading ? (
+                  <p className="text-center text-muted-foreground py-16">Chargement…</p>
+                ) : (
+                  <>
+                    {/* À venir */}
+                    {(() => {
+                      const upcoming = [...events]
+                        .filter((e) => e.end_date >= formatLocalDate(new Date()))
+                        .sort((a, b) => a.start_date.localeCompare(b.start_date));
+                      return upcoming.length > 0 ? (
+                        <div className="space-y-3">
+                          <h3 className="text-xl font-bold">À venir</h3>
+                          {upcoming.map((evt) => (
+                            <Card key={evt.id} className="shadow-card">
+                              <CardContent className="p-4 flex flex-wrap items-start justify-between gap-3">
+                                <div className="space-y-1 flex-1 min-w-0">
+                                  <h4 className="font-semibold">{evt.title}</h4>
+                                  <p className="text-sm text-muted-foreground">
+                                    {new Date(evt.start_date + "T00:00:00").toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}
+                                    {evt.start_date !== evt.end_date && ` – ${new Date(evt.end_date + "T00:00:00").toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}`}
+                                    {evt.start_time && ` · ${evt.start_time}`}{evt.end_time && ` – ${evt.end_time}`}
+                                  </p>
+                                </div>
+                                <Button size="sm" variant="outline" className="gap-1" onClick={() => downloadIcs([evt])}>
+                                  <Download className="h-3.5 w-3.5" /> .ics
+                                </Button>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      ) : null;
+                    })()}
+
+                    {/* Passés */}
+                    {(() => {
+                      const past = [...events]
+                        .filter((e) => e.end_date < formatLocalDate(new Date()))
+                        .sort((a, b) => b.start_date.localeCompare(a.start_date));
+                      return past.length > 0 ? (
+                        <div className="space-y-3">
+                          <h3 className="text-xl font-bold text-muted-foreground">Passés</h3>
+                          {past.map((evt) => (
+                            <Card key={evt.id} className="shadow-card opacity-70">
+                              <CardContent className="p-4">
+                                <div className="space-y-1">
+                                  <h4 className="font-semibold">{evt.title}</h4>
+                                  <p className="text-sm text-muted-foreground">
+                                    {new Date(evt.start_date + "T00:00:00").toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}
+                                    {evt.start_date !== evt.end_date && ` – ${new Date(evt.end_date + "T00:00:00").toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}`}
+                                  </p>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      ) : null;
+                    })()}
+
+                    {events.length === 0 && <p className="text-center text-muted-foreground py-8">Aucun événement.</p>}
+                  </>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {view === "calendar" && <section className="py-12">
           <div className="container mx-auto px-4">
             <div className="max-w-5xl mx-auto">
               {/* Month navigation */}
@@ -584,7 +678,7 @@ export default function Calendrier() {
               </div>
             </div>
           </div>
-        </section>
+        </section>}
         </MaintenanceOverlay>
       </main>
 

@@ -252,6 +252,21 @@ const Intranet = () => {
 
           <div className="container mx-auto px-4 py-12 max-w-6xl space-y-8">
 
+            {/* Onboarding : compléter le profil */}
+            {!profile?.avatar_url && (
+              <div className="flex items-center gap-4 p-4 rounded-xl border border-accent/40 bg-accent/10 flex-wrap">
+                <div className="flex-1 min-w-0 space-y-0.5">
+                  <p className="font-semibold text-sm">Complétez votre profil</p>
+                  <p className="text-sm text-muted-foreground">Ajoutez une photo de profil pour personnaliser votre compte et être identifiable dans l'intranet.</p>
+                </div>
+                <Link to="/profile">
+                  <Button size="sm" variant="outline" className="border-accent text-foreground hover:bg-accent/20 whitespace-nowrap">
+                    Ajouter une photo
+                  </Button>
+                </Link>
+              </div>
+            )}
+
             {/* Notes internes de l'Exécutif */}
             {isBDLMember && internalNotes.length > 0 && (
               <section>

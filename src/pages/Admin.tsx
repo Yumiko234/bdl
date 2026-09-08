@@ -433,9 +433,9 @@ const Admin = () => {
         )}
         <main ref={mainRef} className="flex-1 overflow-y-auto p-4 lg:p-8">
           {renderSection()}
-          <Footer />
         </main>
       </div>
+      <Footer />
     </div>
   );
 };

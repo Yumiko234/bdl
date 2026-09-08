@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useSEO } from "@/hooks/useSEO";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -183,6 +184,11 @@ const InstagramEmbed = ({ post }: { post: InstagramPost }) => {
 // ─── Page principale ──────────────────────────────────────────────────────────
 
 const Index = () => {
+  useSEO({
+    title: "Bureau des Lycéens – Lycée Saint-André",
+    description: "Site officiel du Bureau des Lycéens du Lycée Saint-André : actualités, événements, documents et espace intranet.",
+    url: "/",
+  });
   const [presidentMessage, setPresidentMessage] = useState("");
   const [presidentProfile, setPresidentProfile] = useState<{ name: string; avatar: string | null } | null>(null);
   const [latestNews, setLatestNews] = useState<any[]>([]);

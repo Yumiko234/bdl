@@ -7,9 +7,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Home, ArrowLeft, MessageCircle, Compass } from "lucide-react";
 
 const QUICK_LINKS = [
-  { label: "L'Établissement", href: "/etablissement" },
-  { label: "Le BDL", href: "/bdl" },
+  { label: "Accueil", href: "/" },
   { label: "Actualités", href: "/actualites" },
+  { label: "Événements", href: "/events" },
   { label: "Contact", href: "/contact" },
 ];
 

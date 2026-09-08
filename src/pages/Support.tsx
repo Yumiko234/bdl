@@ -98,12 +98,7 @@ const Support = () => {
   // Profile
   const [profile, setProfile] = useState<{ full_name: string; email: string } | null>(null);
 
-  // ── Auth guard ───────────────────────────────────────────────────────────────
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/auth");
-    }
-  }, [user, authLoading, navigate]);
+  // ── Auth guard — handled in render, no redirect ──────────────────────────────
 
   // ── Load profile & tickets ───────────────────────────────────────────────────
   useEffect(() => {
@@ -199,6 +194,8 @@ const Support = () => {
     setSelectedTicket(ticket);
     setView("detail");
     await loadMessages(ticket.id);
+    try { localStorage.setItem(`ticket_seen_${ticket.id}`, new Date().toISOString()); } catch {}
+    window.dispatchEvent(new CustomEvent("tickets-read"));
   };
 
   // ── Send reply ───────────────────────────────────────────────────────────────
@@ -239,6 +236,33 @@ const Support = () => {
         <div className="flex-1 flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Navigation />
+        <main className="flex-1 flex items-center justify-center px-4">
+          <Card className="max-w-md w-full shadow-card">
+            <CardContent className="p-10 text-center space-y-5">
+              <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+                <Headphones className="h-8 w-8 text-primary" />
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-xl font-bold">Connexion requise</h2>
+                <p className="text-muted-foreground text-sm">
+                  Connectez-vous pour accéder au support et soumettre vos demandes directement au BDL.
+                </p>
+              </div>
+              <Button onClick={() => navigate("/auth")} className="w-full gap-2">
+                Se connecter
+              </Button>
+            </CardContent>
+          </Card>
+        </main>
         <Footer />
       </div>
     );

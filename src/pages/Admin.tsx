@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -431,6 +432,7 @@ const Admin = () => {
         )}
         <main ref={mainRef} className="flex-1 overflow-y-auto p-4 lg:p-8">
           {renderSection()}
+          <Footer />
         </main>
       </div>
     </div>

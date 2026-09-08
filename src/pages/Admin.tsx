@@ -150,7 +150,7 @@ const Admin = () => {
   // Scroll main content to top + sidebar to active item on section change
   useEffect(() => {
     mainRef.current?.scrollTo({ top: 0, behavior: "instant" });
-    activeBtnRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    activeBtnRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
   }, [activeSection]);
   
   const [presidentMessage, setPresidentMessage] = useState("");

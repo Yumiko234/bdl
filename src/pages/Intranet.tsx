@@ -311,7 +311,6 @@ const Intranet = () => {
                     </div>
                   </Link>
 
-                  {primaryRole !== 'administrator' && (
                   <Link to="/bdl-profile">
                     <div className="group relative overflow-hidden rounded-2xl border-2 border-accent/30 bg-accent/5 hover:border-accent/50 hover:shadow-elegant transition-all duration-300 cursor-pointer">
                       <div className="p-5 flex items-center gap-4">
@@ -320,13 +319,16 @@ const Intranet = () => {
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="font-bold text-foreground transition-colors">Suivi de mes actions</h3>
-                          <p className="text-sm text-muted-foreground mt-0.5">Accéder au suivi de mes actions et notes de l'Exécutif.</p>
+                          <p className="text-sm text-muted-foreground mt-0.5">
+                            {primaryRole === 'administrator'
+                              ? "T'es plus là fréro."
+                              : "Accéder au suivi de mes actions et notes de l'Exécutif."}
+                          </p>
                         </div>
                         <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:translate-x-1 transition-all flex-shrink-0" />
                       </div>
                     </div>
                   </Link>
-                  )}
                 </div>
               </section>
             )}

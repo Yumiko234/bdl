@@ -23,6 +23,7 @@ const BDL = () => {
   const [regularMembers, setRegularMembers] = useState<Member[]>([]);
   const [content, setContent] = useState<Record<string, string>>({});
   const [profileSlugMap, setProfileSlugMap] = useState<Record<string, string>>({});
+  const SLUG_OVERRIDES: Record<string, string> = { elodie_roth: "elodie_roth-2026-2027" };
 
   useEffect(() => {
     loadMembers();
@@ -141,7 +142,7 @@ const BDL = () => {
     const primaryRole = getPrimaryRole(member.roles);
     const gradient = getRoleGradient(member.roles);
     const baseSlug = generateMemberSlugStatic(member.full_name);
-    const slug = profileSlugMap[baseSlug] || baseSlug;
+    const slug = profileSlugMap[baseSlug] || SLUG_OVERRIDES[baseSlug] || baseSlug;
 
     return (
       <Link to={`/bdl/${slug}`} key={member.id}>

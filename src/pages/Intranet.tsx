@@ -121,7 +121,7 @@ const Intranet = () => {
   const [primaryRole, setPrimaryRole] = useState<RoleKey>("student");
   const [loading,     setLoading]     = useState(true);
   const [internalNotes, setInternalNotes] = useState<InternalNote[]>([]);
-  const [quickAccessOpen, setQuickAccessOpen] = useState(false);
+  const [quickAccessOpen, setQuickAccessOpen] = useState(true);
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -292,7 +292,7 @@ const Intranet = () => {
                     Administration
                   </h2>
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <Link to="/admin">
                     <div className="group relative overflow-hidden rounded-2xl border-2 border-primary/20 bg-primary/5 hover:border-primary/40 hover:shadow-elegant transition-all duration-300 cursor-pointer">
                       <div className="p-5 flex items-center gap-4">
@@ -371,12 +371,12 @@ const Intranet = () => {
               </button>
 
               {quickAccessOpen && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mt-5">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mt-5">
                   {PUBLIC_CARDS.map((card) => (
                     <Link key={card.href} to={card.href}>
-                      <div className="group h-full rounded-xl border bg-card hover:shadow-card transition-all duration-200 hover:-translate-y-0.5 cursor-pointer p-4 flex flex-col gap-3">
-                        <div className={`h-9 w-9 rounded-lg ${card.color} flex items-center justify-center`}>
-                          <span className="scale-90">{card.icon}</span>
+                      <div className="group h-full rounded-xl border bg-card hover:shadow-card transition-all duration-200 hover:-translate-y-1 cursor-pointer p-5 flex flex-col gap-4">
+                        <div className={`h-12 w-12 rounded-xl ${card.color} flex items-center justify-center`}>
+                          <span className="text-xl">{card.icon}</span>
                         </div>
                         <div className="flex-1">
                           <h3 className="font-semibold text-sm group-hover:text-primary transition-colors leading-tight">{card.title}</h3>

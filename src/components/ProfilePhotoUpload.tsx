@@ -76,7 +76,8 @@ export const ProfilePhotoUpload = ({
   // ── Recadrer la photo existante ──────────────────────────────────────────────
   const handleAdjustExisting = () => {
     if (!avatarUrl) return;
-    setImgSrc(avatarUrl);
+    const sep = avatarUrl.includes("?") ? "&" : "?";
+    setImgSrc(`${avatarUrl}${sep}_t=${Date.now()}`);
     setDims({ w: 0, h: 0 });
     setZoom(1);
     setOffsetX(0);
@@ -169,7 +170,7 @@ export const ProfilePhotoUpload = ({
     ctx.clearRect(0, 0, EXPORT, EXPORT);
     ctx.drawImage(img, cropX, cropY, cropW, cropW, 0, 0, EXPORT, EXPORT);
 
-    canvas.toBlob(async (blob) => {
+    try { canvas.toBlob(async (blob) => {
       if (!blob) { toast.error("Erreur de recadrage"); setUploading(false); return; }
       try {
         const path = `avatars/${userId}-${Date.now()}.jpg`;
@@ -197,7 +198,7 @@ export const ProfilePhotoUpload = ({
       } finally {
         setUploading(false);
       }
-    }, "image/jpeg", 0.92);
+    }, "image/jpeg", 0.92); } catch { toast.error("Impossible de recadrer (image protégée)"); setUploading(false); }
   };
 
   // ── Rendu ────────────────────────────────────────────────────────────────────
@@ -293,6 +294,7 @@ export const ProfilePhotoUpload = ({
                     ref={imgRef}
                     src={imgSrc}
                     alt=""
+                    crossOrigin="anonymous"
                     onLoad={() => {
                       const img = imgRef.current;
                       if (img) setDims({ w: img.naturalWidth, h: img.naturalHeight });

@@ -12,7 +12,7 @@ import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 import {
   Newspaper, Calendar, FileText, Vote, BarChart3,
   BookMarked, BookUser, Headphones, UserCircle, Building2,
-  LogOut, Shield, Loader2, ChevronRight,
+  LogOut, Shield, Loader2, ChevronRight, ChevronDown,
   CalendarDays, BookOpen, Lock, Pin, Scale
 } from "lucide-react";
 
@@ -121,6 +121,7 @@ const Intranet = () => {
   const [primaryRole, setPrimaryRole] = useState<RoleKey>("student");
   const [loading,     setLoading]     = useState(true);
   const [internalNotes, setInternalNotes] = useState<InternalNote[]>([]);
+  const [quickAccessOpen, setQuickAccessOpen] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -249,30 +250,7 @@ const Intranet = () => {
             </div>
           </section>
 
-          <div className="container mx-auto px-4 py-12 max-w-6xl space-y-12">
-
-            {/* Quick access grid — en premier pour tous les membres */}
-            <section>
-              <h2 className="text-xl font-bold mb-5">Accès rapide</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {PUBLIC_CARDS.map((card) => (
-                  <Link key={card.href} to={card.href}>
-                    <div className="group h-full rounded-xl border bg-card hover:shadow-card transition-all duration-200 hover:-translate-y-0.5 cursor-pointer p-5 flex flex-col gap-3">
-                      <div className={`h-10 w-10 rounded-lg ${card.color} flex items-center justify-center`}>
-                        {card.icon}
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-sm group-hover:text-primary transition-colors">{card.title}</h3>
-                        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{card.description}</p>
-                      </div>
-                      <div className="flex items-center justify-end">
-                        <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </section>
+          <div className="container mx-auto px-4 py-12 max-w-6xl space-y-8">
 
             {/* Notes internes de l'Exécutif */}
             {isBDLMember && internalNotes.length > 0 && (
@@ -314,46 +292,46 @@ const Intranet = () => {
                     Administration
                   </h2>
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <Link to="/admin">
                     <div className="group relative overflow-hidden rounded-2xl border-2 border-primary/20 bg-primary/5 hover:border-primary/40 hover:shadow-elegant transition-all duration-300 cursor-pointer">
-                      <div className="p-6 flex items-center gap-5">
-                        <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
-                          <Lock className="h-7 w-7 text-primary" />
+                      <div className="p-5 flex items-center gap-4">
+                        <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+                          <Lock className="h-6 w-6 text-primary" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">Panneau d'administration</h3>
-                          <p className="text-sm text-muted-foreground mt-0.5">
-                            Gérez les actualités, événements, documents, scrutins, sondages et membres du BDL.
-                          </p>
-                          <Badge className="mt-3 bg-primary/10 text-primary border-primary/20">
+                          <h3 className="font-bold text-foreground group-hover:text-primary transition-colors">Panneau d'administration</h3>
+                          <p className="text-sm text-muted-foreground mt-0.5">Gérez les actualités, événements, documents, scrutins, sondages et membres du BDL.</p>
+                          <Badge className="mt-2 bg-primary/10 text-primary border-primary/20 text-xs">
                             {primaryRole === 'administrator' && '👑 '}{roleLabel(primaryRole)}
                           </Badge>
                         </div>
-                        <ChevronRight className="h-6 w-6 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all flex-shrink-0" />
+                        <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all flex-shrink-0" />
                       </div>
                     </div>
                   </Link>
 
+                  {primaryRole !== 'administrator' && (
                   <Link to="/bdl-profile">
                     <div className="group relative overflow-hidden rounded-2xl border-2 border-accent/30 bg-accent/5 hover:border-accent/50 hover:shadow-elegant transition-all duration-300 cursor-pointer">
-                      <div className="p-6 flex items-center gap-5">
-                        <div className="h-14 w-14 rounded-xl bg-accent/20 flex items-center justify-center flex-shrink-0 group-hover:bg-accent/30 transition-colors">
-                          <Shield className="h-7 w-7 text-foreground" />
+                      <div className="p-5 flex items-center gap-4">
+                        <div className="h-12 w-12 rounded-xl bg-accent/20 flex items-center justify-center flex-shrink-0 group-hover:bg-accent/30 transition-colors">
+                          <Shield className="h-6 w-6 text-foreground" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-lg font-bold text-foreground transition-colors">Suivi de mes actions</h3>
+                          <h3 className="font-bold text-foreground transition-colors">Suivi de mes actions</h3>
                           <p className="text-sm text-muted-foreground mt-0.5">Accéder au suivi de mes actions et notes de l'Exécutif.</p>
                         </div>
-                        <ChevronRight className="h-6 w-6 text-muted-foreground group-hover:translate-x-1 transition-all flex-shrink-0" />
+                        <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:translate-x-1 transition-all flex-shrink-0" />
                       </div>
                     </div>
                   </Link>
+                  )}
                 </div>
               </section>
             )}
 
-            {/* Support — en dernier, accessible mais pas le premier élément visible */}
+            {/* Support */}
             <section>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold flex items-center gap-2">
@@ -363,20 +341,49 @@ const Intranet = () => {
               </div>
               <Link to="/support">
                 <div className="group relative overflow-hidden rounded-2xl border border-border hover:border-primary/30 hover:shadow-card transition-all duration-300 cursor-pointer bg-card">
-                  <div className="p-6 flex items-center gap-5">
-                    <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
-                      <Headphones className="h-7 w-7 text-primary" />
+                  <div className="p-5 flex items-center gap-4">
+                    <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+                      <Headphones className="h-6 w-6 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">Accéder au support</h3>
-                      <p className="text-sm text-muted-foreground mt-0.5">
-                        Posez une question, signalez un problème ou demandez une audience auprès du BDL.
-                      </p>
+                      <h3 className="font-bold text-foreground group-hover:text-primary transition-colors">Accéder au support</h3>
+                      <p className="text-sm text-muted-foreground mt-0.5">Posez une question, signalez un problème ou demandez une audience auprès du BDL.</p>
                     </div>
-                    <ChevronRight className="h-6 w-6 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all flex-shrink-0" />
+                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all flex-shrink-0" />
                   </div>
                 </div>
               </Link>
+            </section>
+
+            {/* Accès rapide — collapsible */}
+            <section>
+              <button
+                onClick={() => setQuickAccessOpen(o => !o)}
+                className="w-full flex items-center justify-between group"
+              >
+                <h2 className="text-xl font-bold group-hover:text-primary transition-colors">Accès rapide</h2>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground group-hover:text-primary transition-colors">
+                  <span>{quickAccessOpen ? "Réduire" : "Afficher"}</span>
+                  <ChevronDown className={`h-5 w-5 transition-transform duration-300 ${quickAccessOpen ? "rotate-180" : ""}`} />
+                </div>
+              </button>
+
+              {quickAccessOpen && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mt-5">
+                  {PUBLIC_CARDS.map((card) => (
+                    <Link key={card.href} to={card.href}>
+                      <div className="group h-full rounded-xl border bg-card hover:shadow-card transition-all duration-200 hover:-translate-y-0.5 cursor-pointer p-4 flex flex-col gap-3">
+                        <div className={`h-9 w-9 rounded-lg ${card.color} flex items-center justify-center`}>
+                          <span className="scale-90">{card.icon}</span>
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-sm group-hover:text-primary transition-colors leading-tight">{card.title}</h3>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </section>
 
           </div>

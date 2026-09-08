@@ -5,7 +5,10 @@ import Footer from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Calendar, Pin, Clock } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Calendar, Pin, Clock, Share2 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { toast } from "sonner";
 
 const readingTime = (html: string): number => {
   const text = html.replace(/<[^>]*>/g, " ");
@@ -87,6 +90,11 @@ const Actualites = () => {
         <MaintenanceOverlay>
         <section className="py-16 gradient-institutional text-white">
           <div className="container mx-auto px-4">
+            <nav className="text-xs text-white/60 flex items-center gap-1.5 flex-wrap mb-6">
+              <Link to="/" className="hover:text-white transition-colors">Accueil</Link>
+              <span>/</span>
+              <span className="text-white/90 font-medium">Actualités</span>
+            </nav>
             <div className="max-w-3xl mx-auto text-center space-y-4">
               <h1 className="text-5xl font-bold">Actualités & Communications</h1>
               <p className="text-xl">Restez informé de la vie du lycée et du BDL</p>
@@ -119,13 +127,29 @@ const Actualites = () => {
               )}
 
               {loading ? (
-                <p className="text-center text-muted-foreground py-8">Chargement...</p>
+                <div className="space-y-4">
+                  {[...Array(3)].map((_, i) => (
+                    <Card key={i} className="shadow-card">
+                      <CardContent className="p-6 space-y-4">
+                        <div className="flex gap-2">
+                          <Skeleton className="h-5 w-20 rounded-full" />
+                          <Skeleton className="h-5 w-32" />
+                        </div>
+                        <Skeleton className="h-7 w-3/4" />
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-5/6" />
+                        <Skeleton className="h-4 w-4/6" />
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
               ) : filteredNews.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">Aucune actualité pour le moment</p>
               ) : (
                 filteredNews.map((item) => (
                   <Card
                     key={item.id}
+                    id={`article-${item.id}`}
                     className={`shadow-card ${
                       item.is_important || item.is_pinned ? "border-2 border-accent" : ""
                     }`}
@@ -158,24 +182,42 @@ const Actualites = () => {
                         dangerouslySetInnerHTML={safeHtml(item.content)}
                       />
 
-                      {item.author_name && (
-                        <div className="pt-4 border-t flex items-center gap-3">
-                          <Avatar className="h-10 w-10">
-                            <AvatarImage src={item.author_avatar || undefined} />
-                            <AvatarFallback>
-                              {item.author_name.charAt(0).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="font-medium">{item.author_name}</div>
-                            {item.author_role && (
-                              <div className="text-sm text-muted-foreground">
-                                {getRoleLabel(item.author_role)}
-                              </div>
-                            )}
+                      <div className="pt-4 border-t flex items-center justify-between gap-3">
+                        {item.author_name ? (
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-10 w-10">
+                              <AvatarImage src={item.author_avatar || undefined} />
+                              <AvatarFallback>
+                                {item.author_name.charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="font-medium">{item.author_name}</div>
+                              {item.author_role && (
+                                <div className="text-sm text-muted-foreground">
+                                  {getRoleLabel(item.author_role)}
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        ) : <span />}
+                        <button
+                          onClick={async () => {
+                            const url = `${window.location.origin}/actualites#article-${item.id}`;
+                            if (navigator.share) {
+                              try { await navigator.share({ title: item.title, url }); } catch {}
+                            } else {
+                              await navigator.clipboard.writeText(url);
+                              toast.success("Lien copié !");
+                            }
+                          }}
+                          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors shrink-0"
+                        >
+                          <Share2 className="h-3.5 w-3.5" />
+                          Partager
+                        </button>
+                      </div>
+
                     </CardContent>
                   </Card>
                 ))

@@ -184,6 +184,7 @@ const InstagramEmbed = ({ post }: { post: InstagramPost }) => {
 
 const Index = () => {
   const [presidentMessage, setPresidentMessage] = useState("");
+  const [presidentProfile, setPresidentProfile] = useState<{ name: string; avatar: string | null } | null>(null);
   const [latestNews, setLatestNews] = useState<any[]>([]);
   const [latestEvents, setLatestEvents] = useState<any[]>([]);
   
@@ -194,6 +195,7 @@ const Index = () => {
   useEffect(() => {
     document.title = "Bureau des Lycéens – Lycée Saint-André";
     loadPresidentMessage();
+    loadPresidentProfile();
     loadLatestContent();
   }, []);
 
@@ -204,6 +206,20 @@ const Index = () => {
       .maybeSingle();
 
     if (data) setPresidentMessage(data.content);
+  };
+
+  const loadPresidentProfile = async () => {
+    const { data } = await supabase
+      .from("user_roles")
+      .select("user_id, profiles(full_name, avatar_url)")
+      .in("role", ["president", "presidente"])
+      .limit(1)
+      .maybeSingle();
+
+    if (data?.profiles) {
+      const p = data.profiles as any;
+      setPresidentProfile({ name: p.full_name, avatar: p.avatar_url });
+    }
   };
 
   const loadLatestContent = async () => {
@@ -301,14 +317,12 @@ const Index = () => {
                 <div className="flex flex-col md:flex-row gap-8 items-start">
                   <div className="flex-shrink-0">
                     <Avatar className="w-24 h-24 shadow-elegant">
-  <AvatarImage
-    src="https://ppmlhjcwdyaarbqpngla.supabase.co/storage/v1/object/public/avatars/avatars/91535532-1c9b-4323-a88a-dc874fff777d-1783874240713.jpeg"
-    alt="Elodie ROTH"
-    className="object-cover"
-  />
-  <AvatarFallback className="bg-gradient-institutional text-gold text-3xl font-bold">
-    ER
-  </AvatarFallback>
+                      {presidentProfile?.avatar && (
+                        <AvatarImage src={presidentProfile.avatar} alt={presidentProfile.name} className="object-cover" />
+                      )}
+                      <AvatarFallback className="bg-gradient-institutional text-gold text-3xl font-bold">
+                        {presidentProfile?.name ? presidentProfile.name.split(" ").map(n => n[0]).join("").slice(0, 2) : "BDL"}
+                      </AvatarFallback>
                     </Avatar>
                   </div>
                   <div className="flex-1 space-y-4">
@@ -317,7 +331,9 @@ const Index = () => {
                         Message de la Présidente
                       </h2>
                       <p className="text-muted-foreground font-medium">
-                        Elodie ROTH, Présidente du BDL
+                        {presidentProfile?.name
+                          ? `${presidentProfile.name}, Présidente du BDL`
+                          : "Présidente du BDL"}
                       </p>
                     </div>
                     <div

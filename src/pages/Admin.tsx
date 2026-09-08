@@ -411,7 +411,10 @@ const Admin = () => {
       <div className="border-b bg-muted/20 px-4 py-2 flex items-center gap-3">
         <Button variant="outline" size="sm" className="lg:hidden" onClick={() => setMobileOpen(!mobileOpen)}><LayoutDashboard className="h-4 w-4" /></Button>
         <div className="hidden lg:flex items-center gap-2 text-xs text-muted-foreground">
-          <LayoutDashboard className="h-3 w-3" /> Administration <ChevronRight className="h-2 w-2" /> <span className="text-foreground font-semibold">{activeItem?.label}</span>
+          <LayoutDashboard className="h-3 w-3" />
+          <button onClick={() => navigate("/admin/support")} className="hover:text-foreground transition-colors">Administration</button>
+          <ChevronRight className="h-2 w-2" />
+          <span className="text-foreground font-semibold">{activeItem?.label}</span>
         </div>
       </div>
       <div className="flex flex-1 relative overflow-hidden">

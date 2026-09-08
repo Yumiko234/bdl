@@ -168,6 +168,7 @@ const BDLMemberProfile = () => {
                   <img
                     src={profile.photo_url}
                     alt={profile.full_name}
+                    loading="lazy"
                     className="h-40 w-40 rounded-full object-cover ring-4 ring-white shadow-elegant"
                   />
                 ) : (

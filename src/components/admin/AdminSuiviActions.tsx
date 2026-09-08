@@ -623,7 +623,7 @@ export const SuiviActionsManagement = () => {
                   #{i + 1}
                 </span>
                 <Avatar className="h-8 w-8 flex-shrink-0">
-                  {s.member.avatar_url && <img src={s.member.avatar_url} alt={s.member.full_name} className="h-8 w-8 rounded-full object-cover" />}
+                  {s.member.avatar_url && <img src={s.member.avatar_url} alt={s.member.full_name} loading="lazy" className="h-8 w-8 rounded-full object-cover" />}
                   <AvatarFallback className="text-xs bg-primary text-primary-foreground">{getInitials(s.member.full_name)}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
@@ -726,7 +726,7 @@ export const SuiviActionsManagement = () => {
                         return (
                           <div key={member.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/20">
                             <Avatar className="h-7 w-7 flex-shrink-0">
-                              {member.avatar_url && <img src={member.avatar_url} alt={member.full_name} className="h-7 w-7 rounded-full object-cover" />}
+                              {member.avatar_url && <img src={member.avatar_url} alt={member.full_name} loading="lazy" className="h-7 w-7 rounded-full object-cover" />}
                               <AvatarFallback className="text-[10px] bg-primary text-primary-foreground">{getInitials(member.full_name)}</AvatarFallback>
                             </Avatar>
                             <span className="flex-1 min-w-0 text-sm truncate">{member.full_name}</span>
@@ -780,7 +780,7 @@ export const SuiviActionsManagement = () => {
               >
                 <div className="flex items-center gap-4 p-5 hover:bg-muted/20 transition-colors">
                   <Avatar className="h-12 w-12 flex-shrink-0">
-                    {s.member.avatar_url && <img src={s.member.avatar_url} alt={s.member.full_name} className="h-12 w-12 rounded-full object-cover" />}
+                    {s.member.avatar_url && <img src={s.member.avatar_url} alt={s.member.full_name} loading="lazy" className="h-12 w-12 rounded-full object-cover" />}
                     <AvatarFallback className="bg-primary text-primary-foreground font-bold">{getInitials(s.member.full_name)}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">

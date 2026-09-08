@@ -214,7 +214,7 @@ const Intranet = () => {
               <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
                 <div className="h-20 w-20 rounded-full bg-white/20 flex items-center justify-center text-2xl font-bold shadow-elegant ring-4 ring-white/30 flex-shrink-0">
                   {profile?.avatar_url ? (
-                    <img src={profile.avatar_url} alt={profile.full_name} className="h-full w-full rounded-full object-cover" />
+                    <img src={profile.avatar_url} alt={profile.full_name} loading="lazy" className="h-full w-full rounded-full object-cover" />
                   ) : (
                     getInitials(profile?.full_name ?? "?")
                   )}

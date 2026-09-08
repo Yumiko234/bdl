@@ -178,6 +178,7 @@ document.title = `BDL ${yearInfo.year_label} – Bureau des Lycéens`;
                 <img
                   src={member.avatar_url}
                   alt={member.full_name}
+                  loading="lazy"
                   className="w-24 h-24 rounded-full ring-4 ring-background group-hover:scale-110 transition-transform duration-300 object-cover"
                 />
               ) : (

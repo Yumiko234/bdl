@@ -154,13 +154,21 @@ const BDLMemberProfile = () => {
         {/* Hero Section */}
         <section className="py-16 gradient-institutional text-white">
           <div className="container mx-auto px-4">
+            {/* Breadcrumb */}
+            <nav className="text-xs text-white/60 flex items-center gap-1.5 flex-wrap mb-6">
+              <Link to="/" className="hover:text-white transition-colors">Accueil</Link>
+              <span>/</span>
+              <Link to="/bdl" className="hover:text-white transition-colors">Le BDL</Link>
+              <span>/</span>
+              <span className="text-white/90 font-medium">{profile.full_name}</span>
+            </nav>
+            <Link to="/bdl" className="inline-block mb-8">
+              <Button variant="ghost" size="sm" className="text-white/90 hover:text-white hover:bg-white/10 -ml-2">
+                <ChevronLeft className="h-4 w-4 mr-2" />
+                Retour au BDL
+              </Button>
+            </Link>
             <div className="max-w-3xl mx-auto text-center space-y-4">
-              <Link to="/bdl">
-                <Button variant="outline" className="mb-4 border-white text-black hover:bg-white hover:text-primary">
-                  <ChevronLeft className="h-4 w-4 mr-2" />
-                  Retour au BDL
-                </Button>
-              </Link>
 
               {/* Photo de profil */}
               <div className="flex justify-center">
@@ -168,6 +176,7 @@ const BDLMemberProfile = () => {
                   <img
                     src={profile.photo_url}
                     alt={profile.full_name}
+                    loading="lazy"
                     className="h-40 w-40 rounded-full object-cover ring-4 ring-white shadow-elegant"
                   />
                 ) : (

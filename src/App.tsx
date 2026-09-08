@@ -1,107 +1,111 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Analytics } from "@vercel/analytics/react";
+import { Loader2 } from "lucide-react";
 
 import ScrollToTop from "./components/ScrollToTop";
 import ErrorBoundary from "./components/ErrorBoundary";
 
-import Legal from "./pages/legals/Legal";
-import CGU from "./pages/legals/CGU";
-import MentionsLegales from "./pages/legals/Mentionslegales";
-import Confidentialite from "./pages/legals/Confidentialite";
+// Chargement paresseux de chaque page — le bundle initial ne charge que ce qui est nécessaire
+const Index            = lazy(() => import("./pages/Index"));
+const Etablissement    = lazy(() => import("./pages/Etablissement"));
+const BDL              = lazy(() => import("./pages/BDL"));
+const Clubs            = lazy(() => import("./pages/Clubs"));
+const BDLHistory       = lazy(() => import("./pages/BDLHistory"));
+const BDLYearDetail    = lazy(() => import("./pages/BDLYearDetail"));
+const BDLMemberProfile = lazy(() => import("./pages/BDLMemberProfile"));
+const Actualites       = lazy(() => import("./pages/Actualites"));
+const Documents        = lazy(() => import("./pages/Documents"));
+const Events           = lazy(() => import("./pages/Events"));
+const Calendrier       = lazy(() => import("./pages/Calendrier"));
+const JOBDL            = lazy(() => import("./pages/jobdl/JOBDL"));
+const JobdlArticle     = lazy(() => import("./pages/jobdl/[nor]"));
+const Scrutin          = lazy(() => import("./pages/Scrutin"));
+const Sondage          = lazy(() => import("./pages/Sondage"));
+const Intranet         = lazy(() => import("./pages/Intranet"));
+const Auth             = lazy(() => import("./pages/Auth"));
+const Admin            = lazy(() => import("./pages/Admin"));
+const Contact          = lazy(() => import("./pages/Contact"));
+const Support          = lazy(() => import("./pages/Support"));
+const Conference       = lazy(() => import("./pages/Conference"));
+const CertificatVerif  = lazy(() => import("./pages/CertificatVerif"));
+const Confirm          = lazy(() => import("./pages/Confirm"));
+const ResetPassword    = lazy(() => import("./pages/ResetPassword"));
+const Profile          = lazy(() => import("./pages/profile/Profile"));
+const ProfileBDLSuivi  = lazy(() => import("./pages/profile/ProfileBDLSuivi"));
+const NotFound         = lazy(() => import("./pages/NotFound"));
+const Legal            = lazy(() => import("./pages/legals/Legal"));
+const CGU              = lazy(() => import("./pages/legals/CGU"));
+const MentionsLegales  = lazy(() => import("./pages/legals/Mentionslegales"));
+const Confidentialite  = lazy(() => import("./pages/legals/Confidentialite"));
 
-import Index from "./pages/Index";
-import Etablissement from "./pages/Etablissement";
-
-import BDL from "./pages/BDL";
-import Clubs from "./pages/Clubs";
-import BDLHistory from "./pages/BDLHistory";
-import BDLYearDetail from "./pages/BDLYearDetail";
-import BDLMemberProfile from "./pages/BDLMemberProfile";
-
-import Actualites from "./pages/Actualites";
-import Documents from "./pages/Documents";
-import Events from "./pages/Events";
-import Calendrier from "./pages/Calendrier";
-
-
-
-import JOBDL from "./pages/jobdl/JOBDL";
-import JobdlArticle from "./pages/jobdl/[nor]";
-
-import Scrutin from "./pages/Scrutin";
-import NotFound from "./pages/NotFound";
-import Sondage from "./pages/Sondage";
-
-import Intranet from "./pages/Intranet";
-import Auth from "./pages/Auth";
-import Admin from "./pages/Admin";
-
-import Contact from "./pages/Contact";
-import Support from "./pages/Support";
-import Conference from "./pages/Conference";
-import CertificatVerif from "./pages/CertificatVerif";
-
-import Confirm from "./pages/Confirm";
-import ResetPassword from "./pages/ResetPassword";
-import Profile from "src/pages/profile/Profile";
-import ProfileBDLSuivi from "./pages/profile/ProfileBDLSuivi";
+const PageLoader = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+  </div>
+);
 
 const queryClient = new QueryClient();
 
 const App = () => {
+  const location = useLocation();
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
         <ScrollToTop />
-        <ErrorBoundary>
-        <Routes>
-          <Route path="/" element={<Index />} />
+        <ErrorBoundary key={location.pathname}>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/" element={<Index />} />
 
-          <Route path="/legal" element={<Legal />} />
-          <Route path="/legal/cgu" element={<CGU />} />
-          <Route path="/legal/mentions-legales" element={<MentionsLegales />} />
-          <Route path="/legal/confidentialite" element={<Confidentialite />} />
+              <Route path="/legal" element={<Legal />} />
+              <Route path="/legal/cgu" element={<CGU />} />
+              <Route path="/legal/mentions-legales" element={<MentionsLegales />} />
+              <Route path="/legal/confidentialite" element={<Confidentialite />} />
 
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/etablissement" element={<Etablissement />} />
-          <Route path="/bdl" element={<BDL />} />
-          <Route path="/bdl/historique" element={<BDLHistory />} />
-          <Route path="/bdl/historique/:year" element={<BDLYearDetail />} />
-          <Route path="/bdl/:slug" element={<BDLMemberProfile />} />
-          <Route path="/clubs" element={<Clubs />} />
-          <Route path="/actualites" element={<Actualites />} />
-          <Route path="/events" element={<Events />} />
-          <Route path="/calendrier" element={<Calendrier />} />
-          <Route path="/documents" element={<Documents />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/jo" element={<JOBDL />} />
-          <Route path="/jo/:nor" element={<JobdlArticle />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/intranet" element={<Intranet />} />
-          <Route path="/scrutin" element={<Scrutin />} />
-          <Route path="/support" element={<Support />} />
-          <Route path="/certificat-verif" element={<CertificatVerif />} />
-          <Route path="/conference" element={<Conference />} />
-          <Route path="/sondage" element={<Sondage />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/bdl-profile" element={<ProfileBDLSuivi />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/confirm" element={<Confirm />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+              {/* Admin : /admin redirige vers la section par défaut */}
+              <Route path="/admin" element={<Navigate to="/admin/news" replace />} />
+              <Route path="/admin/:section" element={<Admin />} />
+
+              <Route path="/etablissement" element={<Etablissement />} />
+              <Route path="/bdl" element={<BDL />} />
+              <Route path="/bdl/historique" element={<BDLHistory />} />
+              <Route path="/bdl/historique/:year" element={<BDLYearDetail />} />
+              <Route path="/bdl/:slug" element={<BDLMemberProfile />} />
+              <Route path="/clubs" element={<Clubs />} />
+              <Route path="/actualites" element={<Actualites />} />
+              <Route path="/events" element={<Events />} />
+              <Route path="/calendrier" element={<Calendrier />} />
+              <Route path="/documents" element={<Documents />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/jo" element={<JOBDL />} />
+              <Route path="/jo/:nor" element={<JobdlArticle />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/intranet" element={<Intranet />} />
+              <Route path="/scrutin" element={<Scrutin />} />
+              <Route path="/support" element={<Support />} />
+              <Route path="/certificat-verif" element={<CertificatVerif />} />
+              <Route path="/conference" element={<Conference />} />
+              <Route path="/sondage" element={<Sondage />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/bdl-profile" element={<ProfileBDLSuivi />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/confirm" element={<Confirm />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
         </ErrorBoundary>
 
-        {/* Suivi Vercel Analytics */}
         <Analytics />
       </TooltipProvider>
     </QueryClientProvider>
   );
 };
 
-export default App
+export default App;

@@ -165,7 +165,8 @@ document.title = `BDL ${yearInfo.year_label} – Bureau des Lycéens`;
     const baseSlug = generateMemberSlug(member.full_name);
     // Priorité à la fiche spécifique à cette année si elle existe, sinon fiche globale,
     // sinon on retombe sur le slug "de base" comme avant (comportement historique).
-    const linkSlug = profileSlugMap[baseSlug] || baseSlug;
+    const SLUG_OVERRIDES: Record<string, string> = { elodie_roth: "elodie_roth-2026-2027" };
+    const linkSlug = SLUG_OVERRIDES[baseSlug] || profileSlugMap[baseSlug] || baseSlug;
 
     return (
       <Link to={`/bdl/${linkSlug}`} key={member.id}>
@@ -178,6 +179,7 @@ document.title = `BDL ${yearInfo.year_label} – Bureau des Lycéens`;
                 <img
                   src={member.avatar_url}
                   alt={member.full_name}
+                  loading="lazy"
                   className="w-24 h-24 rounded-full ring-4 ring-background group-hover:scale-110 transition-transform duration-300 object-cover"
                 />
               ) : (
@@ -237,13 +239,23 @@ document.title = `BDL ${yearInfo.year_label} – Bureau des Lycéens`;
         <MaintenanceOverlay>
         <section className="py-16 gradient-institutional text-white">
           <div className="container mx-auto px-4">
+            {/* Breadcrumb */}
+            <nav className="text-xs text-white/60 flex items-center gap-1.5 flex-wrap mb-6">
+              <Link to="/" className="hover:text-white transition-colors">Accueil</Link>
+              <span>/</span>
+              <Link to="/bdl" className="hover:text-white transition-colors">Le BDL</Link>
+              <span>/</span>
+              <Link to="/bdl/historique" className="hover:text-white transition-colors">Historique</Link>
+              <span>/</span>
+              <span className="text-white/90 font-medium">{yearData.year_label}</span>
+            </nav>
+            <Link to="/bdl/historique" className="inline-block mb-8">
+              <Button variant="ghost" size="sm" className="text-white/90 hover:text-white hover:bg-white/10 -ml-2">
+                <ChevronLeft className="h-4 w-4 mr-2" />
+                Retour à l'historique
+              </Button>
+            </Link>
             <div className="max-w-3xl mx-auto text-center space-y-4">
-              <Link to="/bdl/historique">
-                <Button variant="outline" className="mb-4 border-white text-black hover:bg-white hover:text-primary">
-                  <ChevronLeft className="h-4 w-4 mr-2" />
-                  Retour à l'historique
-                </Button>
-              </Link>
               <h1 className="text-5xl font-bold">BDL {yearData.year_label}</h1>
               {yearData.is_current && (
                 <Badge className="text-lg py-2 px-4">Année en cours</Badge>

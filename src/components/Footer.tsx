@@ -3,9 +3,12 @@ import { useEffect, useState } from "react";
 import logoBdl from "@/assets/logo-bdl.jpeg";
 import { supabase } from "@/integrations/supabase/client";
 import { safeHtml } from "@/lib/sanitize";
+import { useDarkMode } from "@/hooks/useDarkMode";
+import { Moon, Sun } from "lucide-react";
 
 const Footer = () => {
   const [content, setContent] = useState<Record<string, string>>({});
+  const { dark, toggle } = useDarkMode();
 
   return (
     <footer className="bg-secondary text-secondary-foreground mt-20">
@@ -86,20 +89,28 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="border-t border-border mt-8 pt-8 text-center text-sm text-muted-foreground">
-          <p>
+        <div className="border-t border-border mt-8 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+          <p className="text-center sm:text-left">
             &copy; {new Date().getFullYear()} {content.copyright || 'Bureau des Lycéens - Lycée Saint-André. Tous droits réservés.'}
             <span className="mx-2">—</span>
             Site géré par{" "}
-            <a 
-              href="https://fr.linkedin.com/in/alexandre-lejal" 
-              target="_blank" 
+            <a
+              href="https://fr.linkedin.com/in/alexandre-lejal"
+              target="_blank"
               rel="noopener noreferrer"
               className="text-muted-foreground hover:text-accent transition-colors underline-offset-4 hover:underline"
             >
               Alexandre Lejal
             </a>
           </p>
+          <button
+            onClick={toggle}
+            aria-label={dark ? "Passer en mode clair" : "Passer en mode sombre"}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-border hover:border-accent hover:text-accent transition-colors text-xs"
+          >
+            {dark ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
+            {dark ? "Mode clair" : "Mode sombre"}
+          </button>
         </div>
       </div>
     </footer>

@@ -192,12 +192,11 @@ const Scrutin = () => {
     });
     setOpenDetails(initialOpenDetails);
 
-    for (const scrutin of data || []) {
-      await loadMyVote(scrutin.id);
-      if (scrutin.status === "closed") {
-        await loadVotes(scrutin.id);
-      }
-    }
+    await Promise.all((data || []).map((scrutin) => {
+      const tasks = [loadMyVote(scrutin.id)];
+      if (scrutin.status === "closed") tasks.push(loadVotes(scrutin.id));
+      return Promise.all(tasks);
+    }));
 
     setLoading(false);
   };

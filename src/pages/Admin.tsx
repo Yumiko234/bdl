@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
@@ -121,7 +121,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "support",       label: "Support & Audiences", icon: <Headphones   className="h-4 w-4" />, group: "Assistance" },
   { id: "conference",    label: "Conférence",          icon: <Headphones   className="h-4" />,    group: "Assistance", minRank: 3},
 
-  { id: "president-msg", label: "Message Président",   icon: <MessageSquare className="h-4 w-4" />, group: "Site", minRank: 2 },
+  { id: "president-msg", label: "Message Présidence",   icon: <MessageSquare className="h-4 w-4" />, group: "Site", minRank: 2 },
   { id: "establishment", label: "Établissement",       icon: <Building2    className="h-4 w-4" />, group: "Site", minRank: 3 },
   { id: "contact",       label: "Contact",             icon: <Phone        className="h-4 w-4" />, group: "Site", minRank: 4 },
  
@@ -136,13 +136,28 @@ const NAV_ITEMS: NavItem[] = [
 const Admin = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const { section } = useParams<{ section: string }>();
+  const activeSection = section || "support";
 
-  const [activeSection, setActiveSection] = useState("support");
+  const mainRef = useRef<HTMLElement>(null);
+  const activeBtnRef = useRef<HTMLButtonElement>(null);
+  const navRef = useRef<HTMLElement>(null);
   const [userRoles,     setUserRoles]     = useState<string[]>([]);
   const [primaryRole,   setPrimaryRole]   = useState<RoleKey>("student");
   const [userProfile,   setUserProfile]   = useState<{ full_name: string } | null>(null);
   const [rolesLoading,  setRolesLoading]  = useState(true);
   const [mobileOpen,    setMobileOpen]    = useState(false);
+
+  // Scroll main content to top + sidebar nav to center active item (sans scroller la page)
+  useEffect(() => {
+    mainRef.current?.scrollTo({ top: 0, behavior: "instant" });
+    if (activeBtnRef.current && navRef.current) {
+      const nav = navRef.current;
+      const btn = activeBtnRef.current;
+      const targetTop = btn.offsetTop - nav.clientHeight / 2 + btn.clientHeight / 2;
+      nav.scrollTo({ top: targetTop, behavior: "instant" });
+    }
+  }, [activeSection]);
   
   const [presidentMessage, setPresidentMessage] = useState("");
   const [audienceRequests, setAudienceRequests] = useState<any[]>([]);
@@ -250,7 +265,6 @@ const Admin = () => {
         <div className="flex-1 flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-        <Footer />
       </div>
     );
   }
@@ -335,7 +349,7 @@ const Admin = () => {
       case "support":       return renderSupportSection();
       case "president-msg": return (
         <Card>
-          <CardHeader><CardTitle className="flex items-center gap-2"><MessageSquare className="h-5 w-5" /> Message du Président</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="flex items-center gap-2"><MessageSquare className="h-5 w-5" /> Message de la Présidence</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <RichTextEditor value={presidentMessage} onChange={setPresidentMessage} />
             <Button onClick={handleSaveMessage} disabled={saving}>{saving ? "Enregistrement..." : "Mettre à jour le message"}</Button>
@@ -370,7 +384,7 @@ const Admin = () => {
           </div>
         </div>
       </div>
-      <nav className="flex-1 overflow-y-auto p-3 space-y-4">
+      <nav ref={navRef} className="flex-1 overflow-y-auto p-3 space-y-4">
         {groups.map((group) => (
           <div key={group}>
             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-3 mb-2">{group}</p>
@@ -378,7 +392,8 @@ const Admin = () => {
               {visibleItems.filter((i) => i.group === group).map((item) => (
                 <button
                   key={item.id}
-                  onClick={() => { setActiveSection(item.id); setMobileOpen(false); }}
+                  ref={activeSection === item.id ? activeBtnRef : null}
+                  onClick={() => { navigate("/admin/" + item.id); setMobileOpen(false); }}
                   className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-all ${
                     activeSection === item.id ? "bg-primary text-primary-foreground font-medium shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   }`}
@@ -396,25 +411,30 @@ const Admin = () => {
   );
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="h-screen flex flex-col bg-background overflow-hidden">
       <Navigation />
-      <div className="border-b bg-muted/20 px-4 py-2 flex items-center gap-3">
+      <div className="border-b bg-muted/20 px-4 py-2 flex items-center gap-3 shrink-0">
         <Button variant="outline" size="sm" className="lg:hidden" onClick={() => setMobileOpen(!mobileOpen)}><LayoutDashboard className="h-4 w-4" /></Button>
         <div className="hidden lg:flex items-center gap-2 text-xs text-muted-foreground">
-          <LayoutDashboard className="h-3 w-3" /> Administration <ChevronRight className="h-2 w-2" /> <span className="text-foreground font-semibold">{activeItem?.label}</span>
+          <LayoutDashboard className="h-3 w-3" />
+          <button onClick={() => navigate("/admin/news")} className="hover:text-foreground transition-colors">Administration</button>
+          <ChevronRight className="h-2 w-2" />
+          <span className="text-foreground font-semibold">{activeItem?.label}</span>
         </div>
       </div>
-      <div className="flex flex-1 relative overflow-hidden">
-        <aside className="hidden lg:flex flex-col w-64 border-r bg-card sticky top-0 h-[calc(100vh-112px)]"><SidebarContent /></aside>
+      <div className="flex flex-1 overflow-hidden">
+        <aside className="hidden lg:flex flex-col w-64 border-r bg-card shrink-0"><SidebarContent /></aside>
         {mobileOpen && (
           <div className="lg:hidden fixed inset-0 z-50 flex">
             <div className="fixed inset-0 bg-black/40" onClick={() => setMobileOpen(false)} />
             <aside className="relative w-72 bg-card h-full shadow-xl"><SidebarContent /></aside>
           </div>
         )}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-8">{renderSection()}</main>
+        <main ref={mainRef} className="flex-1 overflow-y-auto p-4 lg:p-8">
+          {renderSection()}
+          <Footer />
+        </main>
       </div>
-      <Footer />
     </div>
   );
 };

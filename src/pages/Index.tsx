@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useSEO } from "@/hooks/useSEO";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -54,12 +55,17 @@ const INSTAGRAM_POSTS: InstagramPost[] = [
   },
 ];
 
+// Une URL de publication embarquable contient /p/, /reel/ ou /tv/.
+// Une simple URL de profil ne l'est pas.
+const isEmbeddablePost = (url: string) => /\/(p|reel|tv)\//.test(url);
+
 const InstagramEmbed = ({ post }: { post: InstagramPost }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [loaded, setLoaded] = useState(false);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState(!isEmbeddablePost(post.url));
 
   useEffect(() => {
+    if (!isEmbeddablePost(post.url)) return;
     let cancelled = false;
 
     const processEmbeds = () => {
@@ -98,8 +104,8 @@ const InstagramEmbed = ({ post }: { post: InstagramPost }) => {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-8 text-center rounded-xl bg-muted/30 border border-dashed min-h-[200px]">
-        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 flex items-center justify-center">
-          <Instagram className="h-6 w-6 text-white" />
+        <div className="w-12 h-12 rounded-full bg-pink-100 flex items-center justify-center">
+          <Instagram className="h-6 w-6 text-pink-500" />
         </div>
         <p className="text-sm text-muted-foreground">Aperçu indisponible</p>
         <a
@@ -178,7 +184,13 @@ const InstagramEmbed = ({ post }: { post: InstagramPost }) => {
 // ─── Page principale ──────────────────────────────────────────────────────────
 
 const Index = () => {
+  useSEO({
+    title: "Bureau des Lycéens – Lycée Saint-André",
+    description: "Site officiel du Bureau des Lycéens du Lycée Saint-André : actualités, événements, documents et espace intranet.",
+    url: "/",
+  });
   const [presidentMessage, setPresidentMessage] = useState("");
+  const [presidentProfile, setPresidentProfile] = useState<{ name: string; avatar: string | null } | null>(null);
   const [latestNews, setLatestNews] = useState<any[]>([]);
   const [latestEvents, setLatestEvents] = useState<any[]>([]);
   
@@ -189,6 +201,7 @@ const Index = () => {
   useEffect(() => {
     document.title = "Bureau des Lycéens – Lycée Saint-André";
     loadPresidentMessage();
+    loadPresidentProfile();
     loadLatestContent();
   }, []);
 
@@ -199,6 +212,20 @@ const Index = () => {
       .maybeSingle();
 
     if (data) setPresidentMessage(data.content);
+  };
+
+  const loadPresidentProfile = async () => {
+    const { data } = await supabase
+      .from("user_roles")
+      .select("user_id, profiles(full_name, avatar_url)")
+      .in("role", ["president", "presidente"])
+      .limit(1)
+      .maybeSingle();
+
+    if (data?.profiles) {
+      const p = data.profiles as any;
+      setPresidentProfile({ name: p.full_name, avatar: p.avatar_url });
+    }
   };
 
   const loadLatestContent = async () => {
@@ -296,14 +323,12 @@ const Index = () => {
                 <div className="flex flex-col md:flex-row gap-8 items-start">
                   <div className="flex-shrink-0">
                     <Avatar className="w-24 h-24 shadow-elegant">
-  <AvatarImage
-    src="https://ppmlhjcwdyaarbqpngla.supabase.co/storage/v1/object/public/avatars/avatars/91535532-1c9b-4323-a88a-dc874fff777d-1783874240713.jpeg"
-    alt="Elodie ROTH"
-    className="object-cover"
-  />
-  <AvatarFallback className="bg-gradient-institutional text-gold text-3xl font-bold">
-    ER
-  </AvatarFallback>
+                      {presidentProfile?.avatar && (
+                        <AvatarImage src={presidentProfile.avatar} alt={presidentProfile.name} className="object-cover" />
+                      )}
+                      <AvatarFallback className="bg-gradient-institutional text-gold text-3xl font-bold">
+                        {presidentProfile?.name ? presidentProfile.name.split(" ").map(n => n[0]).join("").slice(0, 2) : "BDL"}
+                      </AvatarFallback>
                     </Avatar>
                   </div>
                   <div className="flex-1 space-y-4">
@@ -312,7 +337,9 @@ const Index = () => {
                         Message de la Présidente
                       </h2>
                       <p className="text-muted-foreground font-medium">
-                        Elodie ROTH, Présidentes du BDL
+                        {presidentProfile?.name
+                          ? `${presidentProfile.name}, Présidente du BDL`
+                          : "Présidente du BDL"}
                       </p>
                     </div>
                     <div
@@ -439,7 +466,7 @@ const Index = () => {
         </section>
 
         {/* ── Instagram Section ─────────────────────────────────────────────── */}
-        <section className="py-16 bg-gradient-to-b from-muted/30 to-background">
+        <section className="py-16 bg-muted/30">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto space-y-8">
 
@@ -447,8 +474,8 @@ const Index = () => {
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="space-y-1">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 flex items-center justify-center shadow-sm flex-shrink-0">
-                      <Instagram className="h-5 w-5 text-white" />
+                    <div className="w-9 h-9 rounded-xl bg-pink-100 flex items-center justify-center shadow-sm flex-shrink-0">
+                      <Instagram className="h-5 w-5 text-pink-500" />
                     </div>
                     <h2 className="text-3xl font-bold">Sur Instagram</h2>
                   </div>
@@ -473,11 +500,9 @@ const Index = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="gap-2 border-pink-200 hover:border-pink-400 hover:bg-pink-50 transition-colors"
+                    className="gap-2 border-pink-200 hover:border-pink-300 hover:bg-pink-50/50 transition-colors text-pink-600"
                   >
-                    <div className="w-4 h-4 rounded bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 flex items-center justify-center">
-                      <Instagram className="h-2.5 w-2.5 text-white" />
-                    </div>
+                    <Instagram className="h-3.5 w-3.5" />
                     Voir le profil
                     <ExternalLink className="h-3 w-3 text-muted-foreground" />
                   </Button>
@@ -485,8 +510,8 @@ const Index = () => {
               </div>
 
               {/* Info sur les bloqueurs */}
-              <div className="flex items-start gap-2.5 p-3 rounded-lg bg-blue-50 border border-blue-100 text-xs text-blue-700">
-                <Instagram className="h-4 w-4 flex-shrink-0 mt-0.5 text-blue-500" />
+              <div className="flex items-start gap-2.5 p-3 rounded-lg bg-muted/50 border border-border text-xs text-muted-foreground">
+                <Instagram className="h-4 w-4 flex-shrink-0 mt-0.5 text-pink-400" />
                 <p>
                   Les publications sont chargées directement depuis Instagram. Si elles n'apparaissent pas,
                   vérifiez que votre bloqueur de publicités est désactivé ou{" "}
@@ -515,10 +540,7 @@ const Index = () => {
                             Post épinglé
                           </Badge>
                         ) : (
-                          <Badge
-                            variant="secondary"
-                            className="gap-1.5 border border-pink-100 bg-pink-50 text-pink-700"
-                          >
+                          <Badge className="gap-1.5 border border-pink-100 bg-pink-50 text-pink-700 font-medium">
                             <Instagram className="h-3 w-3" />
                             Dernier post
                           </Badge>

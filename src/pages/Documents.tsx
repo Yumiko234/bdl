@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
+import { useSEO } from "@/hooks/useSEO";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { FileText, Download } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { FileText, Download, Search, Eye, X, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
@@ -55,7 +58,16 @@ const faq = [
 ];
 
 const Documents = () => {
+  useSEO({
+    title: "Documents – Bureau des Lycéens",
+    description: "Règlements, comptes-rendus, formulaires et Journal Officiel du Bureau des Lycéens.",
+    url: "/documents",
+  });
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [search, setSearch] = useState("");
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewTitle, setPreviewTitle] = useState("");
+  const [previewLoading, setPreviewLoading] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([
     "reglement",
     "compte-rendu",
@@ -90,9 +102,12 @@ const Documents = () => {
     );
   };
 
-  const filteredDocuments = documents.filter((doc) =>
-    selectedCategories.includes(doc.category)
-  );
+  const filteredDocuments = documents.filter((doc) => {
+    const matchesCat = selectedCategories.includes(doc.category);
+    const q = search.trim().toLowerCase();
+    const matchesSearch = !q || doc.title.toLowerCase().includes(q) || (doc.description || "").toLowerCase().includes(q);
+    return matchesCat && matchesSearch;
+  });
 
   // Téléchargement direct
   const handleDownload = async (url: string, filename: string) => {
@@ -136,6 +151,18 @@ const Documents = () => {
             <div className="max-w-4xl mx-auto space-y-8">
               <div>
                 <h2 className="text-4xl font-bold mb-6">Documents Officiels</h2>
+
+                {/* Filtres */}
+                {/* Recherche */}
+                <div className="relative mb-4">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                  <Input
+                    className="pl-9"
+                    placeholder="Rechercher un document..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                </div>
 
                 {/* Filtres */}
                 <div className="flex flex-wrap gap-6 mb-8">
@@ -191,16 +218,26 @@ const Documents = () => {
                                   </div>
                                 </div>
                                 {doc.file_url && (
-                                  <Button
-                                    variant="outline"
-                                    className="flex items-center gap-2"
-                                    onClick={() =>
-                                      handleDownload(doc.file_url!, doc.title)
-                                    }
-                                  >
-                                    <Download className="h-4 w-4" />
-                                    Télécharger
-                                  </Button>
+                                  <div className="flex gap-2 flex-shrink-0">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="gap-1.5"
+                                      onClick={() => { setPreviewUrl(doc.file_url!); setPreviewTitle(doc.title); setPreviewLoading(true); }}
+                                    >
+                                      <Eye className="h-4 w-4" />
+                                      Aperçu
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="gap-1.5"
+                                      onClick={() => handleDownload(doc.file_url!, doc.title)}
+                                    >
+                                      <Download className="h-4 w-4" />
+                                      Télécharger
+                                    </Button>
+                                  </div>
                                 )}
                               </div>
                             </div>
@@ -241,6 +278,33 @@ const Documents = () => {
       </main>
 
       <Footer />
+
+      {/* PDF Preview Dialog */}
+      <Dialog open={!!previewUrl} onOpenChange={(open) => { if (!open) { setPreviewUrl(null); setPreviewLoading(false); } }}>
+        <DialogContent className="max-w-4xl w-full h-[85vh] flex flex-col p-0 gap-0">
+          <DialogHeader className="px-6 py-4 border-b shrink-0">
+            <DialogTitle className="truncate pr-8">{previewTitle}</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 min-h-0 relative">
+            {previewLoading && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background z-10">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-sm text-muted-foreground">Chargement de l'aperçu…</p>
+                <p className="text-xs text-muted-foreground">Le chargement peut prendre quelques secondes.</p>
+              </div>
+            )}
+            {previewUrl && (
+              <iframe
+                src={`https://docs.google.com/viewer?url=${encodeURIComponent(previewUrl)}&embedded=true`}
+                className="w-full h-full border-0"
+                title={previewTitle}
+                sandbox="allow-scripts allow-same-origin"
+                onLoad={() => setPreviewLoading(false)}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

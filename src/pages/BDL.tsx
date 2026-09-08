@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSEO } from "@/hooks/useSEO";
 import { Link } from "react-router-dom"; // Modification Étape 3.C
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -19,9 +20,16 @@ interface Member {
 }
 
 const BDL = () => {
+  useSEO({
+    title: "Le BDL – Bureau des Lycéens",
+    description: "Découvrez le Bureau des Lycéens du Lycée Saint-André : mission, équipe exécutive et membres.",
+    url: "/bdl",
+  });
   const [executiveMembers, setExecutiveMembers] = useState<Member[]>([]);
   const [regularMembers, setRegularMembers] = useState<Member[]>([]);
   const [content, setContent] = useState<Record<string, string>>({});
+  const [profileSlugMap, setProfileSlugMap] = useState<Record<string, string>>({});
+  const SLUG_OVERRIDES: Record<string, string> = { elodie_roth: "elodie_roth-2026-2027" };
 
   useEffect(() => {
     loadMembers();
@@ -70,6 +78,21 @@ const BDL = () => {
 
     setExecutiveMembers(mapped.filter((m: any) => m.is_executive));
     setRegularMembers(mapped.filter((m: any) => !m.is_executive));
+
+    // Résolution des slugs de profil publiés
+    const baseSlugs = Array.from(new Set(mapped.map((m: any) => generateMemberSlugStatic(m.full_name))));
+    if (baseSlugs.length > 0) {
+      const { data: profiles } = await supabase
+        .from("bdl_member_profiles")
+        .select("slug, person_slug, year_id")
+        .in("person_slug", baseSlugs)
+        .eq("is_published", true);
+
+      const map: Record<string, string> = {};
+      (profiles || []).filter((p: any) => p.year_id === null).forEach((p: any) => { map[p.person_slug] = p.slug; });
+      (profiles || []).filter((p: any) => p.year_id !== null).forEach((p: any) => { map[p.person_slug] = p.slug; });
+      setProfileSlugMap(map);
+    }
   };
 
   const getRoleLabel = (role: string): string => {
@@ -100,7 +123,7 @@ const BDL = () => {
 
   const getPrimaryRole = (roles: string[]): string => {
     const priority = [
-      'president', 'president',
+      'president', 'presidente',
       'vice_president', 'vice_presidente',
       'secretary_general', 'secretary_general',
       'communication_manager', 'communication_manager2',
@@ -111,8 +134,7 @@ const BDL = () => {
     return roles[0] || 'bdl_member';
   };
 
-  // Fonction utilitaire ajoutée (Étape 3.C)
-  const generateMemberSlug = (fullName: string): string => {
+  const generateMemberSlugStatic = (fullName: string): string => {
     return fullName
       .toLowerCase()
       .normalize("NFD")
@@ -125,10 +147,11 @@ const BDL = () => {
   const renderMemberCard = (member: Member) => {
     const primaryRole = getPrimaryRole(member.roles);
     const gradient = getRoleGradient(member.roles);
-    const slug = generateMemberSlug(member.full_name); // Ajout (Étape 3.C)
+    const baseSlug = generateMemberSlugStatic(member.full_name);
+    const slug = SLUG_OVERRIDES[baseSlug] || profileSlugMap[baseSlug] || baseSlug;
 
     return (
-      <Link to={`/bdl/${slug}`} key={member.id}> {/* Modification (Étape 3.C) */}
+      <Link to={`/bdl/${slug}`} key={member.id}>
         <Card 
           className="group hover:shadow-elegant transition-all duration-300 hover:-translate-y-2 cursor-pointer"
         >

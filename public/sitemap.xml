@@ -1,53 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-  <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://bdl-saintandre.fr/</loc><changefreq>monthly</changefreq></url>
-
-<url><loc>https://bdl-saintandre.fr/legal/</loc><changefreq>monthly</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/legal/cgu</loc><changefreq>weekly</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/legal/confidentialite</loc><changefreq>weekly</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/legal/mentions-legales</loc><changefreq>weekly</changefreq></url>
-
-<url><loc>https://bdl-saintandre.fr/actualites</loc><changefreq>daily</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/admin</loc><changefreq>monthly</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/auth</loc><changefreq>monthly</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/bdl</loc><changefreq>daily</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/bdl/historique</loc><changefreq>daily</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/bdl/historique/2025-2026</loc><changefreq>daily</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/clubs</loc><changefreq>monthly</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/contact</loc><changefreq>monthly</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/documents</loc><changefreq>daily</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/events</loc><changefreq>daily</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/calendrier</loc><changefreq>daily</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/scrutins</loc><changefreq>daily</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/sondages</loc><changefreq>daily</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/intranet</loc><changefreq>monthly</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/profile</loc><changefreq>daily</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/conference</loc><changefreq>daily</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/certificat-verif</loc><changefreq>daily</changefreq></url>
-
-<url><loc>https://bdl-saintandre.fr/jo/</loc><changefreq>daily</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/jo/BDL25DE0001A</loc><changefreq>daily</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/jo/PBDL25DC0001A</loc><changefreq>daily</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/jo/BDL25DE0002B</loc><changefreq>daily</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/jo/BDL25DE0002A</loc><changefreq>daily</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/jo/PBDL25AR0001A</loc><changefreq>daily</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/jo/PBDL25CM0001A</loc><changefreq>daily</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/jo/PBDL25DC0002A</loc><changefreq>daily</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/jo/RCBDL25DC0003B</loc><changefreq>daily</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/jo/RI</loc><changefreq>daily</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/jo/PBDL25DC004A</loc><changefreq>daily</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/jo/PBDL25PV002A</loc><changefreq>daily</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/jo/PBDL25AR0002A</loc><changefreq>daily</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/jo/PBDL25CM0002A</loc><changefreq>daily</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/jo/PBDL26AR0001A</loc><changefreq>daily</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/jo/RCBDL26CM0001A</loc><changefreq>daily</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/jo/PBDL26DC0001A</loc><changefreq>daily</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/jo/BDL26PV0001A</loc><changefreq>daily</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/jo/BDL26CR0001A</loc><changefreq>daily</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/jo/PBDL26DC0002A</loc><changefreq>daily</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/jo/PBDL26DC0003A</loc><changefreq>daily</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/jo/BDL26DE0001A</loc><changefreq>daily</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/jo/BDL26DE0002A</loc><changefreq>daily</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/jo/BDL26CR0002A</loc><changefreq>daily</changefreq></url>
-<url><loc>https://bdl-saintandre.fr/jo/PBDL26AR0002A</loc><changefreq>daily</changefreq></url>
-  </urlset>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://bdl-saintandre.fr/</loc><priority>1.0</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://bdl-saintandre.fr/bdl</loc><priority>0.9</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://bdl-saintandre.fr/actualites</loc><priority>0.9</priority><changefreq>daily</changefreq></url>
+  <url><loc>https://bdl-saintandre.fr/events</loc><priority>0.8</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://bdl-saintandre.fr/documents</loc><priority>0.7</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://bdl-saintandre.fr/etablissement</loc><priority>0.7</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://bdl-saintandre.fr/contact</loc><priority>0.7</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://bdl-saintandre.fr/scrutin</loc><priority>0.6</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://bdl-saintandre.fr/sondage</loc><priority>0.6</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://bdl-saintandre.fr/jo</loc><priority>0.6</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://bdl-saintandre.fr/bdl/historique</loc><priority>0.6</priority><changefreq>monthly</changefreq></url>
+  <url><loc>https://bdl-saintandre.fr/legal/cgu</loc><priority>0.3</priority><changefreq>yearly</changefreq></url>
+  <url><loc>https://bdl-saintandre.fr/legal/mentions-legales</loc><priority>0.3</priority><changefreq>yearly</changefreq></url>
+  <url><loc>https://bdl-saintandre.fr/legal/confidentialite</loc><priority>0.3</priority><changefreq>yearly</changefreq></url>
+</urlset>

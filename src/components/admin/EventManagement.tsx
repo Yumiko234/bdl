@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +30,7 @@ interface EventManagementProps {
 }
 
 export const EventManagement = ({ isPresident }: EventManagementProps) => {
+  const formRef = useRef<HTMLDivElement>(null);
   const [events, setEvents] = useState<Event[]>([]);
   const [editingEvent, setEditingEvent] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -137,6 +138,7 @@ export const EventManagement = ({ isPresident }: EventManagementProps) => {
       start_time: event.start_time || "",
       end_time: event.end_time || ""
     });
+    setTimeout(() => formRef.current?.scrollIntoView({ behavior: "instant", block: "start" }), 0);
   };
 
   const handleDelete = async (id: string) => {
@@ -190,7 +192,7 @@ export const EventManagement = ({ isPresident }: EventManagementProps) => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="border rounded-lg p-6 space-y-4 bg-muted/30">
+        <div ref={formRef} className="border rounded-lg p-6 space-y-4 bg-muted/30">
           <h3 className="font-semibold">
             {editingEvent ? "Modifier l'événement" : "Nouvel événement"}
           </h3>

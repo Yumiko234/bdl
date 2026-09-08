@@ -155,7 +155,7 @@ const Admin = () => {
       const nav = navRef.current;
       const btn = activeBtnRef.current;
       const targetTop = btn.offsetTop - nav.clientHeight / 2 + btn.clientHeight / 2;
-      nav.scrollTo({ top: targetTop, behavior: "smooth" });
+      nav.scrollTo({ top: targetTop, behavior: "instant" });
     }
   }, [activeSection]);
   
@@ -412,9 +412,9 @@ const Admin = () => {
   );
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="h-screen flex flex-col bg-background overflow-hidden">
       <Navigation />
-      <div className="border-b bg-muted/20 px-4 py-2 flex items-center gap-3">
+      <div className="border-b bg-muted/20 px-4 py-2 flex items-center gap-3 shrink-0">
         <Button variant="outline" size="sm" className="lg:hidden" onClick={() => setMobileOpen(!mobileOpen)}><LayoutDashboard className="h-4 w-4" /></Button>
         <div className="hidden lg:flex items-center gap-2 text-xs text-muted-foreground">
           <LayoutDashboard className="h-3 w-3" />
@@ -423,17 +423,19 @@ const Admin = () => {
           <span className="text-foreground font-semibold">{activeItem?.label}</span>
         </div>
       </div>
-      <div className="flex flex-1 relative overflow-hidden">
-        <aside className="hidden lg:flex flex-col w-64 border-r bg-card sticky top-0 h-[calc(100vh-112px)]"><SidebarContent /></aside>
+      <div className="flex flex-1 overflow-hidden">
+        <aside className="hidden lg:flex flex-col w-64 border-r bg-card shrink-0"><SidebarContent /></aside>
         {mobileOpen && (
           <div className="lg:hidden fixed inset-0 z-50 flex">
             <div className="fixed inset-0 bg-black/40" onClick={() => setMobileOpen(false)} />
             <aside className="relative w-72 bg-card h-full shadow-xl"><SidebarContent /></aside>
           </div>
         )}
-        <main ref={mainRef} className="flex-1 overflow-y-auto p-4 lg:p-8">{renderSection()}</main>
+        <main ref={mainRef} className="flex-1 overflow-y-auto p-4 lg:p-8">
+          {renderSection()}
+          <Footer />
+        </main>
       </div>
-      <Footer />
     </div>
   );
 };

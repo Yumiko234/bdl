@@ -114,15 +114,20 @@ const Contact = () => {
 
         {/* Banner support pour les connectés */}
         {user && (
-          <div className="bg-primary/5 border-y border-primary/15 py-3">
+          <div className="bg-accent/15 border-y-2 border-accent/40 py-4">
             <div className="container mx-auto px-4">
-              <div className="flex items-center justify-center gap-3 text-sm flex-wrap">
-                <div className="flex items-center gap-2">
-                  <Lightbulb className="h-4 w-4 text-primary flex-shrink-0" />
-                  <span>Vous avez un compte — utilisez le support pour un meilleur suivi de vos demandes.</span>
+              <div className="flex items-center justify-between gap-4 flex-wrap max-w-4xl mx-auto">
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-full bg-accent/20 flex items-center justify-center shrink-0">
+                    <Lightbulb className="h-5 w-5 text-accent-foreground" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm">Vous avez un compte BDL</p>
+                    <p className="text-xs text-muted-foreground">Passez par le support pour un meilleur suivi de votre demande.</p>
+                  </div>
                 </div>
-                <Button size="sm" variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground h-7 text-xs" onClick={() => navigate("/support")}>
-                  Accéder au support
+                <Button className="shrink-0" onClick={() => navigate("/support")}>
+                  Aller sur le support →
                 </Button>
               </div>
             </div>

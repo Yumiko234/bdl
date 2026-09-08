@@ -6,8 +6,10 @@ export function useDarkMode() {
       const stored = localStorage.getItem("theme");
       if (stored === "dark") return true;
       if (stored === "light") return false;
-    } catch {}
-    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+      return window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false;
+    } catch {
+      return false;
+    }
   });
 
   useEffect(() => {

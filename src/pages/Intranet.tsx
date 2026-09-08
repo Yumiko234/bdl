@@ -292,7 +292,7 @@ const Intranet = () => {
                     Administration
                   </h2>
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <Link to="/admin">
                     <div className="group relative overflow-hidden rounded-2xl border-2 border-primary/20 bg-primary/5 hover:border-primary/40 hover:shadow-elegant transition-all duration-300 cursor-pointer">
                       <div className="p-5 flex items-center gap-4">

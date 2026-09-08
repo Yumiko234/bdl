@@ -190,6 +190,7 @@ export const ProfilePhotoUpload = ({
 
         setAvatarUrl(publicUrl);
         onPhotoUpdate?.(publicUrl);
+        window.dispatchEvent(new CustomEvent("avatar-updated", { detail: { url: publicUrl } }));
         toast.success("Photo mise à jour ✓");
         setOpen(false);
       } catch (err) {

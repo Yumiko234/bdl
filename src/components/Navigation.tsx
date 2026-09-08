@@ -26,6 +26,15 @@ const Navigation = () => {
     });
   }, [user]);
 
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const url = (e as CustomEvent<{ url: string }>).detail?.url;
+      if (url) setNavProfile(prev => prev ? { ...prev, avatar_url: url } : prev);
+    };
+    window.addEventListener("avatar-updated", handler);
+    return () => window.removeEventListener("avatar-updated", handler);
+  }, []);
+
   const getInitials = (name: string) =>
     name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
 
@@ -118,21 +127,27 @@ const Navigation = () => {
             </Button>
           </div>
 
-          {/* Menu mobile */}
-          {isMenuOpen && (
-            <div className="lg:hidden py-4 space-y-2 border-t">
-              {navItems.map((item) => (
-                <Link key={item.path} to={item.path} onClick={() => setIsMenuOpen(false)}>
-                  <Button variant={location.pathname === item.path ? "default" : "ghost"} className="w-full justify-start">
-                    {item.label}
-                  </Button>
-                </Link>
-              ))}
+        </div>
+      </nav>
+      <GlobalBanner />
 
+      {/* Menu mobile — overlay plein écran */}
+      {isMenuOpen && (
+        <div className="lg:hidden fixed inset-0 top-20 z-40 bg-background overflow-y-auto border-t">
+          <div className="px-4 py-4 space-y-1">
+            {navItems.map((item) => (
+              <Link key={item.path} to={item.path} onClick={() => setIsMenuOpen(false)}>
+                <Button variant={location.pathname === item.path ? "default" : "ghost"} className="w-full justify-start">
+                  {item.label}
+                </Button>
+              </Link>
+            ))}
+
+            <div className="pt-3 mt-3 border-t space-y-1">
               {user ? (
                 <>
-                  <div className="flex items-center gap-3 px-3 py-2 border rounded-lg bg-muted/30">
-                    <Avatar className="h-8 w-8">
+                  <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-muted/40 mb-2">
+                    <Avatar className="h-9 w-9">
                       <AvatarImage src={navProfile?.avatar_url ?? undefined} />
                       <AvatarFallback className="gradient-institutional text-white text-xs font-bold">
                         {navProfile ? getInitials(navProfile.full_name) : "?"}
@@ -171,10 +186,9 @@ const Navigation = () => {
                 </Link>
               )}
             </div>
-          )}
+          </div>
         </div>
-      </nav>
-      <GlobalBanner />
+      )}
     </header>
   );
 };

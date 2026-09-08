@@ -412,7 +412,7 @@ const Admin = () => {
         <Button variant="outline" size="sm" className="lg:hidden" onClick={() => setMobileOpen(!mobileOpen)}><LayoutDashboard className="h-4 w-4" /></Button>
         <div className="hidden lg:flex items-center gap-2 text-xs text-muted-foreground">
           <LayoutDashboard className="h-3 w-3" />
-          <button onClick={() => navigate("/admin/support")} className="hover:text-foreground transition-colors">Administration</button>
+          <button onClick={() => navigate("/admin/news")} className="hover:text-foreground transition-colors">Administration</button>
           <ChevronRight className="h-2 w-2" />
           <span className="text-foreground font-semibold">{activeItem?.label}</span>
         </div>

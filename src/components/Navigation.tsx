@@ -83,10 +83,10 @@ const Navigation = () => {
     <header className="sticky top-0 z-50 w-full">
       <nav className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b border-border">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-20 relative">
+          <div className="flex items-center justify-between h-20">
 
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-3">
+            <Link to="/" className="flex items-center gap-3 shrink-0">
               <img src={logoBdl} alt="Logo BDL" className="h-14 w-14 object-contain rounded-full" />
               <div className="hidden md:block">
                 <div className="text-lg font-semibold text-foreground">Bureau des Lycéens</div>
@@ -94,8 +94,8 @@ const Navigation = () => {
               </div>
             </Link>
 
-            {/* Nav links — centrés */}
-            <div className="hidden lg:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
+            {/* Nav links + Auth groupés à droite */}
+            <div className="hidden lg:flex items-center gap-1">
               {navItems.map((item) => (
                 <Link key={item.path} to={item.path}>
                   <Button variant={location.pathname === item.path ? "default" : "ghost"} className="font-medium">
@@ -103,10 +103,7 @@ const Navigation = () => {
                   </Button>
                 </Link>
               ))}
-            </div>
-
-            {/* Auth — à droite */}
-            <div className="hidden lg:flex items-center">
+              <div className="ml-2">
               {user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -161,6 +158,7 @@ const Navigation = () => {
                   </Button>
                 </Link>
               )}
+              </div>
             </div>
 
             {/* Bouton menu mobile */}

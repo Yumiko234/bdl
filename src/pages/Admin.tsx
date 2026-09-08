@@ -121,7 +121,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "support",       label: "Support & Audiences", icon: <Headphones   className="h-4 w-4" />, group: "Assistance" },
   { id: "conference",    label: "Conférence",          icon: <Headphones   className="h-4" />,    group: "Assistance", minRank: 3},
 
-  { id: "president-msg", label: "Message Président",   icon: <MessageSquare className="h-4 w-4" />, group: "Site", minRank: 2 },
+  { id: "president-msg", label: "Message Présidence",   icon: <MessageSquare className="h-4 w-4" />, group: "Site", minRank: 2 },
   { id: "establishment", label: "Établissement",       icon: <Building2    className="h-4 w-4" />, group: "Site", minRank: 3 },
   { id: "contact",       label: "Contact",             icon: <Phone        className="h-4 w-4" />, group: "Site", minRank: 4 },
  
@@ -344,7 +344,7 @@ const Admin = () => {
       case "support":       return renderSupportSection();
       case "president-msg": return (
         <Card>
-          <CardHeader><CardTitle className="flex items-center gap-2"><MessageSquare className="h-5 w-5" /> Message du Président</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="flex items-center gap-2"><MessageSquare className="h-5 w-5" /> Message de la Présidence</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <RichTextEditor value={presidentMessage} onChange={setPresidentMessage} />
             <Button onClick={handleSaveMessage} disabled={saving}>{saving ? "Enregistrement..." : "Mettre à jour le message"}</Button>

@@ -100,7 +100,7 @@ const BDL = () => {
 
   const getPrimaryRole = (roles: string[]): string => {
     const priority = [
-      'president', 'president',
+      'president', 'presidente',
       'vice_president', 'vice_presidente',
       'secretary_general', 'secretary_general',
       'communication_manager', 'communication_manager2',

@@ -6,6 +6,7 @@ interface Props {
 
 interface State {
   hasError: boolean;
+  errorMessage?: string;
 }
 
 /**
@@ -15,8 +16,8 @@ interface State {
 class ErrorBoundary extends Component<Props, State> {
   state: State = { hasError: false };
 
-  static getDerivedStateFromError(): State {
-    return { hasError: true };
+  static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, errorMessage: error?.message };
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
@@ -34,6 +35,11 @@ class ErrorBoundary extends Component<Props, State> {
             La page n'a pas pu s'afficher correctement. Réessayez ou revenez à
             l'accueil.
           </p>
+          {this.state.errorMessage && (
+            <p className="text-xs text-destructive bg-destructive/10 rounded p-2 font-mono text-left break-all">
+              {this.state.errorMessage}
+            </p>
+          )}
           <div className="flex gap-2 justify-center">
             <button
               onClick={() => window.location.reload()}

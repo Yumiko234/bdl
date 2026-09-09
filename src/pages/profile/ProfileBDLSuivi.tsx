@@ -201,7 +201,7 @@ const ProfileBDLSuivi = () => {
               <Button
                 variant="outline"
                 size="sm"
-                className="border-white/40 text-black hover:bg-white/10 gap-1"
+                className="border-white/40 bg-white text-black hover:bg-white/90 gap-1"
                 onClick={() => navigate("/intranet")}
               >
                 <ArrowLeft className="h-4 w-4" />

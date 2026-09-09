@@ -392,7 +392,7 @@ const Admin = () => {
           </div>
         </div>
       </div>
-      <nav ref={navRef} className="flex-1 overflow-y-auto p-3 space-y-4">
+      <nav ref={navRef} className="flex-1 min-h-0 overflow-y-auto p-3 space-y-4">
         {groups.map((group) => (
           <div key={group}>
             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-3 mb-2">{group}</p>

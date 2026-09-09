@@ -150,9 +150,18 @@ const Admin = () => {
 
   // Scroll main content to top + sidebar nav to center active item (sans scroller la page)
   useEffect(() => {
-    requestAnimationFrame(() => {
-      activeBtnRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
-    });
+    setTimeout(() => {
+      const btn = activeBtnRef.current;
+      const nav = navRef.current;
+      if (!btn || !nav) return;
+      let offsetTop = 0;
+      let el: HTMLElement | null = btn;
+      while (el && el !== nav) {
+        offsetTop += el.offsetTop;
+        el = el.offsetParent as HTMLElement | null;
+      }
+      nav.scrollTop = Math.max(0, offsetTop - nav.clientHeight / 2 + btn.offsetHeight / 2);
+    }, 50);
   }, [activeSection]);
   
   const [presidentMessage, setPresidentMessage] = useState("");

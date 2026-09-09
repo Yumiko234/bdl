@@ -427,11 +427,11 @@ const Admin = () => {
         </div>
       </div>
       <div className="flex flex-1 overflow-hidden">
-        <aside className="hidden lg:flex flex-col w-64 border-r bg-card shrink-0"><SidebarContent /></aside>
+        <aside className="hidden lg:flex flex-col w-64 border-r bg-card shrink-0">{SidebarContent()}</aside>
         {mobileOpen && (
           <div className="lg:hidden fixed inset-0 z-50 flex">
             <div className="fixed inset-0 bg-black/40" onClick={() => setMobileOpen(false)} />
-            <aside className="relative w-72 bg-card h-full shadow-xl"><SidebarContent /></aside>
+            <aside className="relative w-72 bg-card h-full shadow-xl">{SidebarContent()}</aside>
           </div>
         )}
         <main ref={mainRef} className="flex-1 overflow-y-auto p-4 lg:p-8">

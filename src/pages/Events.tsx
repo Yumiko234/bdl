@@ -150,6 +150,13 @@ export default function Events() {
     loadEvents();
   }, []);
 
+  useEffect(() => {
+    if (!loading && window.location.hash) {
+      const el = document.getElementById(window.location.hash.slice(1));
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [loading]);
+
   const loadEvents = async () => {
     try {
       const { data, error } = await supabase

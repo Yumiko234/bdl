@@ -150,7 +150,6 @@ const Admin = () => {
 
   // Scroll main content to top + sidebar nav to center active item (sans scroller la page)
   useEffect(() => {
-    mainRef.current?.scrollTo({ top: 0, behavior: "instant" });
     // Defer to ensure ref is attached after render
     requestAnimationFrame(() => {
       if (activeBtnRef.current && navRef.current) {
@@ -435,8 +434,10 @@ const Admin = () => {
           </div>
         )}
         <main ref={mainRef} className="flex-1 overflow-y-auto p-4 lg:p-8">
-          {renderSection()}
-          <Footer />
+          <div key={activeSection}>
+            {renderSection()}
+            <Footer />
+          </div>
         </main>
       </div>
     </div>

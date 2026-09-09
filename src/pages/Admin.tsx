@@ -150,15 +150,8 @@ const Admin = () => {
 
   // Scroll main content to top + sidebar nav to center active item (sans scroller la page)
   useEffect(() => {
-    // Defer to ensure ref is attached after render
     requestAnimationFrame(() => {
-      if (activeBtnRef.current && navRef.current) {
-        const nav = navRef.current;
-        const btn = activeBtnRef.current;
-        const btnTop = btn.getBoundingClientRect().top - nav.getBoundingClientRect().top + nav.scrollTop;
-        const targetTop = btnTop - nav.clientHeight / 2 + btn.clientHeight / 2;
-        nav.scrollTo({ top: Math.max(0, targetTop), behavior: "smooth" });
-      }
+      activeBtnRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
     });
   }, [activeSection]);
   

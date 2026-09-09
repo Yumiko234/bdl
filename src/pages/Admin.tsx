@@ -154,7 +154,8 @@ const Admin = () => {
     if (activeBtnRef.current && navRef.current) {
       const nav = navRef.current;
       const btn = activeBtnRef.current;
-      const targetTop = btn.offsetTop - nav.clientHeight / 2 + btn.clientHeight / 2;
+      const btnTop = btn.getBoundingClientRect().top - nav.getBoundingClientRect().top + nav.scrollTop;
+      const targetTop = btnTop - nav.clientHeight / 2 + btn.clientHeight / 2;
       nav.scrollTo({ top: targetTop, behavior: "instant" });
     }
   }, [activeSection]);

@@ -290,7 +290,7 @@ const Index = () => {
                   <Button
                     size="lg"
                     variant="outline"
-                    className="text-lg px-8 border-white text-black hover:bg-white hover:text-primary"
+                    className="text-lg px-8 border-white bg-white text-black hover:bg-white/90 hover:text-primary"
                   >
                     Accès Intranet
                   </Button>

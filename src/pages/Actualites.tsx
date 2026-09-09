@@ -74,6 +74,13 @@ const Actualites = () => {
     fetchNews();
   }, []);
 
+  useEffect(() => {
+    if (!loading && window.location.hash) {
+      const el = document.getElementById(window.location.hash.slice(1));
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [loading]);
+
   const categories = ["Toutes", ...Array.from(new Set(news.map((n) => n.category).filter(Boolean)))];
   const filteredNews = activeCategory === "Toutes" ? news : news.filter((n) => n.category === activeCategory);
 

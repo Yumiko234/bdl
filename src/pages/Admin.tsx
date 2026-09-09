@@ -150,13 +150,21 @@ const Admin = () => {
 
   // Scroll main content to top + sidebar nav to center active item (sans scroller la page)
   useEffect(() => {
-    mainRef.current?.scrollTo({ top: 0, behavior: "instant" });
-    if (activeBtnRef.current && navRef.current) {
-      const nav = navRef.current;
+    setTimeout(() => {
       const btn = activeBtnRef.current;
-      const targetTop = btn.offsetTop - nav.clientHeight / 2 + btn.clientHeight / 2;
-      nav.scrollTo({ top: targetTop, behavior: "instant" });
-    }
+      if (!btn) return;
+      // Find actual scrollable ancestor
+      let scrollEl: HTMLElement | null = btn.parentElement;
+      while (scrollEl) {
+        const oy = window.getComputedStyle(scrollEl).overflowY;
+        if ((oy === "auto" || oy === "scroll") && scrollEl.scrollHeight > scrollEl.clientHeight) break;
+        scrollEl = scrollEl.parentElement;
+      }
+      if (!scrollEl) return;
+      const btnRect = btn.getBoundingClientRect();
+      const elRect = scrollEl.getBoundingClientRect();
+      scrollEl.scrollTop = Math.max(0, btnRect.top - elRect.top + scrollEl.scrollTop - scrollEl.clientHeight / 2 + btn.offsetHeight / 2);
+    }, 50);
   }, [activeSection]);
   
   const [presidentMessage, setPresidentMessage] = useState("");
@@ -384,7 +392,7 @@ const Admin = () => {
           </div>
         </div>
       </div>
-      <nav ref={navRef} className="flex-1 overflow-y-auto p-3 space-y-4">
+      <nav ref={navRef} className="flex-1 min-h-0 overflow-y-auto p-3 space-y-4">
         {groups.map((group) => (
           <div key={group}>
             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-3 mb-2">{group}</p>
@@ -423,16 +431,18 @@ const Admin = () => {
         </div>
       </div>
       <div className="flex flex-1 overflow-hidden">
-        <aside className="hidden lg:flex flex-col w-64 border-r bg-card shrink-0"><SidebarContent /></aside>
+        <aside className="hidden lg:flex flex-col w-64 border-r bg-card shrink-0">{SidebarContent()}</aside>
         {mobileOpen && (
           <div className="lg:hidden fixed inset-0 z-50 flex">
             <div className="fixed inset-0 bg-black/40" onClick={() => setMobileOpen(false)} />
-            <aside className="relative w-72 bg-card h-full shadow-xl"><SidebarContent /></aside>
+            <aside className="relative w-72 bg-card h-full shadow-xl">{SidebarContent()}</aside>
           </div>
         )}
         <main ref={mainRef} className="flex-1 overflow-y-auto p-4 lg:p-8">
-          {renderSection()}
-          <Footer />
+          <div key={activeSection}>
+            {renderSection()}
+            <Footer />
+          </div>
         </main>
       </div>
     </div>

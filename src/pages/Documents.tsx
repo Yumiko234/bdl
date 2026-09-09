@@ -68,6 +68,7 @@ const Documents = () => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewTitle, setPreviewTitle] = useState("");
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewSlow, setPreviewSlow] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([
     "reglement",
     "compte-rendu",
@@ -223,7 +224,7 @@ const Documents = () => {
                                       variant="outline"
                                       size="sm"
                                       className="gap-1.5"
-                                      onClick={() => { setPreviewUrl(doc.file_url!); setPreviewTitle(doc.title); setPreviewLoading(true); }}
+                                      onClick={() => { setPreviewUrl(doc.file_url!); setPreviewTitle(doc.title); setPreviewLoading(true); setPreviewSlow(false); setTimeout(() => setPreviewSlow(true), 5000); }}
                                     >
                                       <Eye className="h-4 w-4" />
                                       Aperçu
@@ -290,7 +291,11 @@ const Documents = () => {
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background z-10">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <p className="text-sm text-muted-foreground">Chargement de l'aperçu…</p>
-                <p className="text-xs text-muted-foreground">Le chargement peut prendre quelques secondes.</p>
+                {previewSlow ? (
+                  <p className="text-xs text-orange-500 font-medium">Le chargement est long — essayez de recharger la page.</p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Le chargement peut prendre quelques secondes.</p>
+                )}
               </div>
             )}
             {previewUrl && (

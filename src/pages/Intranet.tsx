@@ -236,12 +236,12 @@ const Intranet = () => {
 
                 <div className="sm:ml-auto flex gap-2 flex-wrap justify-center">
                   <Link to="/profile">
-                    <Button variant="outline" className="border-white/40 text-black hover:bg-white/10 gap-2">
+                    <Button variant="outline" className="border-white/40 bg-white text-black hover:bg-white/90 gap-2">
                       <UserCircle className="h-4 w-4" />
                       Mon profil
                     </Button>
                   </Link>
-                  <Button variant="outline" className="border-white/40 text-black hover:bg-white/10 gap-2" onClick={() => signOut()}>
+                  <Button variant="outline" className="border-white/40 bg-white text-black hover:bg-white/90 gap-2" onClick={() => signOut()}>
                     <LogOut className="h-4 w-4" />
                     Déconnexion
                   </Button>

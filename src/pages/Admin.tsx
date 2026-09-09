@@ -152,15 +152,18 @@ const Admin = () => {
   useEffect(() => {
     setTimeout(() => {
       const btn = activeBtnRef.current;
-      const nav = navRef.current;
-      if (!btn || !nav) return;
-      let offsetTop = 0;
-      let el: HTMLElement | null = btn;
-      while (el && el !== nav) {
-        offsetTop += el.offsetTop;
-        el = el.offsetParent as HTMLElement | null;
+      if (!btn) return;
+      // Find actual scrollable ancestor
+      let scrollEl: HTMLElement | null = btn.parentElement;
+      while (scrollEl) {
+        const oy = window.getComputedStyle(scrollEl).overflowY;
+        if ((oy === "auto" || oy === "scroll") && scrollEl.scrollHeight > scrollEl.clientHeight) break;
+        scrollEl = scrollEl.parentElement;
       }
-      nav.scrollTop = Math.max(0, offsetTop - nav.clientHeight / 2 + btn.offsetHeight / 2);
+      if (!scrollEl) return;
+      const btnRect = btn.getBoundingClientRect();
+      const elRect = scrollEl.getBoundingClientRect();
+      scrollEl.scrollTop = Math.max(0, btnRect.top - elRect.top + scrollEl.scrollTop - scrollEl.clientHeight / 2 + btn.offsetHeight / 2);
     }, 50);
   }, [activeSection]);
   

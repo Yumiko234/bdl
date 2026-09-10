@@ -416,7 +416,7 @@ const Index = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {latestEvents.map((event) => (
                           <Card
-                            key={event.id}
+                            key={event._key ?? `ev-${event.id}`}
                             className="shadow-card hover:shadow-elegant transition-all border-primary/20 cursor-pointer"
                             onClick={() => openModal(event, 'event')}
                           >

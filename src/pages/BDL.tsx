@@ -214,7 +214,7 @@ const BDL = () => {
                   <CardContent className="p-8">
                     <h2 className="text-3xl font-bold mb-6">{content.mission_title || 'Notre Mission'}</h2>
                     <div 
-                      className="prose prose-lg max-w-none"
+                      className="prose prose-lg max-w-none dark:prose-invert"
                       dangerouslySetInnerHTML={safeHtml(content.mission_content || "<p>Le Bureau des Lycéens (BDL) du Lycée Saint-André est l'instance associative des élèves. Il a pour mission de favoriser l'expression, la participation et l'engagement des lycéens dans la vie de l'établissement, d'assurer le lien permanent entre les élèves, la communauté éducative et la direction, et de promouvoir les valeurs d'initiative, de respect et de responsabilité.</p>")}
                     />
                   </CardContent>

@@ -343,7 +343,7 @@ const Index = () => {
                       </p>
                     </div>
                     <div
-                      className="prose prose-lg max-w-none text-foreground leading-relaxed"
+                      className="prose prose-lg max-w-none dark:prose-invert leading-relaxed"
                       dangerouslySetInnerHTML={safeHtml(presidentMessage)}
                     />
                   </div>

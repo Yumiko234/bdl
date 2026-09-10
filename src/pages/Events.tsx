@@ -16,6 +16,8 @@ import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 import { safeHtml } from "@/lib/sanitize";
 
 interface Event {
+  _key: string;
+  _source?: "event" | "calendar";
   id: number;
   title: string;
   description: string;
@@ -80,6 +82,12 @@ function EventCard({ event, getRoleLabel, past = false }: { event: Event; getRol
                 <Badge variant="default" className="gap-1">
                   <Pin className="h-3 w-3" />
                   Épinglé
+                </Badge>
+              )}
+              {event._source === "calendar" && (
+                <Badge variant="outline" className="gap-1 text-xs">
+                  <CalendarDays className="h-3 w-3" />
+                  Calendrier
                 </Badge>
               )}
             </div>
@@ -159,14 +167,23 @@ export default function Events() {
 
   const loadEvents = async () => {
     try {
-      const { data, error } = await supabase
-        .from("events")
-        .select("*")
-        .order("is_pinned", { ascending: false })
-        .order("start_date", { ascending: true });
-
-      if (error) throw error;
-      setEvents(data || []);
+      const [eventsRes, calRes] = await Promise.all([
+        supabase.from("events").select("*"),
+        supabase.from("calendar_events" as any).select("*"),
+      ]);
+      if (eventsRes.error) throw eventsRes.error;
+      const evts: Event[] = (eventsRes.data || []).map((e: any) => ({ ...e, _key: `ev-${e.id}`, _source: "event" as const }));
+      const calEvts: Event[] = (calRes.data || []).map((e: any) => ({
+        ...e,
+        _key: `cal-${e.id}`,
+        _source: "calendar" as const,
+        is_pinned: false,
+      }));
+      const merged = [...evts, ...calEvts].sort((a, b) => {
+        if (a.is_pinned !== b.is_pinned) return a.is_pinned ? -1 : 1;
+        return new Date(a.start_date).getTime() - new Date(b.start_date).getTime();
+      });
+      setEvents(merged);
     } catch (error) {
       console.error("Error loading events:", error);
       toast.error("Erreur lors du chargement des évènements");
@@ -264,7 +281,7 @@ export default function Events() {
                   {upcomingEvents.length > 0 && (
                     <div className="space-y-4">
                       <h3 className="text-xl font-semibold text-foreground">À venir</h3>
-                      {upcomingEvents.map((event) => <EventCard key={event.id} event={event} getRoleLabel={getRoleLabel} />)}
+                      {upcomingEvents.map((event) => <EventCard key={event._key} event={event} getRoleLabel={getRoleLabel} />)}
                     </div>
                   )}
 
@@ -272,7 +289,7 @@ export default function Events() {
                   {pastEvents.length > 0 && (
                     <div className="space-y-4 pt-4">
                       <h3 className="text-xl font-semibold text-muted-foreground">Passés</h3>
-                      {pastEvents.map((event) => <EventCard key={event.id} event={event} getRoleLabel={getRoleLabel} past />)}
+                      {pastEvents.map((event) => <EventCard key={event._key} event={event} getRoleLabel={getRoleLabel} past />)}
                     </div>
                   )}
                 </>

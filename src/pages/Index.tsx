@@ -425,6 +425,7 @@ const Index = () => {
                                 <Badge variant="secondary">Événement</Badge>
                                 <span className="text-sm text-muted-foreground">
                                   {new Date(event.start_date).toLocaleDateString("fr-FR")}
+                                  {event.start_time && ` · ${event.start_time}`}
                                 </span>
                               </div>
                               <h3 className="text-xl font-bold">{event.title}</h3>

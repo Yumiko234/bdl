@@ -4,11 +4,11 @@ import logoBdl from "@/assets/logo-bdl.jpeg";
 import { supabase } from "@/integrations/supabase/client";
 import { safeHtml } from "@/lib/sanitize";
 import { useDarkMode } from "@/hooks/useDarkMode";
-import { Moon, Sun } from "lucide-react";
+import { Monitor, Moon, Sun } from "lucide-react";
 
 const Footer = () => {
   const [content, setContent] = useState<Record<string, string>>({});
-  const { dark, toggle } = useDarkMode();
+  const { theme, setTheme } = useDarkMode();
 
   return (
     <footer className="bg-secondary text-secondary-foreground mt-20">
@@ -103,14 +103,27 @@ const Footer = () => {
               Alexandre Lejal
             </a>
           </p>
-          <button
-            onClick={toggle}
-            aria-label={dark ? "Passer en mode clair" : "Passer en mode sombre"}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-border hover:border-accent hover:text-accent transition-colors text-xs"
-          >
-            {dark ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
-            {dark ? "Mode clair" : "Mode sombre"}
-          </button>
+          <div className="flex items-center rounded-full border border-border p-0.5 gap-0.5">
+            {([
+              { value: "system", icon: <Monitor className="h-3.5 w-3.5" />, label: "Système" },
+              { value: "light",  icon: <Sun     className="h-3.5 w-3.5" />, label: "Clair" },
+              { value: "dark",   icon: <Moon    className="h-3.5 w-3.5" />, label: "Sombre" },
+            ] as const).map(({ value, icon, label }) => (
+              <button
+                key={value}
+                onClick={() => setTheme(value)}
+                aria-label={label}
+                title={label}
+                className={`p-1.5 rounded-full transition-colors ${
+                  theme === value
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {icon}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </footer>

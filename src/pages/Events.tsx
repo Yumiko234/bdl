@@ -88,7 +88,7 @@ function EventCard({ event, getRoleLabel, past = false }: { event: Event; getRol
               <span className="flex items-center gap-1">
                 <Calendar className="h-4 w-4" />
                 {format(new Date(event.start_date), "dd MMMM yyyy", { locale: fr })}
-                {event.start_date !== event.end_date && (
+                {event.end_date && event.start_date !== event.end_date && (
                   <> - {format(new Date(event.end_date), "dd MMMM yyyy", { locale: fr })}</>
                 )}
               </span>
@@ -178,8 +178,9 @@ export default function Events() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const upcomingEvents = events.filter((e) => new Date(e.end_date) >= today);
-  const pastEvents = events.filter((e) => new Date(e.end_date) < today).reverse();
+  const getEnd = (e: Event) => new Date(e.end_date || e.start_date);
+  const upcomingEvents = events.filter((e) => getEnd(e) >= today);
+  const pastEvents    = events.filter((e) => getEnd(e) <  today).reverse();
 
   const getRoleLabel = (role: string | null): string => {
     const roleLabels: { [key: string]: string } = {

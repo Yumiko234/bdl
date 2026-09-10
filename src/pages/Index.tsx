@@ -235,14 +235,19 @@ const Index = () => {
       .order("published_at", { ascending: false })
       .limit(2);
 
-    const { data: events } = await supabase
-      .from("events" as any)
-      .select("*")
-      .order("start_date", { ascending: false })
-      .limit(2);
+    const [eventsRes, calRes] = await Promise.all([
+      supabase.from("events" as any).select("*"),
+      supabase.from("calendar_events" as any).select("*"),
+    ]);
+    const allEvents = [
+      ...(eventsRes.data || []).map((e: any) => ({ ...e, _source: "event" })),
+      ...(calRes.data || []).map((e: any) => ({ ...e, _source: "calendar", is_pinned: false })),
+    ]
+      .sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime())
+      .slice(0, 2);
 
     if (news) setLatestNews(news);
-    if (events) setLatestEvents(events);
+    if (allEvents.length) setLatestEvents(allEvents);
   };
 
   const openModal = (item: any, type: 'news' | 'event') => {

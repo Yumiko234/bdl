@@ -10,6 +10,16 @@ import { Calendar, Pin, Clock, Share2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
+const CATEGORY_LABELS: Record<string, string> = {
+  actualites: "Actualités",
+  evenements: "Événements",
+  bdl: "BDL",
+  public: "Public",
+  authenticated: "Connectés",
+  bdl_only: "BDL seulement",
+};
+const catLabel = (c: string) => CATEGORY_LABELS[c] ?? c.charAt(0).toUpperCase() + c.slice(1);
+
 const readingTime = (html: string): number => {
   const text = html.replace(/<[^>]*>/g, " ");
   const words = text.trim().split(/\s+/).filter(Boolean).length;
@@ -127,7 +137,7 @@ const Actualites = () => {
                           : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
                       }`}
                     >
-                      {cat}
+                      {cat === "Toutes" ? "Toutes" : catLabel(cat)}
                     </button>
                   ))}
                 </div>
@@ -163,7 +173,7 @@ const Actualites = () => {
                   >
                     <CardContent className="p-6 space-y-4">
                       <div className="flex flex-wrap items-center gap-3">
-                        <Badge variant="secondary">{item.category}</Badge>
+                        <Badge variant="secondary">{catLabel(item.category)}</Badge>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Calendar className="h-4 w-4" />
                           {new Date(item.published_at).toLocaleDateString("fr-FR")}

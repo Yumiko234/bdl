@@ -731,7 +731,9 @@ export const SuiviActionsManagement = () => {
                             </Avatar>
                             <span className="flex-1 min-w-0 text-sm truncate">{member.full_name}</span>
                             <div className="flex items-center gap-1 flex-shrink-0">
-                              {(["present", "excuse", "absent"] as const).map((status) => (
+                              {!member.hasAccount ? (
+                                <span className="text-xs text-muted-foreground italic">Pas de compte</span>
+                              ) : (["present", "excuse", "absent"] as const).map((status) => (
                                 <button
                                   key={status}
                                   onClick={() => setMemberAttendance(meeting.id, member.id, status)}

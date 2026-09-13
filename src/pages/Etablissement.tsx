@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSEO } from "@/hooks/useSEO";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +16,11 @@ interface EstablishmentSection {
 }
 
 const Etablissement = () => {
+  useSEO({
+    title: "L'Établissement – Lycée Saint-André",
+    description: "Découvrez le Lycée Saint-André : son histoire, ses filières, sa vie étudiante et ses valeurs.",
+    url: "/etablissement",
+  });
   const [sections, setSections] = useState<EstablishmentSection[]>([]);
   const [loading, setLoading] = useState(true);
 

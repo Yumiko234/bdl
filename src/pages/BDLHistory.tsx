@@ -1,5 +1,6 @@
 // src/pages/BDLHistory.tsx
 import { useEffect, useState } from "react";
+import { useSEO } from "@/hooks/useSEO";
 import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -20,6 +21,11 @@ interface Year {
 }
 
 const BDLHistory = () => {
+  useSEO({
+    title: "Historique du BDL – Bureau des Lycéens",
+    description: "Retracez l'histoire du Bureau des Lycéens du Lycée Saint-André, année par année.",
+    url: "/bdl/historique",
+  });
   const [years, setYears] = useState<Year[]>([]);
   const [loading, setLoading] = useState(true);
 

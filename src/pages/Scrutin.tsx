@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSEO } from "@/hooks/useSEO";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -56,6 +57,11 @@ interface GroupedScrutins {
 const PAGE_SIZE = 10;
 
 const Scrutin = () => {
+  useSEO({
+    title: "Scrutin – Bureau des Lycéens",
+    description: "Participez aux votes et élections organisés par le Bureau des Lycéens du Lycée Saint-André.",
+    url: "/scrutin",
+  });
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 

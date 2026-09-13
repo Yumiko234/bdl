@@ -8,8 +8,9 @@
   <url><loc>https://bdl-saintandre.fr/etablissement</loc><priority>0.7</priority><changefreq>monthly</changefreq></url>
   <url><loc>https://bdl-saintandre.fr/contact</loc><priority>0.7</priority><changefreq>monthly</changefreq></url>
   <url><loc>https://bdl-saintandre.fr/scrutin</loc><priority>0.6</priority><changefreq>weekly</changefreq></url>
-  <url><loc>https://bdl-saintandre.fr/sondage</loc><priority>0.6</priority><changefreq>weekly</changefreq></url>
   <url><loc>https://bdl-saintandre.fr/jo</loc><priority>0.6</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://bdl-saintandre.fr/calendrier</loc><priority>0.7</priority><changefreq>weekly</changefreq></url>
+  <url><loc>https://bdl-saintandre.fr/clubs</loc><priority>0.6</priority><changefreq>monthly</changefreq></url>
   <url><loc>https://bdl-saintandre.fr/bdl/historique</loc><priority>0.6</priority><changefreq>monthly</changefreq></url>
   <url><loc>https://bdl-saintandre.fr/legal/cgu</loc><priority>0.3</priority><changefreq>yearly</changefreq></url>
   <url><loc>https://bdl-saintandre.fr/legal/mentions-legales</loc><priority>0.3</priority><changefreq>yearly</changefreq></url>

@@ -10,5 +10,6 @@ Disallow: /auth
 Disallow: /bdl-profile
 Disallow: /conference
 Disallow: /sondage
+Disallow: /scrutin
 
 Sitemap: https://bdl-saintandre.fr/sitemap.xml

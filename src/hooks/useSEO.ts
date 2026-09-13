@@ -8,8 +8,10 @@ interface SEOProps {
 }
 
 const BASE_URL = "https://bdl-saintandre.fr";
+const DEFAULT_IMAGE = `${BASE_URL}/logo-bdl.jpeg`;
 
 export function useSEO({ title, description, image, url }: SEOProps) {
+  const resolvedImage = image ?? DEFAULT_IMAGE;
   useEffect(() => {
     document.title = title;
 
@@ -35,10 +37,8 @@ export function useSEO({ title, description, image, url }: SEOProps) {
       setMeta(`meta[name="twitter:description"]`, description);
     }
 
-    if (image) {
-      setMeta(`meta[property="og:image"]`, image);
-      setMeta(`meta[name="twitter:image"]`, image);
-    }
+    setMeta(`meta[property="og:image"]`, resolvedImage);
+    setMeta(`meta[name="twitter:image"]`, resolvedImage);
 
     const canonical = url ? `${BASE_URL}${url}` : undefined;
     if (canonical) {

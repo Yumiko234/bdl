@@ -8,9 +8,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
+import { useSEO } from "@/hooks/useSEO";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Lightbulb } from "lucide-react";
 
 interface ContactInfo {
   section_key: string;
@@ -19,6 +22,13 @@ interface ContactInfo {
 }
 
 const Contact = () => {
+  useSEO({
+    title: "Contact – Bureau des Lycéens",
+    description: "Contactez le Bureau des Lycéens du Lycée Saint-André via notre formulaire ou demandez une audience.",
+    url: "/contact",
+  });
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -102,20 +112,27 @@ const Contact = () => {
           </div>
         </section>
 
-        {/* Alert Banner */}
-        <div className="bg-accent/10 border-y border-accent/20 py-4">
-          <div className="container mx-auto px-4">
-            <div className="flex items-center justify-center gap-2 text-sm md:text-base">
-              <AlertCircle className="h-5 w-5 text-accent flex-shrink-0" />
-              <p className="text-center">
-                <span className="font-semibold">
-                  Utilisateurs disposant d'un compte :
-                </span>{" "}
-                Il est recommandé d'utiliser l'outil support de l'intranet pour une meilleure prise en charge.
-              </p>
+        {/* Banner support pour les connectés */}
+        {user && (
+          <div className="bg-accent/15 border-y-2 border-accent/40 py-4">
+            <div className="container mx-auto px-4">
+              <div className="flex items-center justify-between gap-4 flex-wrap max-w-4xl mx-auto">
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-full bg-accent/20 flex items-center justify-center shrink-0">
+                    <Lightbulb className="h-5 w-5 text-accent-foreground" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm">Vous avez un compte BDL</p>
+                    <p className="text-xs text-muted-foreground">Passez par le support pour un meilleur suivi de votre demande.</p>
+                  </div>
+                </div>
+                <Button className="shrink-0" onClick={() => navigate("/support")}>
+                  Aller sur le support →
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         <section className="py-16">
           <div className="container mx-auto px-4">

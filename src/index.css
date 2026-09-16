@@ -61,23 +61,23 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 0 0% 8%;
-    --foreground: 0 0% 98%;
+    --background: 0 0% 7%;
+    --foreground: 0 0% 95%;
 
-    --card: 0 0% 10%;
-    --card-foreground: 0 0% 98%;
+    --card: 0 0% 11%;
+    --card-foreground: 0 0% 95%;
 
-    --popover: 0 0% 8%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 0 0% 13%;
+    --popover-foreground: 0 0% 95%;
 
-    --primary: 217 91% 45%;
+    --primary: 217 91% 55%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 15%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 0 0% 16%;
+    --secondary-foreground: 0 0% 95%;
 
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 0 0% 16%;
+    --muted-foreground: 0 0% 60%;
 
     --accent: 45 100% 51%;
     --accent-foreground: 0 0% 10%;
@@ -85,9 +85,9 @@ All colors MUST be HSL.
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 217 91% 45%;
+    --border: 0 0% 22%;
+    --input: 0 0% 22%;
+    --ring: 217 91% 55%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -168,31 +168,32 @@ All colors MUST be HSL.
 
 /* Fond et bordure du menu */
 .ql-picker.ql-lineheight .ql-picker-options {
-  background-color: #f9f9f9;
-  border: 1px solid #ccc;
+  background-color: hsl(var(--popover));
+  border: 1px solid hsl(var(--border));
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
   z-index: 100;
 }
 
 /* Options visibles et lisibles */
 .ql-picker.ql-lineheight .ql-picker-item {
-  color: #000001;
+  color: hsl(var(--popover-foreground));
   padding: 6px 12px;
   cursor: pointer;
 }
 
 .ql-picker.ql-lineheight .ql-picker-item:hover {
-  background-color: #e6e6e6;
+  background-color: hsl(var(--muted));
 }
 
 /* Texte de l’option actuellement sélectionnée */
 .ql-picker.ql-lineheight .ql-picker-label {
-  color: #000001;
-  background-color: #fff;
-  border: 1px solid #ccc;
+  color: hsl(var(--foreground));
+  background-color: hsl(var(--background));
+  border: 1px solid hsl(var(--border));
 }
 
 /* Pour que le texte soit visible dans tous les thèmes */
 .ql-snow .ql-picker-options {
-  color: #000001 !important;
+  color: hsl(var(--popover-foreground)) !important;
+  background-color: hsl(var(--popover)) !important;
 }

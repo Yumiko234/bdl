@@ -1,3 +1,15 @@
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /intranet
+Disallow: /profile
+Disallow: /support
+Disallow: /confirm
+Disallow: /reset-password
+Disallow: /auth
+Disallow: /bdl-profile
+Disallow: /conference
+Disallow: /sondage
+Disallow: /scrutin
+
 Sitemap: https://bdl-saintandre.fr/sitemap.xml

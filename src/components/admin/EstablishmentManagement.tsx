@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { toast } from "sonner";
 import { Pencil, Trash2 } from "lucide-react";
+import { safeHtml } from "@/lib/sanitize";
 
 interface EstablishmentSection {
   id: string;
@@ -244,7 +245,7 @@ export const EstablishmentManagement = () => {
                 <CardContent>
                   <div 
                     className="prose prose-sm max-w-none dark:prose-invert"
-                    dangerouslySetInnerHTML={{ __html: section.content }}
+                    dangerouslySetInnerHTML={safeHtml(section.content)}
                   />
                 </CardContent>
               </Card>

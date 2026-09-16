@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Newspaper, Pin, Edit, Trash2 } from "lucide-react";
+import { safeHtml } from "@/lib/sanitize";
 
 interface NewsArticle {
   id: string;
@@ -29,6 +30,7 @@ interface NewsManagementProps {
 }
 
 export const NewsManagement = ({ isPresident }: NewsManagementProps) => {
+  const formRef = useRef<HTMLDivElement>(null);
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [editingArticle, setEditingArticle] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -132,6 +134,7 @@ export const NewsManagement = ({ isPresident }: NewsManagementProps) => {
       is_important: article.is_important,
       visibility: (article as any).visibility || "public"
     });
+    setTimeout(() => formRef.current?.scrollIntoView({ behavior: "instant", block: "start" }), 0);
   };
 
   const handleDelete = async (id: string) => {
@@ -184,7 +187,7 @@ export const NewsManagement = ({ isPresident }: NewsManagementProps) => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="border rounded-lg p-6 space-y-4 bg-muted/30">
+        <div ref={formRef} className="border rounded-lg p-6 space-y-4 bg-muted/30">
           <h3 className="font-semibold">
             {editingArticle ? "Modifier l'article" : "Nouvel article"}
           </h3>
@@ -283,7 +286,7 @@ export const NewsManagement = ({ isPresident }: NewsManagementProps) => {
                       </div>
                       <div 
                         className="prose prose-sm max-w-none dark:prose-invert line-clamp-2"
-                        dangerouslySetInnerHTML={{ __html: article.content }}
+                        dangerouslySetInnerHTML={safeHtml(article.content)}
                       />
                       <p className="text-xs text-muted-foreground">
                         {new Date(article.published_at).toLocaleDateString('fr-FR')}

@@ -2,9 +2,13 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import logoBdl from "@/assets/logo-bdl.jpeg";
 import { supabase } from "@/integrations/supabase/client";
+import { safeHtml } from "@/lib/sanitize";
+import { useDarkMode } from "@/hooks/useDarkMode";
+import { Monitor, Moon, Sun } from "lucide-react";
 
 const Footer = () => {
   const [content, setContent] = useState<Record<string, string>>({});
+  const { theme, setTheme } = useDarkMode();
 
   return (
     <footer className="bg-secondary text-secondary-foreground mt-20">
@@ -14,15 +18,11 @@ const Footer = () => {
             <img src={logoBdl} alt="Logo BDL" className="h-16 w-16 rounded-full" />
             <p 
               className="text-sm"
-              dangerouslySetInnerHTML={{ 
-                __html: content.about || 'Bureau des Lycéens<br />Lycée Saint-André' 
-              }}
+              dangerouslySetInnerHTML={safeHtml(content.about || 'Bureau des Lycéens<br />Lycée Saint-André')}
             />
             <p 
               className="text-xs italic text-accent"
-              dangerouslySetInnerHTML={{ 
-                __html: content.quote || '"Là où naît l\'ambition, s\'élève la grandeur."' 
-              }}
+              dangerouslySetInnerHTML={safeHtml(content.quote || '"Là où naît l\'ambition, s\'élève la grandeur."')}
             />
           </div>
 
@@ -63,15 +63,11 @@ const Footer = () => {
             <div className="text-sm space-y-1">
               <span 
                 className="block"
-                dangerouslySetInnerHTML={{ 
-                  __html: content.contact_address || 'Lycée Saint-André' 
-                }}
+                dangerouslySetInnerHTML={safeHtml(content.contact_address || 'Lycée Saint-André')}
               />
               <span 
                 className="block text-muted-foreground"
-                dangerouslySetInnerHTML={{ 
-                  __html: content.contact_email || 'contact@bdl-saintandre.fr' 
-                }}
+                dangerouslySetInnerHTML={safeHtml(content.contact_email || 'contact@bdl-saintandre.fr')}
               />
               <a 
                 href="https://www.instagram.com/bdllgsaintandre"
@@ -93,20 +89,41 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="border-t border-border mt-8 pt-8 text-center text-sm text-muted-foreground">
-          <p>
+        <div className="border-t border-border mt-8 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+          <p className="text-center sm:text-left">
             &copy; {new Date().getFullYear()} {content.copyright || 'Bureau des Lycéens - Lycée Saint-André. Tous droits réservés.'}
             <span className="mx-2">—</span>
             Site géré par{" "}
-            <a 
-              href="https://fr.linkedin.com/in/alexandre-lejal" 
-              target="_blank" 
+            <a
+              href="https://fr.linkedin.com/in/alexandre-lejal"
+              target="_blank"
               rel="noopener noreferrer"
               className="text-muted-foreground hover:text-accent transition-colors underline-offset-4 hover:underline"
             >
               Alexandre Lejal
             </a>
           </p>
+          <div className="flex items-center rounded-full border border-border p-0.5 gap-0.5">
+            {([
+              { value: "system", icon: <Monitor className="h-3.5 w-3.5" />, label: "Système" },
+              { value: "light",  icon: <Sun     className="h-3.5 w-3.5" />, label: "Clair" },
+              { value: "dark",   icon: <Moon    className="h-3.5 w-3.5" />, label: "Sombre" },
+            ] as const).map(({ value, icon, label }) => (
+              <button
+                key={value}
+                onClick={() => setTheme(value)}
+                aria-label={label}
+                title={label}
+                className={`p-1.5 rounded-full transition-colors ${
+                  theme === value
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {icon}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </footer>

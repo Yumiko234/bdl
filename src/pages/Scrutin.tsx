@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSEO } from "@/hooks/useSEO";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -56,6 +57,11 @@ interface GroupedScrutins {
 const PAGE_SIZE = 10;
 
 const Scrutin = () => {
+  useSEO({
+    title: "Scrutin – Bureau des Lycéens",
+    description: "Participez aux votes et élections organisés par le Bureau des Lycéens du Lycée Saint-André.",
+    url: "/scrutin",
+  });
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
@@ -93,8 +99,11 @@ const Scrutin = () => {
   useEffect(() => {
     if (user) {
       checkVotingRights();
+      // Si la liste s'est chargée avant que la session soit résolue,
+      // on récupère maintenant le vote de l'utilisateur pour chaque scrutin.
+      scrutins.forEach((s) => loadMyVote(s.id));
     }
-  }, [user]);
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     document.title = "Scrutins – Bureau des Lycéens";
@@ -141,13 +150,17 @@ const Scrutin = () => {
   const loadScrutins = async () => {
     setLoading(true);
 
+    // Neutralise les caractères qui permettraient d'injecter des filtres
+    // PostgREST supplémentaires via .or() ( , ( ) et le méta-caractère * ).
+    const term = searchQuery.trim().replace(/[,()*\\]/g, " ").trim();
+
     let countQuery = supabase
       .from("scrutins")
       .select("*", { count: "exact", head: true });
 
-    if (searchQuery.trim()) {
+    if (term) {
       countQuery = countQuery.or(
-        `title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`
+        `title.ilike.%${term}%,description.ilike.%${term}%`
       );
     }
 
@@ -163,9 +176,9 @@ const Scrutin = () => {
       .order("created_at", { ascending: false })
       .range(from, to);
 
-    if (searchQuery.trim()) {
+    if (term) {
       dataQuery = dataQuery.or(
-        `title.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`
+        `title.ilike.%${term}%,description.ilike.%${term}%`
       );
     }
 
@@ -185,12 +198,11 @@ const Scrutin = () => {
     });
     setOpenDetails(initialOpenDetails);
 
-    for (const scrutin of data || []) {
-      await loadMyVote(scrutin.id);
-      if (scrutin.status === "closed") {
-        await loadVotes(scrutin.id);
-      }
-    }
+    await Promise.all((data || []).map((scrutin) => {
+      const tasks = [loadMyVote(scrutin.id)];
+      if (scrutin.status === "closed") tasks.push(loadVotes(scrutin.id));
+      return Promise.all(tasks);
+    }));
 
     setLoading(false);
   };

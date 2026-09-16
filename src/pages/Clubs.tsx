@@ -1,9 +1,15 @@
+import { useSEO } from "@/hooks/useSEO";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 
 const Clubs = () => {
+  useSEO({
+    title: "Clubs – Bureau des Lycéens",
+    description: "Découvrez les clubs et associations du Lycée Saint-André animés par le Bureau des Lycéens.",
+    url: "/clubs",
+  });
   return (
     <div className="min-h-screen flex flex-col">
       <Navigation />

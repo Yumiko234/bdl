@@ -98,12 +98,7 @@ const Support = () => {
   // Profile
   const [profile, setProfile] = useState<{ full_name: string; email: string } | null>(null);
 
-  // ── Auth guard ───────────────────────────────────────────────────────────────
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/auth");
-    }
-  }, [user, authLoading, navigate]);
+  // ── Auth guard — handled in render, no redirect ──────────────────────────────
 
   // ── Load profile & tickets ───────────────────────────────────────────────────
   useEffect(() => {
@@ -199,6 +194,8 @@ const Support = () => {
     setSelectedTicket(ticket);
     setView("detail");
     await loadMessages(ticket.id);
+    try { localStorage.setItem(`ticket_seen_${ticket.id}`, new Date().toISOString()); } catch {}
+    window.dispatchEvent(new CustomEvent("tickets-read"));
   };
 
   // ── Send reply ───────────────────────────────────────────────────────────────
@@ -244,24 +241,44 @@ const Support = () => {
     );
   }
 
+  if (!user) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Navigation />
+        <main className="flex-1 flex items-center justify-center px-4">
+          <Card className="max-w-md w-full shadow-card">
+            <CardContent className="p-10 text-center space-y-5">
+              <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+                <Headphones className="h-8 w-8 text-primary" />
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-xl font-bold">Connexion requise</h2>
+                <p className="text-muted-foreground text-sm">
+                  Connectez-vous pour accéder au support et soumettre vos demandes directement au BDL.
+                </p>
+              </div>
+              <Button onClick={() => navigate("/auth")} className="w-full gap-2">
+                Se connecter
+              </Button>
+            </CardContent>
+          </Card>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navigation />
       <MaintenanceOverlay>
         <main className="flex-1">
           {/* Hero */}
-          <section className="gradient-institutional text-white py-12">
+          <section className="py-16 gradient-institutional text-white">
             <div className="container mx-auto px-4">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-white/10 rounded-xl">
-                  <Headphones className="h-8 w-8" />
-                </div>
-                <div>
-                  <h1 className="text-3xl font-bold">Support & Demandes</h1>
-                  <p className="text-white/80 mt-1">
-                    Posez vos questions, demandez une audience ou signalez un problème.
-                  </p>
-                </div>
+              <div className="max-w-3xl mx-auto text-center space-y-4">
+                <h1 className="text-5xl font-bold">Support & Demandes</h1>
+                <p className="text-xl">Posez vos questions, demandez une audience ou signalez un problème.</p>
               </div>
             </div>
           </section>

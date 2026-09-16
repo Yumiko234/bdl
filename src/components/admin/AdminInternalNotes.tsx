@@ -34,7 +34,7 @@ interface InternalNote {
  * Les notes publiées apparaissent ensuite dans l'Intranet (voir Intranet.tsx).
  */
 export const AdminInternalNotes = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   const [notes, setNotes] = useState<InternalNote[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,8 +50,12 @@ export const AdminInternalNotes = () => {
     if (user) {
       checkExecutiveAccess();
       loadNotes();
+    } else if (!authLoading) {
+      // Pas d'utilisateur connecté : on arrête les indicateurs de chargement.
+      setCheckingAccess(false);
+      setLoading(false);
     }
-  }, [user]);
+  }, [user, authLoading]);
 
   const checkExecutiveAccess = async () => {
     setCheckingAccess(true);

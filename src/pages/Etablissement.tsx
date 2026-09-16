@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
+import { useSEO } from "@/hooks/useSEO";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
+import { safeHtml } from "@/lib/sanitize";
 
 interface EstablishmentSection {
   id: string;
@@ -14,6 +16,11 @@ interface EstablishmentSection {
 }
 
 const Etablissement = () => {
+  useSEO({
+    title: "L'Établissement – Lycée Saint-André",
+    description: "Découvrez le Lycée Saint-André : son histoire, ses filières, sa vie étudiante et ses valeurs.",
+    url: "/etablissement",
+  });
   const [sections, setSections] = useState<EstablishmentSection[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -71,7 +78,7 @@ const Etablissement = () => {
                       <CardContent>
                         <div 
                           className="prose prose-sm max-w-none dark:prose-invert text-muted-foreground"
-                          dangerouslySetInnerHTML={{ __html: section.content }}
+                          dangerouslySetInnerHTML={safeHtml(section.content)}
                         />
                       </CardContent>
                     </Card>

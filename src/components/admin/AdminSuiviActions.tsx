@@ -35,6 +35,7 @@ interface BDLMember {
   email: string;
   avatar_url: string | null;
   role_label: string;
+  hasAccount: boolean;
 }
 
 interface Action {
@@ -186,7 +187,7 @@ export const SuiviActionsManagement = () => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data: p } = await supabase.from("profiles").select("full_name").eq("id", user.id).single();
+        const { data: p } = await supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle();
         setCurrentUser({ id: user.id, name: (p as any)?.full_name ?? "Staff" });
       }
       await Promise.all([loadMembers(), loadActions(), loadNotes(), loadMeetings(), loadAttendance()]);
@@ -207,6 +208,7 @@ export const SuiviActionsManagement = () => {
         email: "",
         avatar_url: m.avatar_url,
         role_label: m.role_label,
+        hasAccount: !!m.user_id,
       }));
       setMembers(mapped);
     }
@@ -318,6 +320,13 @@ export const SuiviActionsManagement = () => {
   const handleSaveAction = async () => {
     if (!actionForm.title.trim() || !actionForm.assigned_to) {
       toast.error("Titre et membre assigné requis.");
+      return;
+    }
+    const target = members.find((m) => m.id === actionForm.assigned_to);
+    if (!target?.hasAccount) {
+      toast.error(
+        "Ce membre n'a pas de compte lié. Liez sa fiche à un compte dans « Membres du Bureau » avant de lui assigner une action."
+      );
       return;
     }
     const payload: any = {
@@ -614,7 +623,7 @@ export const SuiviActionsManagement = () => {
                   #{i + 1}
                 </span>
                 <Avatar className="h-8 w-8 flex-shrink-0">
-                  {s.member.avatar_url && <img src={s.member.avatar_url} alt={s.member.full_name} className="h-8 w-8 rounded-full object-cover" />}
+                  {s.member.avatar_url && <img src={s.member.avatar_url} alt={s.member.full_name} loading="lazy" className="h-8 w-8 rounded-full object-cover" />}
                   <AvatarFallback className="text-xs bg-primary text-primary-foreground">{getInitials(s.member.full_name)}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
@@ -625,7 +634,7 @@ export const SuiviActionsManagement = () => {
                   <span className="hidden sm:block">{s.done}/{s.totalActions} terminées</span>
                   <span className="font-bold text-amber-600">{s.totalPoints.toFixed(1)} pts</span>
                 </div>
-                <Button size="sm" variant="outline" onClick={() => openCreateAction(s.member.id)} className="hidden sm:flex gap-1 text-xs">
+                <Button size="sm" variant="outline" disabled={!s.member.hasAccount} title={s.member.hasAccount ? undefined : "Fiche sans compte lié"} onClick={() => openCreateAction(s.member.id)} className="hidden sm:flex gap-1 text-xs">
                   <Plus className="h-3 w-3" /> Action
                 </Button>
               </div>
@@ -717,12 +726,14 @@ export const SuiviActionsManagement = () => {
                         return (
                           <div key={member.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/20">
                             <Avatar className="h-7 w-7 flex-shrink-0">
-                              {member.avatar_url && <img src={member.avatar_url} alt={member.full_name} className="h-7 w-7 rounded-full object-cover" />}
+                              {member.avatar_url && <img src={member.avatar_url} alt={member.full_name} loading="lazy" className="h-7 w-7 rounded-full object-cover" />}
                               <AvatarFallback className="text-[10px] bg-primary text-primary-foreground">{getInitials(member.full_name)}</AvatarFallback>
                             </Avatar>
                             <span className="flex-1 min-w-0 text-sm truncate">{member.full_name}</span>
                             <div className="flex items-center gap-1 flex-shrink-0">
-                              {(["present", "excuse", "absent"] as const).map((status) => (
+                              {!member.hasAccount ? (
+                                <span className="text-xs text-muted-foreground italic">Pas de compte</span>
+                              ) : (["present", "excuse", "absent"] as const).map((status) => (
                                 <button
                                   key={status}
                                   onClick={() => setMemberAttendance(meeting.id, member.id, status)}
@@ -771,7 +782,7 @@ export const SuiviActionsManagement = () => {
               >
                 <div className="flex items-center gap-4 p-5 hover:bg-muted/20 transition-colors">
                   <Avatar className="h-12 w-12 flex-shrink-0">
-                    {s.member.avatar_url && <img src={s.member.avatar_url} alt={s.member.full_name} className="h-12 w-12 rounded-full object-cover" />}
+                    {s.member.avatar_url && <img src={s.member.avatar_url} alt={s.member.full_name} loading="lazy" className="h-12 w-12 rounded-full object-cover" />}
                     <AvatarFallback className="bg-primary text-primary-foreground font-bold">{getInitials(s.member.full_name)}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
@@ -798,6 +809,8 @@ export const SuiviActionsManagement = () => {
                       size="sm"
                       variant="outline"
                       className="gap-1 text-xs"
+                      disabled={!s.member.hasAccount}
+                      title={s.member.hasAccount ? undefined : "Fiche sans compte lié"}
                       onClick={(e) => { e.stopPropagation(); openCreateAction(s.member.id); }}
                     >
                       <Plus className="h-3 w-3" /> Action
@@ -1018,8 +1031,9 @@ export const SuiviActionsManagement = () => {
                   </SelectTrigger>
                   <SelectContent>
                     {members.map((m) => (
-                      <SelectItem key={m.id} value={m.id}>
+                      <SelectItem key={m.id} value={m.id} disabled={!m.hasAccount}>
                         {m.full_name} — {m.role_label}
+                        {!m.hasAccount && " (pas de compte lié)"}
                       </SelectItem>
                     ))}
                   </SelectContent>

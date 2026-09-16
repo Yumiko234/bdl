@@ -14,7 +14,7 @@ import {
   Shield, Ban, Mail, Lock, Search, AlertTriangle,
   CheckCircle, ChevronDown, ChevronUp, Clock,
   LogIn, Globe, Calendar, Activity, Loader2, RefreshCw,
-  UserX, UserCheck, KeyRound, AtSign,
+  UserX, UserCheck, KeyRound, AtSign, Trash2,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -120,6 +120,7 @@ export const AdminManagement = () => {
   const [banDialog, setBanDialog]           = useState<{ open: boolean; user: UserProfile | null }>({ open: false, user: null });
   const [emailDialog, setEmailDialog]       = useState<{ open: boolean; user: UserProfile | null }>({ open: false, user: null });
   const [passwordDialog, setPasswordDialog] = useState<{ open: boolean; user: UserProfile | null }>({ open: false, user: null });
+  const [deleteDialog, setDeleteDialog]     = useState<{ open: boolean; user: UserProfile | null }>({ open: false, user: null });
 
   const [newEmail, setNewEmail]             = useState("");
   const [newPassword, setNewPassword]       = useState("");
@@ -241,6 +242,20 @@ export const AdminManagement = () => {
     }
   };
 
+  const handleDeleteUser = async (user: UserProfile) => {
+    setActionLoading(true);
+    try {
+      await callAdminFunction({ action: "delete_user", userId: user.id });
+      toast.success(`${user.full_name} supprimé définitivement.`);
+      setDeleteDialog({ open: false, user: null });
+      await loadUsers(true);
+    } catch (err: any) {
+      toast.error("Erreur : " + err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   // ── Filter + display ──────────────────────────────────────────────────────
 
   const filtered = users.filter(
@@ -341,6 +356,11 @@ export const AdminManagement = () => {
                           className={`h-8 w-8 p-0 ${user.is_banned ? "text-green-600 hover:text-green-700" : "text-destructive hover:text-destructive"}`}
                         >
                           {user.is_banned ? <UserCheck className="h-3.5 w-3.5" /> : <UserX className="h-3.5 w-3.5" />}
+                        </Button>
+                        <Button size="sm" variant="ghost" title="Supprimer définitivement"
+                          onClick={() => setDeleteDialog({ open: true, user })}
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive">
+                          <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                         <Button size="sm" variant="ghost" title="Voir les stats"
                           onClick={() => toggleExpand(user.id)}
@@ -501,6 +521,32 @@ export const AdminManagement = () => {
                 Modifier le mot de passe
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      {/* ── Delete dialog ── */}
+      <Dialog open={deleteDialog.open} onOpenChange={(o) => setDeleteDialog({ open: o, user: deleteDialog.user })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="h-5 w-5" /> Supprimer définitivement
+            </DialogTitle>
+            <DialogDescription>
+              <span className="text-destructive font-semibold">⚠ Action irréversible.</span>{" "}
+              Le compte de <strong>{deleteDialog.user?.full_name}</strong> ({deleteDialog.user?.email}) sera{" "}
+              <strong>définitivement supprimé</strong> de Supabase Auth, des profils et des rôles.
+              Cette action ne peut pas être annulée.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2 justify-end mt-4">
+            <Button variant="outline" onClick={() => setDeleteDialog({ open: false, user: null })}>
+              Annuler
+            </Button>
+            <Button variant="destructive" disabled={actionLoading}
+              onClick={() => deleteDialog.user && handleDeleteUser(deleteDialog.user)}>
+              {actionLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
+              Supprimer définitivement
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

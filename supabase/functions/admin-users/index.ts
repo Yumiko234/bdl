@@ -161,6 +161,23 @@ serve(async (req) => {
         return json({ success: true });
       }
 
+      // ── Supprimer définitivement ──────────────────────────────────────────
+      case "delete_user": {
+        if (!userId) throw new Error("userId manquant");
+        if (userId === user.id) {
+          throw new Error("Vous ne pouvez pas supprimer votre propre compte.");
+        }
+
+        // Supprime les données liées avant auth.users (pas de cascade garantie)
+        await supabaseAdmin.from("user_roles").delete().eq("user_id", userId);
+        await supabaseAdmin.from("profiles").delete().eq("id", userId);
+
+        const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
+        if (deleteError) throw deleteError;
+
+        return json({ success: true });
+      }
+
       default:
         throw new Error(`Action inconnue : ${action}`);
     }

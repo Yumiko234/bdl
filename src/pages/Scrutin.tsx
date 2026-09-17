@@ -140,11 +140,19 @@ const Scrutin = () => {
       const votingRoles = [
         "bdl_member",
         "communication_manager",
+        "communication_manager2",
         "secretary_general",
+        "secretary_general2",
         "vice_president",
+        "vice_presidente",
+        "vie_scolaire",
       ];
       setCanVote(roles.some((r) => votingRoles.includes(r)));
-      setIsPresident(roles.includes("president") || roles.includes("administrator"));
+      setIsPresident(
+        roles.includes("president") ||
+        roles.includes("presidente") ||
+        roles.includes("administrator")
+      );
     }
   };
 

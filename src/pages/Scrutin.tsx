@@ -200,10 +200,7 @@ const Scrutin = () => {
     setOpenDetails(initialOpenDetails);
 
     await Promise.all((data || []).map((scrutin) => {
-      const tasks = [loadMyVote(scrutin.id)];
-      if (scrutin.status === "closed") tasks.push(loadVotes(scrutin.id));
-      else tasks.push(loadVoteCount(scrutin.id));
-      return Promise.all(tasks);
+      return Promise.all([loadMyVote(scrutin.id), loadVotes(scrutin.id)]);
     }));
 
     setLoading(false);
@@ -318,7 +315,7 @@ const Scrutin = () => {
     } else {
       toast.success("Vote enregistré avec succès");
       setMyVotes((prev) => ({ ...prev, [scrutinId]: { vote: voteValue } }));
-      setVoteCounts((prev) => ({ ...prev, [scrutinId]: (prev[scrutinId] ?? 0) + 1 }));
+      setVotes((prev) => ({ ...prev, [scrutinId]: [...(prev[scrutinId] ?? []), { user_id: user.id, vote: voteValue, profiles: { full_name: "", avatar_url: null, user_roles: [] } }] }));
     }
 
     closeConfirmDialog();
@@ -581,10 +578,10 @@ const Scrutin = () => {
                                   </span>
                                 </div>
                               )}
-                              {voteCounts[scrutin.id] !== undefined && (
+                              {votes[scrutin.id] !== undefined && (
                                 <div className="flex items-center gap-1 text-xs text-muted-foreground ml-auto">
                                   <Users className="h-3 w-3" />
-                                  <span>{voteCounts[scrutin.id]} votant{voteCounts[scrutin.id] !== 1 ? "s" : ""}</span>
+                                  <span>{votes[scrutin.id].length} votant{votes[scrutin.id].length !== 1 ? "s" : ""}</span>
                                 </div>
                               )}
                             </div>

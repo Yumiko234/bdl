@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Vote, ThumbsUp, ThumbsDown, Minus, ChevronDown, ChevronUp, EyeOff, Search, ChevronLeft, ChevronRight, Users } from "lucide-react";
+import { Vote, ThumbsUp, ThumbsDown, Minus, ChevronDown, ChevronUp, EyeOff, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
@@ -68,7 +68,6 @@ const Scrutin = () => {
   const [scrutins, setScrutins] = useState<Scrutin[]>([]);
   const [votes, setVotes] = useState<Record<string, VoteData[]>>({});
   const [myVotes, setMyVotes] = useState<Record<string, MyVote>>({});
-  const [voteCounts, setVoteCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
 
   const [canVote, setCanVote] = useState(false);
@@ -576,22 +575,12 @@ const Scrutin = () => {
                             </div>
                           )}
 
-                          {scrutin.status === "open" && (
-                            <div className="flex items-center justify-between pt-2 flex-wrap gap-2">
-                              {myVotes[scrutin.id] && (
-                                <div className="text-sm text-muted-foreground">
-                                  Votre vote :{" "}
-                                  <span className="font-semibold">
-                                    {getVoteLabel(myVotes[scrutin.id].vote)}
-                                  </span>
-                                </div>
-                              )}
-                              {votes[scrutin.id] !== undefined && (
-                                <div className="flex items-center gap-1 text-xs text-muted-foreground ml-auto">
-                                  <Users className="h-3 w-3" />
-                                  <span>{votes[scrutin.id].length} votant{votes[scrutin.id].length !== 1 ? "s" : ""}</span>
-                                </div>
-                              )}
+                          {scrutin.status === "open" && myVotes[scrutin.id] && (
+                            <div className="text-sm text-muted-foreground pt-2">
+                              Votre vote :{" "}
+                              <span className="font-semibold">
+                                {getVoteLabel(myVotes[scrutin.id].vote)}
+                              </span>
                             </div>
                           )}
 

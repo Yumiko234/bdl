@@ -7,6 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ProfilePhotoUpload } from "@/components/ProfilePhotoUpload";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,10 +25,28 @@ import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 
 interface UserProfile {
   full_name: string;
+  first_name: string;
+  last_name: string;
+  class_name: string | null;
   email: string;
   avatar_url: string | null;
   roles: string[];
 }
+
+const CLASS_OPTIONS = [
+  {
+    label: "Seconde",
+    values: Array.from({ length: 8 }, (_, i) => `Seconde ${i + 1}`),
+  },
+  {
+    label: "Première",
+    values: Array.from({ length: 6 }, (_, i) => `Première ${i + 1}`),
+  },
+  {
+    label: "Terminale",
+    values: Array.from({ length: 6 }, (_, i) => `Terminale ${i + 1}`),
+  },
+];
 
 const Profile = () => {
   const { user, loading: authLoading } = useAuth();
@@ -30,7 +57,9 @@ const Profile = () => {
   const [saving, setSaving] = useState(false);
 
   const [formData, setFormData] = useState({
-    full_name: "",
+    first_name: "",
+    last_name: "",
+    class_name: "",
     email: ""
   });
 
@@ -56,7 +85,7 @@ const Profile = () => {
     try {
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
-        .select("full_name, email, avatar_url")
+        .select("full_name, first_name, last_name, class_name, email, avatar_url")
         .eq("id", user.id)
         .maybeSingle();
 
@@ -76,7 +105,9 @@ const Profile = () => {
 
       setProfile(userData);
       setFormData({
-        full_name: userData.full_name,
+        first_name: userData.first_name || "",
+        last_name: userData.last_name || "",
+        class_name: userData.class_name || "",
         email: userData.email
       });
     } catch (error) {
@@ -97,7 +128,10 @@ const Profile = () => {
       const { error } = await supabase
         .from("profiles")
         .update({
-          full_name: formData.full_name,
+          first_name: formData.first_name,
+          // Le nom de famille est toujours stocké en majuscules
+          last_name: formData.last_name.toUpperCase(),
+          class_name: formData.class_name,
           email: formData.email
         })
         .eq("id", user.id);
@@ -258,13 +292,48 @@ const Profile = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label>Nom complet</Label>
+                    <Label>Prénom</Label>
                     <Input
-                      value={formData.full_name}
+                      value={formData.first_name}
                       onChange={(e) =>
-                        setFormData({ ...formData, full_name: e.target.value })
+                        setFormData({ ...formData, first_name: e.target.value })
                       }
                     />
+                  </div>
+
+                  <div>
+                    <Label>Nom de famille</Label>
+                    <Input
+                      value={formData.last_name}
+                      className="uppercase"
+                      onChange={(e) =>
+                        setFormData({ ...formData, last_name: e.target.value.toUpperCase() })
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Classe</Label>
+                    <Select
+                      value={formData.class_name}
+                      onValueChange={(value) => setFormData({ ...formData, class_name: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionnez votre classe" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CLASS_OPTIONS.map((group) => (
+                          <SelectGroup key={group.label}>
+                            <SelectLabel>{group.label}</SelectLabel>
+                            {group.values.map((value) => (
+                              <SelectItem key={value} value={value}>
+                                {value}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div>

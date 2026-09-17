@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-const LAST_UPDATED = "8 août 2026"; // [À COMPLÉTER] mettre à jour à chaque modification
+const LAST_UPDATED = "16 septembre 2026"; // [À COMPLÉTER] mettre à jour à chaque modification
 
 const TOC: LegalTocEntry[] = [
   { id: "edition", label: "Édition du site" },
@@ -80,7 +80,7 @@ const MentionsLegales = () => {
           responsabilité.
         </p>
 
-<div className="rounded-lg border border-border bg-muted/30 p-5 space-y-2">
+        <div className="rounded-lg border border-border bg-muted/30 p-5 space-y-2">
           <p>
             <strong>Directrice de publication :</strong>{" "}
          Elodie ROTH
@@ -112,6 +112,8 @@ const MentionsLegales = () => {
           >
             Profil LinkedIn
           </a>
+
+          <p className="font-semibold text-foreground mt-6">Maël Vicq</p>
         </div>
       </LegalSection>
 

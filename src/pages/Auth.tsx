@@ -7,6 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Shield, Lock, UserPlus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,13 +23,30 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 
+const CLASS_OPTIONS = [
+  {
+    label: "Seconde",
+    values: Array.from({ length: 8 }, (_, i) => `Seconde ${i + 1}`),
+  },
+  {
+    label: "Première",
+    values: Array.from({ length: 6 }, (_, i) => `Première ${i + 1}`),
+  },
+  {
+    label: "Terminale",
+    values: Array.from({ length: 6 }, (_, i) => `Terminale ${i + 1}`),
+  },
+];
+
 const Auth = () => {
   const [loginCredentials, setLoginCredentials] = useState({ email: "", password: "" });
   const [signupCredentials, setSignupCredentials] = useState({ 
     email: "", 
     password: "", 
     confirmPassword: "",
-    fullName: ""
+    firstName: "",
+    lastName: "",
+    className: ""
   });
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   
@@ -55,7 +81,18 @@ const Auth = () => {
       return;
     }
 
-    await signUp(signupCredentials.email, signupCredentials.password, signupCredentials.fullName);
+    if (!signupCredentials.className) {
+      toast.error("Veuillez sélectionner votre classe.");
+      return;
+    }
+
+    await signUp(
+      signupCredentials.email,
+      signupCredentials.password,
+      signupCredentials.firstName,
+      signupCredentials.lastName,
+      signupCredentials.className
+    );
   };
 
   const handleForgotPassword = async () => {
@@ -171,14 +208,56 @@ const Auth = () => {
 
                         <form onSubmit={handleSignup} className="space-y-4">
                           <div className="space-y-2">
-                            <Label htmlFor="signup-name">Nom complet</Label>
+                            <Label htmlFor="signup-firstname">Prénom</Label>
                             <Input
-                              id="signup-name"
+                              id="signup-firstname"
                               required
-                              value={signupCredentials.fullName}
-                              onChange={(e) => setSignupCredentials({ ...signupCredentials, fullName: e.target.value })}
-                              placeholder="Votre Prénom et Nom complet"
+                              value={signupCredentials.firstName}
+                              onChange={(e) => setSignupCredentials({ ...signupCredentials, firstName: e.target.value })}
+                              placeholder="Votre prénom"
                             />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="signup-lastname">Nom de famille</Label>
+                            <Input
+                              id="signup-lastname"
+                              required
+                              value={signupCredentials.lastName}
+                              onChange={(e) =>
+                                setSignupCredentials({
+                                  ...signupCredentials,
+                                  // Le nom de famille est toujours affiché/saisi en majuscules
+                                  lastName: e.target.value.toUpperCase(),
+                                })
+                              }
+                              placeholder="VOTRE NOM DE FAMILLE"
+                              className="uppercase"
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label htmlFor="signup-class">Classe</Label>
+                            <Select
+                              value={signupCredentials.className}
+                              onValueChange={(value) => setSignupCredentials({ ...signupCredentials, className: value })}
+                            >
+                              <SelectTrigger id="signup-class">
+                                <SelectValue placeholder="Sélectionnez votre classe" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {CLASS_OPTIONS.map((group) => (
+                                  <SelectGroup key={group.label}>
+                                    <SelectLabel>{group.label}</SelectLabel>
+                                    {group.values.map((value) => (
+                                      <SelectItem key={value} value={value}>
+                                        {value}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectGroup>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           </div>
 
                           <div className="space-y-2">

@@ -9,7 +9,13 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>;
+  signUp: (
+    email: string,
+    password: string,
+    firstName: string,
+    lastName: string,
+    className: string
+  ) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   hasRole: (role: string) => Promise<boolean>;
 }
@@ -57,16 +63,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return { error };
   };
 
-  const signUp = async (email: string, password: string, fullName: string) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    firstName: string,
+    lastName: string,
+    className: string
+  ) => {
     const redirectUrl = `${window.location.origin}/`;
-    
+
+    // Le nom de famille est toujours stocké en majuscules
+    const normalizedLastName = lastName.trim().toUpperCase();
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: redirectUrl,
         data: {
-          full_name: fullName,
+          first_name: firstName.trim(),
+          last_name: normalizedLastName,
+          // Conservé pour compatibilité avec le code existant qui lit full_name
+          full_name: `${firstName.trim()} ${normalizedLastName}`.trim(),
+          class_name: className,
         }
       }
     });

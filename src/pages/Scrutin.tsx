@@ -129,30 +129,39 @@ const Scrutin = () => {
 
   const checkVotingRights = async () => {
     if (!user) return;
-    const { data } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id);
 
-    if (data) {
-      const roles = data.map((r) => r.role);
-      const votingRoles = [
-        "bdl_member",
-        "communication_manager",
-        "communication_manager2",
-        "secretary_general",
-        "secretary_general2",
-        "vice_president",
-        "vice_presidente",
-        "vie_scolaire",
-      ];
-      setCanVote(roles.some((r) => votingRoles.includes(r)));
-      setIsPresident(
-        roles.includes("president") ||
-        roles.includes("presidente") ||
-        roles.includes("administrator")
-      );
+    const [{ data: rolesData }, { data: bdlMember }] = await Promise.all([
+      supabase.from("user_roles").select("role").eq("user_id", user.id),
+      supabase.from("bdl_members").select("id").eq("user_id", user.id).maybeSingle(),
+    ]);
+
+    const roles = (rolesData ?? []).map((r) => r.role);
+
+    const isPresidentRole =
+      roles.includes("president") ||
+      roles.includes("presidente") ||
+      roles.includes("administrator");
+
+    setIsPresident(isPresidentRole);
+
+    if (isPresidentRole) {
+      setCanVote(false);
+      return;
     }
+
+    const votingRoles = [
+      "bdl_member",
+      "communication_manager",
+      "communication_manager2",
+      "secretary_general",
+      "secretary_general2",
+      "vice_president",
+      "vice_presidente",
+      "vie_scolaire",
+    ];
+
+    // Peut voter si rôle BDL OU présent dans bdl_members avec un compte lié
+    setCanVote(roles.some((r) => votingRoles.includes(r)) || !!bdlMember);
   };
 
   const loadScrutins = async () => {

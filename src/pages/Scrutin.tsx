@@ -593,6 +593,34 @@ const Scrutin = () => {
                             </div>
                           )}
 
+                          {scrutin.status === "open" && isPresident && votes[scrutin.id] && votes[scrutin.id].length > 0 && (() => {
+                            const v = votes[scrutin.id];
+                            const pour = v.filter((x) => x.vote === "pour").length;
+                            const contre = v.filter((x) => x.vote === "contre").length;
+                            const abstention = v.filter((x) => x.vote === "abstention").length;
+                            const total = v.length;
+                            return (
+                              <div className="pt-4 border-t space-y-2">
+                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                                  <EyeOff className="h-3 w-3" /> Résultats provisoires — admin uniquement
+                                </p>
+                                <div className="grid grid-cols-4 gap-3 p-3 bg-muted/20 rounded-lg border text-center">
+                                  {[
+                                    { label: "Votants", value: total, color: "" },
+                                    { label: "Pour", value: pour, color: "text-green-600" },
+                                    { label: "Contre", value: contre, color: "text-red-600" },
+                                    { label: "Abstention", value: abstention, color: "" },
+                                  ].map(({ label, value, color }) => (
+                                    <div key={label} className="flex flex-col">
+                                      <span className={`text-xs text-muted-foreground uppercase font-medium ${color}`}>{label}</span>
+                                      <span className={`text-xl font-bold ${color}`}>{value}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })()}
+
                           {scrutin.status === "closed" && votes[scrutin.id] && (() => {
                             const currentVotes = votes[scrutin.id];
                             const pour = currentVotes.filter((v) => v.vote === "pour").length;

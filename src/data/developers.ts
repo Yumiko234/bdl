@@ -56,7 +56,7 @@ export const developers: Developer[] = [
     skillsLabel: "Droit",
     stack: [
       { name: "Diplomatie", level: 100 },
-      { name: "Droi constit", level: 85 },
+      { name: "Droit constit", level: 85 },
       { name: "Institutions judiciaires", level: 88 },
       { name: "Eco po", level: 5 },
     ],

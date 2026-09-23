@@ -8,10 +8,7 @@ import DOMPurify from "dompurify";
 export const sanitizeHtml = (dirty: string | null | undefined): string => {
   if (!dirty) return "";
   const clean = DOMPurify.sanitize(dirty, { USE_PROFILES: { html: true } });
-  // Retire les couleurs inline pour que le dark mode (prose-invert) fonctionne
-  return clean
-    .replace(/\bcolor\s*:[^;}"']{0,120};?/gi, "")
-    .replace(/\bbackground-color\s*:[^;}"']{0,120};?/gi, "");
+  return clean;
 };
 
 /** Prêt à passer à `dangerouslySetInnerHTML`. */

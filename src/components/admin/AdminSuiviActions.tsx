@@ -216,7 +216,7 @@ export const SuiviActionsManagement = () => {
 
   const loadActions = async () => {
     const { data, error } = await supabase
-      .from("bdl_actions" as any)
+      .from("bdl_actions")
       .select("*")
       .order("created_at", { ascending: false });
     if (!error && data) setActions(data as unknown as Action[]);
@@ -224,7 +224,7 @@ export const SuiviActionsManagement = () => {
 
   const loadNotes = async () => {
     const { data, error } = await supabase
-      .from("bdl_member_notes" as any)
+      .from("bdl_member_notes")
       .select("*, profiles!bdl_member_notes_author_id_fkey(full_name)")
       .order("created_at", { ascending: false });
     if (!error && data) {
@@ -238,7 +238,7 @@ export const SuiviActionsManagement = () => {
 
   const loadMeetings = async () => {
     const { data, error } = await supabase
-      .from("bdl_meetings" as any)
+      .from("bdl_meetings")
       .select("*")
       .order("meeting_date", { ascending: false });
     if (!error && data) setMeetings(data as unknown as Meeting[]);
@@ -246,7 +246,7 @@ export const SuiviActionsManagement = () => {
 
   const loadAttendance = async () => {
     const { data, error } = await supabase
-      .from("bdl_meeting_attendance" as any)
+      .from("bdl_meeting_attendance")
       .select("id, meeting_id, member_id, status");
     if (!error && data) setAttendance(data as unknown as Attendance[]);
   };
@@ -344,9 +344,9 @@ export const SuiviActionsManagement = () => {
 
     let error: any;
     if (editingAction) {
-      ({ error } = await (supabase.from("bdl_actions" as any).update(payload).eq("id", editingAction.id)));
+      ({ error } = await (supabase.from("bdl_actions").update(payload).eq("id", editingAction.id)));
     } else {
-      ({ error } = await (supabase.from("bdl_actions" as any).insert(payload)));
+      ({ error } = await (supabase.from("bdl_actions").insert(payload)));
     }
 
     if (error) {
@@ -360,13 +360,13 @@ export const SuiviActionsManagement = () => {
   };
 
   const handleDeleteAction = async (id: string) => {
-    const { error } = await (supabase.from("bdl_actions" as any).delete().eq("id", id));
+    const { error } = await (supabase.from("bdl_actions").delete().eq("id", id));
     if (error) toast.error("Erreur suppression");
     else { toast.success("Action supprimée."); await loadActions(); }
   };
 
   const handleStatusChange = async (id: string, newStatus: Action["status"]) => {
-    const { error } = await (supabase.from("bdl_actions" as any).update({
+    const { error } = await (supabase.from("bdl_actions").update({
       status: newStatus,
       updated_at: new Date().toISOString(),
       completed_at: newStatus === "terminee" ? new Date().toISOString() : null,
@@ -379,7 +379,7 @@ export const SuiviActionsManagement = () => {
 
   const handleSaveNote = async (memberId: string) => {
     if (!noteForm.content.trim()) { toast.error("Note vide."); return; }
-    const { error } = await (supabase.from("bdl_member_notes" as any).insert({
+    const { error } = await (supabase.from("bdl_member_notes").insert({
       member_id: memberId,
       author_id: currentUser!.id,
       content: noteForm.content.trim(),
@@ -395,7 +395,7 @@ export const SuiviActionsManagement = () => {
   };
 
   const handleDeleteNote = async (id: string) => {
-    const { error } = await (supabase.from("bdl_member_notes" as any).delete().eq("id", id));
+    const { error } = await (supabase.from("bdl_member_notes").delete().eq("id", id));
     if (error) toast.error("Erreur suppression");
     else { toast.success("Note supprimée."); await loadNotes(); }
   };
@@ -412,7 +412,7 @@ export const SuiviActionsManagement = () => {
       toast.error("Titre et date requis.");
       return;
     }
-    const { data, error } = await (supabase.from("bdl_meetings" as any).insert({
+    const { data, error } = await (supabase.from("bdl_meetings").insert({
       title: meetingForm.title.trim(),
       meeting_date: meetingForm.meeting_date,
       description: meetingForm.description.trim() || null,
@@ -430,7 +430,7 @@ export const SuiviActionsManagement = () => {
   };
 
   const handleDeleteMeeting = async (id: string) => {
-    const { error } = await (supabase.from("bdl_meetings" as any).delete().eq("id", id));
+    const { error } = await (supabase.from("bdl_meetings").delete().eq("id", id));
     if (error) toast.error("Erreur suppression");
     else {
       toast.success("Réunion supprimée.");
@@ -450,7 +450,7 @@ export const SuiviActionsManagement = () => {
       setAttendance((prev) => [...prev, { id: `temp-${meetingId}-${memberId}`, meeting_id: meetingId, member_id: memberId, status }]);
     }
 
-    const { error } = await (supabase.from("bdl_meeting_attendance" as any).upsert(
+    const { error } = await (supabase.from("bdl_meeting_attendance").upsert(
       {
         meeting_id: meetingId,
         member_id: memberId,

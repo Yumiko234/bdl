@@ -11,7 +11,6 @@ import logoBdl from "@/assets/logo-bdl.jpeg";
 import GlobalBanner from "./GlobalBanner";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-
 const Navigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -31,7 +30,7 @@ const Navigation = () => {
   const checkUnreadTickets = async () => {
     if (!user) return;
     const { data: tickets } = await supabase
-      .from("support_tickets" as any)
+      .from("support_tickets")
       .select("id")
       .eq("requester_user_id", user.id);
     if (!tickets?.length) { setUnreadTickets(0); return; }
@@ -39,7 +38,7 @@ const Navigation = () => {
       (tickets as { id: string }[]).map(async ({ id }) => {
         const lastSeen = (() => { try { return localStorage.getItem(`ticket_seen_${id}`) || "1970-01-01T00:00:00Z"; } catch { return "1970-01-01T00:00:00Z"; } })();
         const { count } = await supabase
-          .from("support_messages" as any)
+          .from("support_messages")
           .select("id", { count: "exact", head: true })
           .eq("ticket_id", id)
           .eq("is_staff", true)

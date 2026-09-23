@@ -169,7 +169,7 @@ export default function Events() {
     try {
       const [eventsRes, calRes] = await Promise.all([
         supabase.from("events").select("*"),
-        supabase.from("calendar_events" as any).select("*"),
+        supabase.from("calendar_events").select("*"),
       ]);
       if (eventsRes.error) throw eventsRes.error;
       const evts: Event[] = (eventsRes.data || []).map((e: any) => ({ ...e, _key: `ev-${e.id}`, _source: "event" as const }));

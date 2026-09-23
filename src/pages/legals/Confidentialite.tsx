@@ -93,8 +93,8 @@ const Confidentialite = () => {
             </TableRow>
             <TableRow>
               <TableCell className="font-medium text-foreground">Données de profil</TableCell>
-              <TableCell>Photo de profil, informations complémentaires</TableCell>
-              <TableCell>Utilisation de l'espace membre</TableCell>
+              <TableCell>Photo de profil, classe scolaire, informations complémentaires</TableCell>
+              <TableCell>Inscription et utilisation de l'espace membre</TableCell>
             </TableRow>
             <TableRow>
               <TableCell className="font-medium text-foreground">Données de participation</TableCell>
@@ -196,7 +196,7 @@ const Confidentialite = () => {
                 au Délégué à la Protection des Données, Gestionnaire du Site, actuellement Alexandre LEJAL ; 
             </li>
           <li>
-            aux membres habilités du BDL disposant d'un accès exévutig
+            aux membres habilités du BDL disposant d'un accès exécutif
             (gestion de l'Intranet, des scrutins, des sondages, du support) ;
           </li>
           <li>
@@ -277,7 +277,7 @@ const Confidentialite = () => {
             </TableRow>
             <TableRow>
               <TableCell>Compte inactif</TableCell>
-              <TableCell>Suppression après deux (2) d'inactivité</TableCell>
+              <TableCell>Suppression après deux (2) ans d'inactivité</TableCell>
             </TableRow>
             <TableRow>
               <TableCell>Résultats des scrutins et sondages</TableCell>

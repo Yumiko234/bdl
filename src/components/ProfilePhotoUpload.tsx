@@ -176,7 +176,7 @@ export const ProfilePhotoUpload = ({
         const path = `avatars/${userId}-${Date.now()}.jpg`;
         if (avatarUrl) {
           const old = avatarUrl.split("/avatars/").pop();
-          if (old) await supabase.storage.from("avatars").remove([`avatars/${old}`]);
+          if (old) await supabase.storage.from("avatars").remove([old]);
         }
         const { error: upErr } = await supabase.storage
           .from("avatars")

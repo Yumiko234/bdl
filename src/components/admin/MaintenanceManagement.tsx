@@ -65,7 +65,7 @@ export const MaintenanceManagement = () => {
   const loadConfig = async () => {
     setLoading(true);
     const { data, error } = await supabase
-      .from("maintenance_mode" as any)
+      .from("maintenance_mode")
       .select("*")
       .limit(1)
       .maybeSingle();
@@ -120,10 +120,10 @@ export const MaintenanceManagement = () => {
     // Si aucune ligne de config n'existe encore, on la crée.
     const { error } = config
       ? await supabase
-          .from("maintenance_mode" as any)
+          .from("maintenance_mode")
           .update(payload)
           .eq("id", config.id)
-      : await supabase.from("maintenance_mode" as any).insert(payload);
+      : await supabase.from("maintenance_mode").insert(payload);
 
     if (error) {
       toast.error("Erreur lors de la sauvegarde");

@@ -74,9 +74,9 @@ const Actualites = () => {
         .order("published_at", { ascending: false });
 
       if (error) {
-        console.error("Error fetching news:", error);
+        toast.error("Erreur lors du chargement des actualités");
       } else {
-        setNews(data as unknown as NewsArticle[]);
+        setNews((data ?? []) as NewsArticle[]);
       }
       setLoading(false);
     };
@@ -191,6 +191,9 @@ const Actualites = () => {
                         {item.is_important && (
                           <Badge className="bg-accent text-secondary">Important</Badge>
                         )}
+                        {(Date.now() - new Date(item.published_at).getTime()) < 7 * 24 * 60 * 60 * 1000 && (
+                          <Badge className="bg-green-600 text-white">Nouveau</Badge>
+                        )}
                       </div>
 
                       <h3 className="text-2xl font-bold">{item.title}</h3>
@@ -204,8 +207,8 @@ const Actualites = () => {
                           <div className="flex items-center gap-3">
                             <Avatar className="h-10 w-10">
                               <AvatarImage src={item.author_avatar || undefined} />
-                              <AvatarFallback>
-                                {item.author_name.charAt(0).toUpperCase()}
+                              <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
+                                {item.author_name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)}
                               </AvatarFallback>
                             </Avatar>
                             <div>

@@ -45,14 +45,16 @@ const Contact = () => {
   }, []);
 
   const loadContactInfos = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('contact_info')
       .select('section_key, title, content')
       .order('display_order');
 
-    if (data) {
-      setContactInfos(data);
+    if (error) {
+      console.error("Erreur chargement infos contact", error);
+      return;
     }
+    if (data) setContactInfos(data);
   };
 
   const getContactInfo = (key: string) => {
@@ -61,11 +63,20 @@ const Contact = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name || !formData.email || !formData.subject || !formData.type || !formData.message) {
       toast.error("Veuillez remplir tous les champs");
       return;
     }
+
+    try {
+      const last = localStorage.getItem("contact_last_submit");
+      if (last && Date.now() - parseInt(last) < 30 * 60 * 1000) {
+        const remaining = Math.ceil((30 * 60 * 1000 - (Date.now() - parseInt(last))) / 60000);
+        toast.error(`Veuillez attendre encore ${remaining} min avant de renvoyer un message.`);
+        return;
+      }
+    } catch {}
 
     setLoading(true);
 
@@ -75,7 +86,7 @@ const Contact = () => {
     const ticketType = formData.type === "audience" ? "audience" : "support";
 
     const { error } = await supabase
-      .from('support_tickets' as any)
+      .from('support_tickets')
       .insert({
         requester_user_id: user?.id ?? null,
         requester_name: formData.name,
@@ -94,6 +105,7 @@ const Contact = () => {
     } else {
       toast.success("Votre message a été envoyé avec succès. Le BDL vous répondra dans les plus brefs délais.");
       setFormData({ name: "", email: "", subject: "", type: "", message: "" });
+      try { localStorage.setItem("contact_last_submit", Date.now().toString()); } catch {}
     }
   };
 

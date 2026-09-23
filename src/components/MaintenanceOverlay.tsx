@@ -37,13 +37,14 @@ export const MaintenanceOverlay = ({ children }: MaintenanceOverlayProps) => {
   }, [user]);
 
   const loadConfig = async () => {
-    const { data } = await supabase
-      .from("maintenance_mode" as any)
+    const { data, error } = await supabase
+      .from("maintenance_mode")
       .select("is_active, message, submessage, estimated_end, affected_paths")
       .limit(1)
       .maybeSingle();
 
-    if (data) setConfig(data as unknown as MaintenanceConfig);
+    if (error) console.error("Erreur chargement config maintenance", error);
+    else if (data) setConfig(data as unknown as MaintenanceConfig);
     setLoading(false);
   };
 
@@ -57,9 +58,15 @@ export const MaintenanceOverlay = ({ children }: MaintenanceOverlayProps) => {
       const staffRoles = [
         "administrator",
         "president",
+        "presidente",
         "vice_president",
+        "vice_presidente",
         "secretary_general",
+        "secretary_general2",
         "communication_manager",
+        "communication_manager2",
+        "bdl_member",
+        "vie_scolaire",
       ];
       setIsBDLStaff(data.some((r: any) => staffRoles.includes(r.role)));
     }

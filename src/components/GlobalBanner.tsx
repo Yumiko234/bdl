@@ -49,7 +49,7 @@ const GlobalBanner = () => {
 
   const loadActiveBanner = async () => {
     const { data, error } = await supabase
-      .from("global_banners" as any)
+      .from("global_banners")
       .select("*")
       .eq("is_active", true)
       .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)

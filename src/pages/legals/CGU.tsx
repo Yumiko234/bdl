@@ -172,10 +172,13 @@ const CGU = () => {
           </li>
           <li>
             Certains scrutins peuvent être configurés en mode{" "}
-            <strong>secret</strong> : dans ce cas, le lien entre l'identité
-            de l'Utilisateur et son vote n'est pas conservé de façon à en
-            permettre la ré-identification, dans la limite des garanties
-            techniques mises en œuvre par le BDL.
+            <strong>secret</strong> : dans ce cas, le détail nominatif des
+            votes n'est pas affiché publiquement sur le Site. Les données
+            techniques nécessaires à la prévention du vote multiple (identifiant
+            de session) sont conservées en base de données sécurisée et
+            accessibles aux seuls administrateurs habilités, conformément
+            aux garanties décrites dans la{" "}
+            <Link to="/legal/confidentialite">Politique de confidentialité</Link>.
           </li>
           <li>
             Toute tentative de fraude, de vote multiple, d'usurpation

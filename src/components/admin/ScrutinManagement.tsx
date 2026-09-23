@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Vote, Plus, Trash2, Lock, Unlock, EyeOff } from "lucide-react";
+import { Vote, Plus, Trash2, Lock, Unlock, EyeOff, Download, Calendar } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,6 +30,7 @@ interface Scrutin {
   created_at: string;
   opened_at: string | null;
   closed_at: string | null;
+  ends_at: string | null;
 }
 
 interface VoteCount {
@@ -43,7 +44,8 @@ export const ScrutinManagement = () => {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    is_secret: true, // Secret par défaut
+    is_secret: true,
+    ends_at: "",
   });
   const [loading, setLoading] = useState(false);
   const [voteCounts, setVoteCounts] = useState<Record<string, VoteCount>>({});
@@ -64,10 +66,27 @@ export const ScrutinManagement = () => {
     }
 
     setScrutins(data || []);
-    
     if (data) {
-      for (const scrutin of data) {
-        await loadVoteCount(scrutin.id);
+      await Promise.all(data.map((s) => loadVoteCount(s.id)));
+      // Auto-close scrutins dont ends_at est dépassé
+      const expired = data.filter(
+        (s) => s.status === "open" && s.ends_at && new Date(s.ends_at) < new Date()
+      );
+      if (expired.length > 0) {
+        await Promise.all(
+          expired.map((s) =>
+            supabase
+              .from("scrutins")
+              .update({ status: "closed", closed_at: new Date().toISOString() })
+              .eq("id", s.id)
+          )
+        );
+        toast.info(`${expired.length} scrutin(s) clôturé(s) automatiquement.`);
+        const { data: refreshed } = await supabase
+          .from("scrutins")
+          .select("*")
+          .order("created_at", { ascending: false });
+        setScrutins(refreshed || []);
       }
     }
   };
@@ -109,6 +128,7 @@ export const ScrutinManagement = () => {
       title: formData.title,
       description: formData.description,
       is_secret: formData.is_secret,
+      ends_at: formData.ends_at ? new Date(formData.ends_at).toISOString() : null,
       created_by: user?.id,
       status: "closed",
     });
@@ -117,7 +137,7 @@ export const ScrutinManagement = () => {
       toast.error("Erreur lors de la création");
     } else {
       toast.success("Scrutin créé avec succès");
-      setFormData({ title: "", description: "", is_secret: true });
+      setFormData({ title: "", description: "", is_secret: true, ends_at: "" });
       loadScrutins();
     }
 
@@ -125,11 +145,13 @@ export const ScrutinManagement = () => {
   };
 
   const handleOpen = async (id: string) => {
+    const scrutin = scrutins.find((s) => s.id === id);
     const { error } = await supabase
       .from("scrutins")
-      .update({ 
-        status: "open", 
-        opened_at: new Date().toISOString() 
+      .update({
+        status: "open",
+        // Ne pas écraser opened_at si le scrutin a déjà été ouvert une fois
+        ...(!scrutin?.opened_at ? { opened_at: new Date().toISOString() } : {}),
       })
       .eq("id", id);
 
@@ -177,6 +199,41 @@ export const ScrutinManagement = () => {
     }
   };
 
+  const exportCSV = () => {
+    const rows = [
+      ["Titre", "Statut", "Secret", "Pour", "Contre", "Abstention", "Total", "Résultat", "Créé le", "Clos le"],
+      ...scrutins.map((s) => {
+        const c = voteCounts[s.id];
+        const pour = c?.pour ?? 0;
+        const contre = c?.contre ?? 0;
+        const abstention = c?.abstention ?? 0;
+        const total = pour + contre + abstention;
+        const exprimes = pour + contre;
+        const adopte = exprimes > 0 ? (pour >= Math.floor(exprimes / 2) + 1 ? "Adopté" : "Rejeté") : "";
+        return [
+          s.title,
+          s.status === "open" ? "Ouvert" : "Fermé",
+          s.is_secret ? "Oui" : "Non",
+          pour,
+          contre,
+          abstention,
+          total,
+          adopte,
+          new Date(s.created_at).toLocaleDateString("fr-FR"),
+          s.closed_at ? new Date(s.closed_at).toLocaleDateString("fr-FR") : "",
+        ];
+      }),
+    ];
+    const csv = rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";")).join("\n");
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `scrutins_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const handleDelete = async (id: string) => {
     const { error } = await supabase
       .from("scrutins")
@@ -194,10 +251,18 @@ export const ScrutinManagement = () => {
   return (
     <Card className="shadow-card">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Vote className="h-6 w-6" />
-          Gestion des Scrutins
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Vote className="h-6 w-6" />
+            Gestion des Scrutins
+          </CardTitle>
+          {scrutins.length > 0 && (
+            <Button size="sm" variant="outline" onClick={exportCSV}>
+              <Download className="h-4 w-4 mr-2" />
+              Export CSV
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="border rounded-lg p-6 space-y-4 bg-muted/30">
@@ -251,6 +316,22 @@ export const ScrutinManagement = () => {
               </div>
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="ends_at" className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                Date de clôture automatique (optionnel)
+              </Label>
+              <Input
+                id="ends_at"
+                type="datetime-local"
+                value={formData.ends_at}
+                onChange={(e) => setFormData({ ...formData, ends_at: e.target.value })}
+              />
+              <p className="text-xs text-muted-foreground">
+                Le scrutin se fermera automatiquement à cette date (via cron Supabase).
+              </p>
+            </div>
+
             <Button onClick={handleCreate} disabled={loading}>
               <Plus className="h-4 w-4 mr-2" />
               Créer le scrutin
@@ -288,6 +369,12 @@ export const ScrutinManagement = () => {
                       <p className="text-sm text-muted-foreground">
                         {scrutin.description}
                       </p>
+                      {scrutin.ends_at && scrutin.status === "open" && (
+                        <p className="text-xs text-amber-600 flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          Clôture auto : {new Date(scrutin.ends_at).toLocaleString("fr-FR")}
+                        </p>
+                      )}
                       
                       {voteCounts[scrutin.id] && (() => {
                         const counts = voteCounts[scrutin.id];

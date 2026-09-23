@@ -98,10 +98,9 @@ export const UserManagement = () => {
 
   const loadCurrentUserRole = async () => {
     try {
-      const res = await supabase.auth.getUser();
-      const user = (res as any)?.data?.user ?? null;
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-      if (!user) {
+      if (userError || !user) {
         setCurrentUserPrimaryRole("student");
         return;
       }
@@ -189,9 +188,15 @@ export const UserManagement = () => {
 
     setLoading(true);
     try {
+      const generatePassword = () => {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%';
+        return Array.from(crypto.getRandomValues(new Uint8Array(16)))
+          .map((b) => chars[b % chars.length])
+          .join('');
+      };
       const { data: signData, error: signError } = await supabase.auth.signUp({
         email: newUser.email,
-        password: newUser.password || Math.random().toString(36).slice(2, 10),
+        password: newUser.password || generatePassword(),
         options: {
           data: { full_name: newUser.fullName }
         }
@@ -214,7 +219,7 @@ export const UserManagement = () => {
         .from("profiles")
         .insert([{ id: createdUserId, full_name: newUser.fullName, email: newUser.email }]);
 
-      if (profErr) console.debug("profiles insert error", profErr);
+      if (profErr) toast.error("Utilisateur créé mais échec lors de la création du profil");
 
       const { error: roleErr } = await supabase
         .from("user_roles")

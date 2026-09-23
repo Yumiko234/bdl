@@ -75,7 +75,7 @@ export const AdminInternalNotes = () => {
   const loadNotes = async () => {
     setLoading(true);
     const { data, error } = await supabase
-      .from("bdl_internal_notes" as any)
+      .from("bdl_internal_notes")
       .select("id, title, content, author_id, is_pinned, created_at, updated_at")
       .order("is_pinned", { ascending: false })
       .order("created_at", { ascending: false });
@@ -140,7 +140,7 @@ export const AdminInternalNotes = () => {
 
     if (editingNote) {
       const { error } = await supabase
-        .from("bdl_internal_notes" as any)
+        .from("bdl_internal_notes")
         .update({
           title: form.title.trim(),
           content: form.content.trim(),
@@ -152,7 +152,7 @@ export const AdminInternalNotes = () => {
       if (error) toast.error("Erreur : " + error.message);
       else toast.success("Note mise à jour.");
     } else {
-      const { error } = await supabase.from("bdl_internal_notes" as any).insert({
+      const { error } = await supabase.from("bdl_internal_notes").insert({
         title: form.title.trim(),
         content: form.content.trim(),
         is_pinned: form.is_pinned,
@@ -170,7 +170,7 @@ export const AdminInternalNotes = () => {
 
   const handleTogglePin = async (note: InternalNote) => {
     const { error } = await supabase
-      .from("bdl_internal_notes" as any)
+      .from("bdl_internal_notes")
       .update({ is_pinned: !note.is_pinned })
       .eq("id", note.id);
     if (error) toast.error("Erreur : " + error.message);
@@ -178,7 +178,7 @@ export const AdminInternalNotes = () => {
   };
 
   const handleDelete = async (id: string) => {
-    const { error } = await supabase.from("bdl_internal_notes" as any).delete().eq("id", id);
+    const { error } = await supabase.from("bdl_internal_notes").delete().eq("id", id);
     if (error) toast.error("Erreur suppression");
     else { toast.success("Note supprimée."); await loadNotes(); }
   };

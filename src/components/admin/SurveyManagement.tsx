@@ -353,7 +353,9 @@ export const SurveyManagement = () => {
     setLoading(true);
     const {
       data: { user },
+      error: userError,
     } = await supabase.auth.getUser();
+    if (userError) { toast.error("Erreur d'authentification"); setLoading(false); return; }
 
     const { data, error } = await supabase
       .from("surveys")
@@ -603,14 +605,14 @@ export const SurveyManagement = () => {
   };
 
   const persistOrder = async () => {
-    for (let i = 0; i < questions.length; i++) {
-      if (questions[i].display_order !== i) {
-        await supabase
-          .from("survey_questions")
-          .update({ display_order: i })
-          .eq("id", questions[i].id);
-      }
-    }
+    const updates = questions
+      .map((q, i) => ({ id: q.id, newOrder: i, changed: q.display_order !== i }))
+      .filter((x) => x.changed);
+    await Promise.all(
+      updates.map(({ id, newOrder }) =>
+        supabase.from("survey_questions").update({ display_order: newOrder }).eq("id", id)
+      )
+    );
   };
 
   // ── render ──────────────────────────────────────────────────────────────────

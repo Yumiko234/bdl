@@ -71,6 +71,11 @@ const Auth = () => {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (signupCredentials.password.length < 12) {
+      toast.error("Le mot de passe doit contenir au moins 12 caractères");
+      return;
+    }
+
     if (signupCredentials.password !== signupCredentials.confirmPassword) {
       toast.error("Les mots de passe ne correspondent pas");
       return;
@@ -107,7 +112,7 @@ const Auth = () => {
       });
 
       if (error) throw error;
-      toast.success("Email de réinitialisation envoyé ! Vérifiez vos spams.");
+      toast.success("Email de réinitialisation envoyé ! Cliquez le lien depuis ce navigateur (pas un autre appareil). Vérifiez vos spams.");
     } catch (error: any) {
       toast.error(error.message || "Erreur lors de l'envoi de l'email");
     }

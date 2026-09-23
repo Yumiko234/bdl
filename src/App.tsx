@@ -8,6 +8,8 @@ import { Analytics } from "@vercel/analytics/react";
 import { Loader2 } from "lucide-react";
 
 import ScrollToTop from "./components/ScrollToTop";
+import NavigationProgress from "./components/NavigationProgress";
+import ScrollToTopButton from "./components/ScrollToTopButton";
 import ErrorBoundary from "./components/ErrorBoundary";
 
 // Chargement paresseux de chaque page — le bundle initial ne charge que ce qui est nécessaire
@@ -60,9 +62,12 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <NavigationProgress />
         <ScrollToTop />
-        <ErrorBoundary key={location.pathname}>
+        <ScrollToTopButton />
+        <ErrorBoundary key={location.pathname.split('/')[1]}>
           <Suspense fallback={<PageLoader />}>
+            <div key={location.pathname.split('/')[1]} className="page-fade-in">
             <Routes>
               <Route path="/" element={<Index />} />
 
@@ -75,7 +80,7 @@ const App = () => {
               <Route path="/developpers/:slug" element={<DeveloperProfile />} />
 
               {/* Admin : /admin redirige vers la section par défaut */}
-              <Route path="/admin" element={<Navigate to="/admin/news" replace />} />
+              <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
               <Route path="/admin/:section" element={<Admin />} />
 
               <Route path="/etablissement" element={<Etablissement />} />
@@ -104,6 +109,7 @@ const App = () => {
               <Route path="/confirm" element={<Confirm />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </div>
           </Suspense>
         </ErrorBoundary>
 

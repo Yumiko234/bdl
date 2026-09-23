@@ -153,11 +153,16 @@ const Sondage = () => {
 
   // ── load questions ────────────────────────────────────────────────────────
   const loadQuestions = async (surveyId: string): Promise<Question[]> => {
-    const { data: qData } = await supabase
+    const { data: qData, error: qError } = await supabase
       .from("survey_questions")
       .select("*")
       .eq("survey_id", surveyId)
       .order("display_order");
+
+    if (qError) {
+      toast.error("Erreur lors du chargement des questions");
+      return [];
+    }
 
     const result: Question[] = await Promise.all(
       (qData || []).map(async (q: any) => {
@@ -179,46 +184,45 @@ const Sondage = () => {
 
   // ── load results for closed non-form surveys ──────────────────────────────
   const loadResults = async (surveyId: string, qs: Question[]) => {
-    const resultsData: ResultsData = {};
+    const entries = await Promise.all(
+      qs.map(async (question) => {
+        if (question.question_type === "qcm") {
+          const { data: qcmAnswers } = await supabase
+            .from("survey_answers")
+            .select("option_id")
+            .eq("question_id", question.id)
+            .not("option_id", "is", null);
 
-    for (const question of qs) {
-      if (question.question_type === "qcm") {
-        const { data: qcmAnswers } = await supabase
-          .from("survey_answers")
-          .select("option_id")
-          .eq("question_id", question.id)
-          .not("option_id", "is", null);
+          const optionCounts: Record<string, number> = {};
+          (qcmAnswers || []).forEach((ans: any) => {
+            if (ans.option_id) {
+              optionCounts[ans.option_id] = (optionCounts[ans.option_id] || 0) + 1;
+            }
+          });
 
-        const optionCounts: Record<string, number> = {};
-        (qcmAnswers || []).forEach((ans: any) => {
-          if (ans.option_id) {
-            optionCounts[ans.option_id] =
-              (optionCounts[ans.option_id] || 0) + 1;
-          }
-        });
+          return [question.id, {
+            type: "qcm" as const,
+            options: question.options.map((opt) => ({
+              name: opt.option_text,
+              value: optionCounts[opt.id] || 0,
+            })),
+          }] as const;
+        } else {
+          const { data: textAnswers } = await supabase
+            .from("survey_answers")
+            .select("text_answer")
+            .eq("question_id", question.id)
+            .not("text_answer", "is", null);
 
-        resultsData[question.id] = {
-          type: "qcm",
-          options: question.options.map((opt) => ({
-            name: opt.option_text,
-            value: optionCounts[opt.id] || 0,
-          })),
-        };
-      } else {
-        const { data: textAnswers } = await supabase
-          .from("survey_answers")
-          .select("text_answer")
-          .eq("question_id", question.id)
-          .not("text_answer", "is", null);
+          return [question.id, {
+            type: "text" as const,
+            answers: (textAnswers || []).map((a: any) => a.text_answer),
+          }] as const;
+        }
+      })
+    );
 
-        resultsData[question.id] = {
-          type: "text",
-          answers: (textAnswers || []).map((a: any) => a.text_answer),
-        };
-      }
-    }
-
-    setResults(resultsData);
+    setResults(Object.fromEntries(entries));
   };
 
   // ── check if respondent already answered (for limit_responses) ───────────

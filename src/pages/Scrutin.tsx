@@ -11,7 +11,8 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Vote, ThumbsUp, ThumbsDown, Minus, ChevronDown, ChevronUp, EyeOff, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Vote, ThumbsUp, ThumbsDown, Minus, ChevronDown, ChevronUp, EyeOff, Search, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Collapsible,
   CollapsibleContent,
@@ -34,6 +35,8 @@ interface Scrutin {
   status: "open" | "closed";
   is_secret: boolean;
   created_at: string;
+  opened_at: string | null;
+  closed_at: string | null;
 }
 
 interface VoteData {
@@ -110,6 +113,35 @@ const Scrutin = () => {
     loadScrutins();
   }, [currentPage, searchQuery]);
 
+  // Realtime : met à jour les résultats provisoires admin sans refresh
+  useEffect(() => {
+    if (!isPresident) return;
+
+    const channel = supabase
+      .channel("scrutin-votes-realtime")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "scrutin_votes" },
+        (payload) => {
+          const v = payload.new as { scrutin_id: string; user_id: string; vote: string };
+          setVotes((prev) => ({
+            ...prev,
+            [v.scrutin_id]: [
+              ...(prev[v.scrutin_id] ?? []),
+              {
+                user_id: v.user_id,
+                vote: v.vote as "pour" | "contre" | "abstention",
+                profiles: { full_name: "", avatar_url: null, user_roles: [] },
+              },
+            ],
+          }));
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [isPresident]);
+
   // La recherche ne se déclenche que quand searchQuery change (via Enter)
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
@@ -129,22 +161,44 @@ const Scrutin = () => {
 
   const checkVotingRights = async () => {
     if (!user) return;
-    const { data } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id);
 
-    if (data) {
-      const roles = data.map((r) => r.role);
-      const votingRoles = [
-        "bdl_member",
-        "communication_manager",
-        "secretary_general",
-        "vice_president",
-      ];
-      setCanVote(roles.some((r) => votingRoles.includes(r)));
-      setIsPresident(roles.includes("president") || roles.includes("administrator"));
+    const [rolesRes, bdlRes] = await Promise.all([
+      supabase.from("user_roles").select("role").eq("user_id", user.id),
+      supabase.from("bdl_members").select("id").eq("user_id", user.id).maybeSingle(),
+    ]);
+
+    if (rolesRes.error) { console.error("checkVotingRights roles", rolesRes.error); return; }
+
+    const rolesData = rolesRes.data;
+    const bdlMember = bdlRes.data;
+
+    const roles = (rolesData ?? []).map((r) => r.role);
+
+    const isPresidentRole =
+      roles.includes("president") ||
+      roles.includes("presidente") ||
+      roles.includes("administrator");
+
+    setIsPresident(isPresidentRole);
+
+    if (isPresidentRole) {
+      setCanVote(false);
+      return;
     }
+
+    const votingRoles = [
+      "bdl_member",
+      "communication_manager",
+      "communication_manager2",
+      "secretary_general",
+      "secretary_general2",
+      "vice_president",
+      "vice_presidente",
+      "vie_scolaire",
+    ];
+
+    // Peut voter si rôle BDL OU présent dans bdl_members avec un compte lié
+    setCanVote(roles.some((r) => votingRoles.includes(r)) || !!bdlMember);
   };
 
   const loadScrutins = async () => {
@@ -164,7 +218,12 @@ const Scrutin = () => {
       );
     }
 
-    const { count } = await countQuery;
+    const { count, error: countError } = await countQuery;
+    if (countError) {
+      toast.error("Erreur lors du chargement");
+      setLoading(false);
+      return;
+    }
     setTotalCount(count ?? 0);
 
     const from = (currentPage - 1) * PAGE_SIZE;
@@ -199,9 +258,7 @@ const Scrutin = () => {
     setOpenDetails(initialOpenDetails);
 
     await Promise.all((data || []).map((scrutin) => {
-      const tasks = [loadMyVote(scrutin.id)];
-      if (scrutin.status === "closed") tasks.push(loadVotes(scrutin.id));
-      return Promise.all(tasks);
+      return Promise.all([loadMyVote(scrutin.id), loadVotes(scrutin.id)]);
     }));
 
     setLoading(false);
@@ -306,6 +363,7 @@ const Scrutin = () => {
     } else {
       toast.success("Vote enregistré avec succès");
       setMyVotes((prev) => ({ ...prev, [scrutinId]: { vote: voteValue } }));
+      setVotes((prev) => ({ ...prev, [scrutinId]: [...(prev[scrutinId] ?? []), { user_id: user.id, vote: voteValue, profiles: { full_name: "", avatar_url: null, user_roles: [] } }] }));
     }
 
     closeConfirmDialog();
@@ -412,9 +470,29 @@ const Scrutin = () => {
     return (
       <div className="min-h-screen flex flex-col">
         <Navigation />
-        <div className="flex-1 flex items-center justify-center">
-          <p className="text-lg text-muted-foreground">Chargement...</p>
-        </div>
+        <section className="py-16 gradient-institutional text-white">
+          <div className="container mx-auto px-4 text-center space-y-4">
+            <Vote className="h-20 w-20 mx-auto" />
+            <h1 className="text-5xl font-bold">Scrutins BDL</h1>
+          </div>
+        </section>
+        <section className="py-16">
+          <div className="container mx-auto px-4 max-w-4xl space-y-6">
+            {[...Array(3)].map((_, i) => (
+              <Card key={i} className="shadow-card">
+                <CardContent className="p-6 space-y-3">
+                  <div className="flex gap-2">
+                    <Skeleton className="h-6 w-24 rounded-full" />
+                    <Skeleton className="h-6 w-16 rounded-full" />
+                  </div>
+                  <Skeleton className="h-8 w-2/3" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-4/5" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
         <Footer />
       </div>
     );
@@ -536,6 +614,20 @@ const Scrutin = () => {
                                 )}
                               </div>
                               <p className="text-muted-foreground">{scrutin.description}</p>
+                              <div className="flex flex-wrap gap-3 text-xs text-muted-foreground pt-1">
+                                {scrutin.opened_at && (
+                                  <span className="flex items-center gap-1">
+                                    <Calendar className="h-3 w-3" />
+                                    Ouvert le {new Date(scrutin.opened_at).toLocaleDateString("fr-FR")}
+                                  </span>
+                                )}
+                                {scrutin.closed_at && scrutin.status === "closed" && (
+                                  <span className="flex items-center gap-1">
+                                    <Calendar className="h-3 w-3" />
+                                    Clos le {new Date(scrutin.closed_at).toLocaleDateString("fr-FR")}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
 
@@ -566,6 +658,34 @@ const Scrutin = () => {
                               </span>
                             </div>
                           )}
+
+                          {scrutin.status === "open" && isPresident && votes[scrutin.id] && votes[scrutin.id].length > 0 && (() => {
+                            const v = votes[scrutin.id];
+                            const pour = v.filter((x) => x.vote === "pour").length;
+                            const contre = v.filter((x) => x.vote === "contre").length;
+                            const abstention = v.filter((x) => x.vote === "abstention").length;
+                            const total = v.length;
+                            return (
+                              <div className="pt-4 border-t space-y-2">
+                                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                                  <EyeOff className="h-3 w-3" /> Résultats provisoires — admin uniquement
+                                </p>
+                                <div className="grid grid-cols-4 gap-3 p-3 bg-muted/20 rounded-lg border text-center">
+                                  {[
+                                    { label: "Votants", value: total, color: "" },
+                                    { label: "Pour", value: pour, color: "text-green-600" },
+                                    { label: "Contre", value: contre, color: "text-red-600" },
+                                    { label: "Abstention", value: abstention, color: "" },
+                                  ].map(({ label, value, color }) => (
+                                    <div key={label} className="flex flex-col">
+                                      <span className={`text-xs text-muted-foreground uppercase font-medium ${color}`}>{label}</span>
+                                      <span className={`text-xl font-bold ${color}`}>{value}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })()}
 
                           {scrutin.status === "closed" && votes[scrutin.id] && (() => {
                             const currentVotes = votes[scrutin.id];

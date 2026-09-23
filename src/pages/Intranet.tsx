@@ -160,7 +160,7 @@ const Intranet = () => {
 
   const loadInternalNotes = async () => {
     const { data, error } = await supabase
-      .from("bdl_internal_notes" as any)
+      .from("bdl_internal_notes")
       .select("id, title, content, is_pinned, created_at, author_id")
       .order("is_pinned", { ascending: false })
       .order("created_at", { ascending: false })

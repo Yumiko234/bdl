@@ -113,12 +113,12 @@ export const BannerManagement = () => {
 
   const loadBanners = async () => {
     const { data, error } = await supabase
-      .from("global_banners" as any)
+      .from("global_banners")
       .select("*")
       .order("created_at", { ascending: false });
 
     if (!error && data) {
-      setBanners(data as unknown as Banner[]);
+      setBanners(data as Banner[]);
     } else if (error) {
       toast.error("Erreur lors du chargement des bandeaux");
     }
@@ -131,9 +131,10 @@ export const BannerManagement = () => {
     }
 
     setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError) { toast.error("Erreur d'authentification"); setLoading(false); return; }
 
-    const payload: any = {
+    const payload = {
       message: form.message,
       color: form.color,
       text_color: form.text_color,
@@ -148,14 +149,15 @@ export const BannerManagement = () => {
 
     // If activating this banner, deactivate all others first
     if (form.is_active) {
-      await supabase
-        .from("global_banners" as any)
+      const { error: deactivateError } = await supabase
+        .from("global_banners")
         .update({ is_active: false })
         .eq("is_active", true);
+      if (deactivateError) { toast.error("Erreur lors de la désactivation des autres bandeaux"); setLoading(false); return; }
     }
 
     const { error } = await supabase
-      .from("global_banners" as any)
+      .from("global_banners")
       .insert(payload);
 
     if (error) {
@@ -172,14 +174,15 @@ export const BannerManagement = () => {
   const handleToggleActive = async (banner: Banner) => {
     if (!banner.is_active) {
       // Activating: deactivate all others first
-      await supabase
-        .from("global_banners" as any)
+      const { error: deactivateError } = await supabase
+        .from("global_banners")
         .update({ is_active: false })
         .eq("is_active", true);
+      if (deactivateError) { toast.error("Erreur lors de la désactivation"); return; }
     }
 
     const { error } = await supabase
-      .from("global_banners" as any)
+      .from("global_banners")
       .update({ is_active: !banner.is_active })
       .eq("id", banner.id);
 
@@ -193,7 +196,7 @@ export const BannerManagement = () => {
 
   const handleDelete = async (id: string) => {
     const { error } = await supabase
-      .from("global_banners" as any)
+      .from("global_banners")
       .delete()
       .eq("id", id);
 

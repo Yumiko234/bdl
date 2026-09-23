@@ -131,13 +131,15 @@ export const DocumentManagement = () => {
     setUploading(false);
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string, fileUrl: string | null) => {
     if (!confirm("Êtes-vous sûr de vouloir supprimer ce document ?")) return;
 
-    const { error } = await supabase
-      .from("documents")
-      .delete()
-      .eq("id", id);
+    if (fileUrl?.includes("/storage/v1/object/public/documents/")) {
+      const filePath = fileUrl.split("/storage/v1/object/public/documents/")[1];
+      if (filePath) await supabase.storage.from("documents").remove([filePath]);
+    }
+
+    const { error } = await supabase.from("documents").delete().eq("id", id);
 
     if (error) {
       toast.error("Erreur lors de la suppression");
@@ -287,7 +289,7 @@ export const DocumentManagement = () => {
                     <Button
                       size="sm"
                       variant="destructive"
-                      onClick={() => handleDelete(doc.id)}
+                      onClick={() => handleDelete(doc.id, doc.file_url)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

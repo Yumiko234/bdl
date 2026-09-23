@@ -22,6 +22,14 @@ class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error("Erreur de rendu :", error, info);
+    // Chunk Vite/webpack périmé après un déploiement → rechargement forcé
+    if (
+      error.message?.includes("Failed to fetch dynamically imported module") ||
+      error.message?.includes("Importing a module script failed") ||
+      error.message?.includes("Loading chunk")
+    ) {
+      window.location.reload();
+    }
   }
 
   render() {

@@ -42,19 +42,18 @@ const ResetPassword = () => {
       setLoading(false);
     };
 
-    // 1) Nouveau format de lien : ?token_hash=...&type=recovery
-    //    (indépendant du navigateur/appareil, robuste aux pré-chargements de lien)
     const params = new URLSearchParams(window.location.search);
     const tokenHash = params.get("token_hash");
     const type = params.get("type");
+    const code = params.get("code");
 
-    if (tokenHash && type === "recovery") {
+    // 1) PKCE : ?code=... (format envoyé par les nouvelles versions de Supabase)
+    if (code) {
       supabase.auth
-        .verifyOtp({ type: "recovery", token_hash: tokenHash })
+        .exchangeCodeForSession(code)
         .then(({ error }) => {
           if (error) markInvalid();
           else {
-            // Nettoie l'URL pour éviter une reconsommation au rechargement
             window.history.replaceState({}, "", "/reset-password");
             markValid();
           }
@@ -62,21 +61,33 @@ const ResetPassword = () => {
       return () => clearTimeout(timeout);
     }
 
-    // 2) Ancien format : #access_token=... (flux implicite) ou ?code=... (PKCE)
-    //    supabase-js les traite automatiquement (detectSessionInUrl) et émet
-    //    PASSWORD_RECOVERY / SIGNED_IN.
+    // 2) OTP classique : ?token_hash=...&type=recovery
+    if (tokenHash && type === "recovery") {
+      supabase.auth
+        .verifyOtp({ type: "recovery", token_hash: tokenHash })
+        .then(({ error }) => {
+          if (error) markInvalid();
+          else {
+            window.history.replaceState({}, "", "/reset-password");
+            markValid();
+          }
+        });
+      return () => clearTimeout(timeout);
+    }
+
+    // 3) Ancien format implicite : #access_token=... géré automatiquement par supabase-js
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN" || session) {
+      if (event === "PASSWORD_RECOVERY") {
         markValid();
       }
     });
 
-    // 3) Filet de sécurité : une session de récupération est peut-être déjà là.
+    // 4) Session déjà présente (retour sur la page après validation)
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) markValid();
     });
 
-    // 4) Rien après 5 s → lien invalide/expiré.
+    // 5) Rien après 5 s → lien invalide/expiré.
     timeout = setTimeout(markInvalid, 5000);
 
     return () => {
@@ -90,8 +101,8 @@ const ResetPassword = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (password.length < 6) {
-      toast.error("Le mot de passe doit contenir au moins 6 caractères");
+    if (password.length < 12) {
+      toast.error("Le mot de passe doit contenir au moins 12 caractères");
       return;
     }
 

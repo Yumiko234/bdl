@@ -75,10 +75,10 @@ const generateCertId = (roleValue: RoleValue = "bdl_member"): string => {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   const prefix = getPrefixForRole(roleValue);
   const yy = String(new Date().getFullYear()).slice(-2);
+  const bytes = new Uint8Array(6);
+  crypto.getRandomValues(bytes);
   let random = "";
-  for (let i = 0; i < 6; i++) {
-    random += chars[Math.floor(Math.random() * chars.length)];
-  }
+  for (const b of bytes) random += chars[b % chars.length];
   return `${prefix}-${yy}-${random}`;
 };
 
@@ -237,7 +237,7 @@ export const CertificateManagement = () => {
     else setRefreshing(true);
 
     const { data, error } = await supabase
-      .from("bdl_certificates" as any)
+      .from("bdl_certificates")
       .select("*")
       .order("created_at", { ascending: false });
 
@@ -261,9 +261,10 @@ export const CertificateManagement = () => {
 
     setSaving(true);
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError) throw userError;
 
-    const { error } = await supabase.from("bdl_certificates" as any).insert({
+    const { error } = await supabase.from("bdl_certificates").insert({
       certificate_id: form.certificate_id,
       first_name: form.first_name.trim(),
       last_name: form.last_name.trim(),
@@ -293,7 +294,7 @@ export const CertificateManagement = () => {
 
   const handleDelete = async (id: string) => {
     const { error } = await supabase
-      .from("bdl_certificates" as any)
+      .from("bdl_certificates")
       .delete()
       .eq("id", id);
 

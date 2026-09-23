@@ -206,48 +206,60 @@ const Index = () => {
   }, []);
 
   const loadPresidentMessage = async () => {
-    const { data } = await supabase
-      .from("president_message")
-      .select("content")
-      .maybeSingle();
-
-    if (data) setPresidentMessage(data.content);
+    try {
+      const { data } = await supabase
+        .from("president_message")
+        .select("content")
+        .maybeSingle();
+      if (data) setPresidentMessage(data.content);
+    } catch (err) {
+      console.error("loadPresidentMessage", err);
+    }
   };
 
   const loadPresidentProfile = async () => {
-    const { data } = await supabase
-      .from("user_roles")
-      .select("user_id, profiles(full_name, avatar_url)")
-      .in("role", ["president", "presidente"])
-      .limit(1)
-      .maybeSingle();
-
-    if (data?.profiles) {
-      const p = data.profiles as any;
-      setPresidentProfile({ name: p.full_name, avatar: p.avatar_url });
+    try {
+      const { data } = await supabase
+        .from("user_roles")
+        .select("user_id, profiles(full_name, avatar_url)")
+        .in("role", ["president", "presidente"])
+        .limit(1)
+        .maybeSingle();
+      if (data?.profiles) {
+        const p = data.profiles as any;
+        setPresidentProfile({ name: p.full_name, avatar: p.avatar_url });
+      }
+    } catch (err) {
+      console.error("loadPresidentProfile", err);
     }
   };
 
   const loadLatestContent = async () => {
-    const { data: news } = await supabase
-      .from("news")
-      .select("*")
-      .order("published_at", { ascending: false })
-      .limit(2);
+    try {
+      const { data: news, error: newsError } = await supabase
+        .from("news")
+        .select("*")
+        .order("published_at", { ascending: false })
+        .limit(2);
 
-    const [eventsRes, calRes] = await Promise.all([
-      supabase.from("events" as any).select("*"),
-      supabase.from("calendar_events" as any).select("*"),
-    ]);
-    const allEvents = [
-      ...(eventsRes.data || []).map((e: any) => ({ ...e, _source: "event" })),
-      ...(calRes.data || []).map((e: any) => ({ ...e, _source: "calendar", is_pinned: false })),
-    ]
-      .sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime())
-      .slice(0, 2);
+      if (newsError) { console.error("loadLatestContent news", newsError); }
 
-    if (news) setLatestNews(news);
-    if (allEvents.length) setLatestEvents(allEvents);
+      const [eventsRes, calRes] = await Promise.all([
+        supabase.from("events").select("*"),
+        supabase.from("calendar_events").select("*"),
+      ]);
+      const allEvents = [
+        ...(eventsRes.data || []).map((e: any) => ({ ...e, _source: "event" })),
+        ...(calRes.data || []).map((e: any) => ({ ...e, _source: "calendar", is_pinned: false })),
+      ]
+        .sort((a, b) => new Date(b.start_date).getTime() - new Date(a.start_date).getTime())
+        .slice(0, 2);
+
+      if (news) setLatestNews(news);
+      if (allEvents.length) setLatestEvents(allEvents);
+    } catch (err) {
+      console.error("loadLatestContent", err);
+    }
   };
 
   const openModal = (item: any, type: 'news' | 'event') => {

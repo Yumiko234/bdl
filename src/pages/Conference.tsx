@@ -249,7 +249,7 @@ export default function ConferencePage() {
   // ─── fetch live conferences ───────────────────────────────────────────────
   const fetchConfs = useCallback(async () => {
     const { data } = await supabase
-      .from("conferences" as any)
+      .from("conferences")
       .select("*")
       .eq("status", "live")
       .order("created_at", { ascending: false });
@@ -700,7 +700,7 @@ export default function ConferencePage() {
       host_id: user!.id, host_name: userName,
       created_at: new Date().toISOString(), ended_at: null,
     };
-    await supabase.from("conferences" as any).insert({
+    await supabase.from("conferences").insert({
       id, title: conf.title, status: "live", host_id: user!.id, host_name: userName,
     }).then(({ error }) => { if (error) console.warn("conferences table:", error.message); });
 
@@ -727,7 +727,7 @@ export default function ConferencePage() {
   const endConference = async () => {
     channelRef.current?.send({ type: "broadcast", event: "conf_end", payload: {} });
     if (activeConf) {
-      await supabase.from("conferences" as any)
+      await supabase.from("conferences")
         .update({ status: "ended", ended_at: new Date().toISOString() })
         .eq("id", activeConf.id);
     }

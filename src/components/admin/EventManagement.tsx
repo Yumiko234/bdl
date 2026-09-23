@@ -48,7 +48,7 @@ export const EventManagement = ({ isPresident }: EventManagementProps) => {
 
   const loadEvents = async () => {
     const { data, error } = await supabase
-      .from('events' as any)
+      .from('events')
       .select('*')
       .order('is_pinned', { ascending: false })
       .order('start_date', { ascending: false });
@@ -84,7 +84,7 @@ export const EventManagement = ({ isPresident }: EventManagementProps) => {
 
     if (editingEvent) {
       const { error } = await supabase
-        .from('events' as any)
+        .from('events')
         .update({
           title: formData.title,
           description: formData.description,
@@ -104,7 +104,7 @@ export const EventManagement = ({ isPresident }: EventManagementProps) => {
       }
     } else {
       const { error } = await supabase
-        .from('events' as any)
+        .from('events')
         .insert({
           title: formData.title,
           description: formData.description,
@@ -145,7 +145,7 @@ export const EventManagement = ({ isPresident }: EventManagementProps) => {
     if (!confirm("Êtes-vous sûr de vouloir supprimer cet événement ?")) return;
 
     const { error } = await supabase
-      .from('events' as any)
+      .from('events')
       .delete()
       .eq('id', id);
 
@@ -159,7 +159,7 @@ export const EventManagement = ({ isPresident }: EventManagementProps) => {
 
   const handlePin = async (id: string, currentPinned: boolean) => {
     const { error } = await supabase
-      .from('events' as any)
+      .from('events')
       .update({ is_pinned: !currentPinned })
       .eq('id', id);
 

@@ -114,7 +114,7 @@ export const AdminConference = () => {
     else setRefreshing(true);
 
     const { data, error } = await supabase
-      .from("conferences" as any)
+      .from("conferences")
       .select("*")
       .order("created_at", { ascending: false });
 
@@ -135,7 +135,7 @@ export const AdminConference = () => {
     setCreating(true);
     const id = crypto.randomUUID();
 
-    const { error } = await supabase.from("conferences" as any).insert({
+    const { error } = await supabase.from("conferences").insert({
       id,
       title: newTitle.trim(),
       status: "live",
@@ -155,7 +155,7 @@ export const AdminConference = () => {
 
   const endConference = async (id: string) => {
     const { error } = await supabase
-      .from("conferences" as any)
+      .from("conferences")
       .update({ status: "ended", ended_at: new Date().toISOString() })
       .eq("id", id);
 
@@ -170,7 +170,7 @@ export const AdminConference = () => {
   const deleteConference = async (id: string) => {
     if (!confirm("Supprimer définitivement cette conférence ?")) return;
     const { error } = await supabase
-      .from("conferences" as any)
+      .from("conferences")
       .delete()
       .eq("id", id);
 

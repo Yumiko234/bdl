@@ -105,7 +105,7 @@ const ProfileBDLSuivi = () => {
 
       // Actions assigned to this user
       const { data: a, error: aErr } = await supabase
-        .from("bdl_actions" as any)
+        .from("bdl_actions")
         .select("*")
         .eq("assigned_to", user!.id)
         .order("created_at", { ascending: false });
@@ -114,7 +114,7 @@ const ProfileBDLSuivi = () => {
 
       // Notes about this user (visible to the member)
       const { data: n, error: nErr } = await supabase
-        .from("bdl_member_notes" as any)
+        .from("bdl_member_notes")
         .select("*, profiles!bdl_member_notes_author_id_fkey(full_name)")
         .eq("member_id", user!.id)
         .order("created_at", { ascending: false });
@@ -127,7 +127,7 @@ const ProfileBDLSuivi = () => {
 
       // Présences aux réunions
       const { data: att, error: attErr } = await supabase
-        .from("bdl_meeting_attendance" as any)
+        .from("bdl_meeting_attendance")
         .select("id, status, meeting:bdl_meetings(title, meeting_date)")
         .eq("member_id", user!.id);
       if (attErr) throw attErr;

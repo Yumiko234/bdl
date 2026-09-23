@@ -104,7 +104,7 @@ export const SupportManagement = ({
   const loadTickets = async () => {
     setLoading(true);
     const { data, error } = await supabase
-      .from("support_tickets" as any)
+      .from("support_tickets")
       .select("*")
       .order("created_at", { ascending: false });
 
@@ -114,30 +114,33 @@ export const SupportManagement = ({
       return;
     }
 
-    // Enrich with handler names
-    const enriched = await Promise.all(
-      (data || []).map(async (t: any) => {
-        if (t.handled_by) {
-          const { data: hp } = await supabase
-            .from("profiles")
-            .select("full_name")
-            .eq("id", t.handled_by)
-            .single();
-          return { ...t, handler_name: (hp as any)?.full_name ?? null };
-        }
-        return { ...t, handler_name: null };
-      })
-    );
+    // Batch-fetch handler profiles to avoid N+1
+    const handlerIds = [...new Set((data || []).map((t: any) => t.handled_by).filter(Boolean))];
+    const handlerMap: Record<string, string> = {};
+    if (handlerIds.length > 0) {
+      const { data: handlerProfiles } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .in("id", handlerIds);
+      handlerProfiles?.forEach((hp: any) => {
+        handlerMap[hp.id] = hp.full_name;
+      });
+    }
+    const enriched = (data || []).map((t: any) => ({
+      ...t,
+      handler_name: t.handled_by ? (handlerMap[t.handled_by] ?? null) : null,
+    }));
     setTickets(enriched as Ticket[]);
     setLoading(false);
   };
 
   const loadMessages = async (ticketId: string) => {
-    const { data } = await supabase
-      .from("support_messages" as any)
+    const { data, error } = await supabase
+      .from("support_messages")
       .select("*")
       .eq("ticket_id", ticketId)
       .order("created_at", { ascending: true });
+    if (error) { toast.error("Erreur lors du chargement des messages"); return; }
     setMessages((data || []) as Message[]);
     setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
   };
@@ -145,7 +148,7 @@ export const SupportManagement = ({
   // ── Status update ─────────────────────────────────────────────────────────────
   const updateStatus = async (ticketId: string, newStatus: string) => {
     const { error } = await supabase
-      .from("support_tickets" as any)
+      .from("support_tickets")
       .update({
         status: newStatus,
         handled_by: currentUserId || null,
@@ -178,7 +181,7 @@ export const SupportManagement = ({
     }
 
     setSendingReply(true);
-    const { error } = await supabase.from("support_messages" as any).insert({
+    const { error } = await supabase.from("support_messages").insert({
       ticket_id: selectedTicket.id,
       sender_user_id: currentUserId || null,
       sender_name: currentUserName,

@@ -125,6 +125,11 @@ const Profile = () => {
 
     setSaving(true);
     try {
+      if (formData.email !== profile?.email) {
+        const { error: authError } = await supabase.auth.updateUser({ email: formData.email });
+        if (authError) throw authError;
+      }
+
       const { error } = await supabase
         .from("profiles")
         .update({
@@ -154,9 +159,7 @@ const Profile = () => {
     if (!user || !profile?.avatar_url) return;
 
     try {
-      const avatarPath = profile.avatar_url.split(
-        "/storage/v1/object/public/avatars/"
-      )[1];
+      const avatarPath = new URL(profile.avatar_url).pathname.replace(/^\/storage\/v1\/object\/public\/avatars\//, "");
 
       const { error: storageError } = await supabase.storage
         .from("avatars")
@@ -182,8 +185,8 @@ const Profile = () => {
   /* ===================== CHANGE PASSWORD ===================== */
 
   const handlePasswordChange = async () => {
-    if (passwordData.password.length < 6) {
-      toast.error("Le mot de passe doit contenir au moins 6 caractères");
+    if (passwordData.password.length < 12) {
+      toast.error("Le mot de passe doit contenir au moins 12 caractères");
       return;
     }
 

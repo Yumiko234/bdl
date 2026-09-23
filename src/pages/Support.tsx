@@ -121,7 +121,7 @@ const Support = () => {
   const loadTickets = async () => {
     setLoading(true);
     const { data, error } = await supabase
-      .from("support_tickets" as any)
+      .from("support_tickets")
       .select("*")
       .eq("requester_user_id", user!.id)
       .order("created_at", { ascending: false });
@@ -129,20 +129,19 @@ const Support = () => {
     if (error) {
       toast.error("Erreur lors du chargement des demandes");
     } else {
-      // Enrich with handler name
-      const enriched = await Promise.all(
-        (data || []).map(async (t: any) => {
-          if (t.handled_by) {
-            const { data: hp } = await supabase
-              .from("profiles")
-              .select("full_name")
-              .eq("id", t.handled_by)
-              .single();
-            return { ...t, handler_name: (hp as any)?.full_name ?? null };
-          }
-          return { ...t, handler_name: null };
-        })
-      );
+      const handlerIds = [...new Set((data || []).map((t: any) => t.handled_by).filter(Boolean))];
+      const handlerMap: Record<string, string> = {};
+      if (handlerIds.length > 0) {
+        const { data: handlerProfiles } = await supabase
+          .from("profiles")
+          .select("id, full_name")
+          .in("id", handlerIds);
+        handlerProfiles?.forEach((hp: any) => { handlerMap[hp.id] = hp.full_name; });
+      }
+      const enriched = (data || []).map((t: any) => ({
+        ...t,
+        handler_name: t.handled_by ? (handlerMap[t.handled_by] ?? null) : null,
+      }));
       setTickets(enriched as Ticket[]);
     }
     setLoading(false);
@@ -150,7 +149,7 @@ const Support = () => {
 
   const loadMessages = async (ticketId: string) => {
     const { data } = await supabase
-      .from("support_messages" as any)
+      .from("support_messages")
       .select("*")
       .eq("ticket_id", ticketId)
       .order("created_at", { ascending: true });
@@ -167,7 +166,7 @@ const Support = () => {
     }
 
     setLoading(true);
-    const { error } = await supabase.from("support_tickets" as any).insert({
+    const { error } = await supabase.from("support_tickets").insert({
       requester_user_id: user!.id,
       requester_name: profile?.full_name ?? "Utilisateur",
       requester_email: profile?.email ?? user!.email,
@@ -207,7 +206,7 @@ const Support = () => {
     }
 
     setSendingReply(true);
-    const { error } = await supabase.from("support_messages" as any).insert({
+    const { error } = await supabase.from("support_messages").insert({
       ticket_id: selectedTicket.id,
       sender_user_id: user!.id,
       sender_name: profile?.full_name ?? "Utilisateur",

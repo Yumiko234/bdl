@@ -353,7 +353,7 @@ export const OfficialJournalManagement = () => {
   useEffect(() => { loadEntries(); }, []);
 
   const loadEntries = async () => {
-    const { data, error } = await supabase.from("official_journal" as any).select("*").order("publication_date", { ascending: false });
+    const { data, error } = await supabase.from("official_journal").select("*").order("publication_date", { ascending: false });
     if (error) { toast.error("Erreur lors du chargement des entrées"); console.error(error); }
     else setEntries(data as unknown as JournalEntry[]);
   };
@@ -382,13 +382,13 @@ export const OfficialJournalManagement = () => {
       const originalEntry = entries.find((e) => e.id === editingEntry);
       const newMod = originalContent !== formData.content ? detectModifications(originalContent, formData.content) : null;
       const allMods = [...(originalEntry?.modifications || []), ...(newMod ? [newMod] : [])];
-      const { error } = await supabase.from("official_journal" as any)
+      const { error } = await supabase.from("official_journal")
         .update({ title: formData.title, nor_number: formData.nor_number, content: formData.content, publication_date: formData.publication_date, modifications: allMods, signatures: signatories })
         .eq("id", editingEntry);
       if (error) { toast.error("Erreur lors de la modification"); console.error(error); }
       else { toast.success(newMod ? "Entrée modifiée — diff enregistré" : "Entrée modifiée"); resetForm(); loadEntries(); }
     } else {
-      const { error } = await supabase.from("official_journal" as any).insert({
+      const { error } = await supabase.from("official_journal").insert({
         title: formData.title, nor_number: formData.nor_number, content: formData.content,
         publication_date: formData.publication_date, author_id: user.id,
         author_name: (profile as any)?.full_name || null, author_role: userRole,
@@ -411,7 +411,7 @@ export const OfficialJournalManagement = () => {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Êtes-vous sûr de vouloir supprimer cette entrée ?")) return;
-    const { error } = await supabase.from("official_journal" as any).delete().eq("id", id);
+    const { error } = await supabase.from("official_journal").delete().eq("id", id);
     if (error) { toast.error("Erreur lors de la suppression"); console.error(error); }
     else { toast.success("Entrée supprimée"); loadEntries(); }
   };

@@ -25,6 +25,8 @@ import {
   GripVertical,
   Link,
   Link2Off,
+  Download,
+  Search,
 } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
@@ -53,17 +55,20 @@ interface ProfileOption {
 /* ------------------------------------------------------------------ */
 
 const ROLE_OPTIONS = [
-  {value:  "administrator", label : "Administrateur"},
-  { value: "Président", label: "Président" },
-  { value: "Présidente", label: "Présidente" },
-  { value: "Vice-Président", label: "Vice-Président" },
-  { value: "Vice-Présidente", label: "Vice-Présidente" },
-  { value: "Secrétaire Général", label: "Secrétaire Général" },
-  { value: "Secrétaire Générale", label: "Secrétaire Générale" },
-  { value: "Directeur de la Communauté et de la Communication", label: "Dir. Communauté & Communication (H)" },
-  { value: "Directrice de la Communauté et de la Communication", label: "Dir. Communauté & Communication (F)" },
-  { value: "Membre du Bureau", label: "Membre du Bureau" },
+  { value: "Administrateur",                                         label: "Administrateur",                          systemRole: "administrator" },
+  { value: "Président",                                              label: "Président",                               systemRole: "president" },
+  { value: "Présidente",                                             label: "Présidente",                              systemRole: "presidente" },
+  { value: "Vice-Président",                                         label: "Vice-Président",                          systemRole: "vice_president" },
+  { value: "Vice-Présidente",                                        label: "Vice-Présidente",                         systemRole: "vice_presidente" },
+  { value: "Secrétaire Général",                                     label: "Secrétaire Général",                      systemRole: "secretary_general" },
+  { value: "Secrétaire Générale",                                    label: "Secrétaire Générale",                     systemRole: "secretary_general2" },
+  { value: "Directeur de la Communauté et de la Communication",     label: "Dir. Communauté & Communication (H)",     systemRole: "communication_manager" },
+  { value: "Directrice de la Communauté et de la Communication",    label: "Dir. Communauté & Communication (F)",     systemRole: "communication_manager2" },
+  { value: "Membre du Bureau",                                       label: "Membre du Bureau",                        systemRole: "bdl_member" },
 ];
+
+const getSystemRole = (roleLabel: string): string =>
+  ROLE_OPTIONS.find((r) => r.value === roleLabel)?.systemRole ?? "bdl_member";
 
 const getRoleLabel = (role: string) =>
   ROLE_OPTIONS.find((r) => r.value === role)?.label ?? role;
@@ -78,7 +83,7 @@ const getInitials = (name: string) =>
 
 const emptyForm = {
   full_name: "",
-  role_label: "bdl_member",
+  role_label: "Membre du Bureau",
   avatar_url: "",
   is_executive: false,
   display_order: 1,
@@ -97,6 +102,7 @@ export const BDLMembersManagement = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [linkAccount, setLinkAccount] = useState(false);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     loadMembers();
@@ -199,7 +205,7 @@ export const BDLMembersManagement = () => {
         if (userId) {
           await supabase
             .from("user_roles")
-            .upsert({ user_id: userId, role: form.role_label as any });
+            .upsert({ user_id: userId, role: getSystemRole(form.role_label) as any });
         }
 
         toast.success("Membre ajouté avec succès");
@@ -214,7 +220,7 @@ export const BDLMembersManagement = () => {
         if (userId) {
           await supabase
             .from("user_roles")
-            .upsert({ user_id: userId, role: form.role_label as any });
+            .upsert({ user_id: userId, role: getSystemRole(form.role_label) as any });
         }
 
         toast.success("Membre mis à jour");
@@ -242,26 +248,78 @@ export const BDLMembersManagement = () => {
     }
   };
 
+  const exportCSV = () => {
+    const rows = [
+      ["Nom", "Rôle", "Exécutif", "Lié à un compte", "Ordre"],
+      ...members.map((m) => [
+        m.full_name,
+        m.role_label,
+        m.is_executive ? "Oui" : "Non",
+        m.user_id ? "Oui" : "Non",
+        m.display_order,
+      ]),
+    ];
+    const csv = rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(";")).join("\n");
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `membres_bdl_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   /* ---- derived ---- */
 
-  const executive = members.filter((m) => m.is_executive);
-  const regular = members.filter((m) => !m.is_executive);
+  const q = search.trim().toLowerCase();
+  const filtered = q
+    ? members.filter(
+        (m) =>
+          m.full_name.toLowerCase().includes(q) ||
+          m.role_label.toLowerCase().includes(q)
+      )
+    : members;
+  const executive = filtered.filter((m) => m.is_executive);
+  const regular = filtered.filter((m) => !m.is_executive);
 
   /* ---- render ---- */
 
   return (
     <Card className="shadow-card">
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-6 w-6" />
-            Membres du BDL
-          </CardTitle>
-          {!isCreating && !editingId && (
-            <Button size="sm" onClick={openCreate}>
-              <UserPlus className="h-4 w-4 mr-2" />
-              Ajouter un membre
-            </Button>
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-6 w-6" />
+              Membres du BDL
+            </CardTitle>
+            {!isCreating && !editingId && (
+              <div className="flex gap-2">
+                {members.length > 0 && (
+                  <Button size="sm" variant="outline" onClick={exportCSV}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Export CSV
+                  </Button>
+                )}
+                <Button size="sm" onClick={openCreate}>
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Ajouter un membre
+                </Button>
+              </div>
+            )}
+          </div>
+          {members.length > 0 && !isCreating && !editingId && (
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                className="pl-9"
+                placeholder="Rechercher par nom ou rôle…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
           )}
         </div>
       </CardHeader>
@@ -473,6 +531,11 @@ export const BDLMembersManagement = () => {
         {members.length === 0 && !isCreating && (
           <p className="text-center text-muted-foreground py-8">
             Aucun membre BDL enregistré. Cliquez sur « Ajouter un membre » pour commencer.
+          </p>
+        )}
+        {members.length > 0 && filtered.length === 0 && (
+          <p className="text-center text-muted-foreground py-8">
+            Aucun membre ne correspond à « {search} »
           </p>
         )}
       </CardContent>

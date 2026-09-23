@@ -27,17 +27,26 @@ const Confirm = () => {
 
       const tokenHash = searchParams.get("token_hash");
       const type = searchParams.get("type");
+      const code = searchParams.get("code");
 
-      if (!tokenHash || !type) {
+      let error: { message: string } | null = null;
+
+      if (code) {
+        // PKCE flow
+        const result = await supabase.auth.exchangeCodeForSession(code);
+        error = result.error;
+      } else if (tokenHash && type) {
+        // OTP classic
+        const result = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: type as "signup" | "email" | "recovery" | "invite" | "email_change",
+        });
+        error = result.error;
+      } else {
         setStatus("error");
         setErrorMessage("Lien de confirmation invalide ou incomplet.");
         return;
       }
-
-      const { error } = await supabase.auth.verifyOtp({
-        token_hash: tokenHash,
-        type: type as "signup" | "email" | "recovery" | "invite" | "email_change",
-      });
 
       if (error) {
         setStatus("error");

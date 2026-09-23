@@ -93,15 +93,13 @@ const Footer = () => {
           <p className="text-center sm:text-left">
             &copy; {new Date().getFullYear()} {content.copyright || 'Bureau des Lycéens - Lycée Saint-André. Tous droits réservés.'}
             <span className="mx-2">—</span>
-            Site géré par{" "}
-            <a
-              href="https://fr.linkedin.com/in/alexandre-lejal"
-              target="_blank"
-              rel="noopener noreferrer"
+            Site développé par{" "}
+            <Link
+              to="/developpers"
               className="text-muted-foreground hover:text-accent transition-colors underline-offset-4 hover:underline"
             >
-              Alexandre Lejal
-            </a>
+              l'équipe technique
+            </Link>
           </p>
           <div className="flex items-center rounded-full border border-border p-0.5 gap-0.5">
             {([

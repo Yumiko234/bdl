@@ -56,7 +56,7 @@ export const developers: Developer[] = [
     skillsLabel: "Droit",
     stack: [
       { name: "Diplomatie", level: 100 },
-      { name: "Droit constit", level: 85 },
+      { name: "Droi constit", level: 85 },
       { name: "Institutions judiciaires", level: 88 },
       { name: "Eco po", level: 5 },
     ],
@@ -66,12 +66,12 @@ export const developers: Developer[] = [
       "Les chiffres mentionnés sont 100% authentiques.",
     ],
     timeline: [
-      { date: "Septembre 2025", title: "Découverte", description: "Je découvre que le BDL a un site internet, malheureusement totalement inactif depuis 2020 et fait avec Wix."},
+      { date: "Septembre 2025", title: "Découverte", description: "Je décopuvre que le BDL a un site internet, malheureusement totalement inactif depuis 2020 et fait avec Wix."},
       { date: "Octobre 2025", title: "Lancement du projet", description: "Première version du site du BDL, de zéro. De base j'étais en voyage scolaire à NYC." },
       { date: "Février 2026", title: "Refonte complète", description: "Nouvelle architecture, back-office et système de comptes." },
       { date: "Aujourd'hui", title: "Amélioration continue", description: "De nouvelles fonctionnalités ajoutées régulièrement, avec Maël." },
     ],
-    quote: "« Là où nait l'ambition, s'élève la grandeur » ; c'est de moi !",
+    quote: "« Là où nait l'ambition, s'léève la grandeur » ; c'est de moi !",
     terminalBoot: [
       "whoami",
       "> alexandre-lejal",
@@ -88,43 +88,51 @@ export const developers: Developer[] = [
   {
     slug: "mael-vicq",
     fullName: "Maël Vicq",
-    handle: "@mael-vicq", // [À PERSONNALISER] pseudo réel si différent
-    role: "Développeur — Co-mainteneur du site", // [À PERSONNALISER]
-    tagline: "Ici pour coder, rester pour les bugs en prod.", // [À PERSONNALISER]
-    accent: "45 100% 51%", // doré/accent du site
+    handle: "@mv1234vm",
+    role: "Développeur — Co-mainteneur du site",
+    tagline: "J'ai corrigé 35 bugs en une session. Alexandre en a créé 36.",
+    accent: "45 100% 51%",
+    accentSoft: "45 80% 20%",
     avatarInitials: "MV",
+    avatarUrl: "https://ppmlhjcwdyaarbqpngla.supabase.co/storage/v1/object/public/avatars/avatars/8b73f069-f08f-4758-8981-1b01305e1f03-1788884818681.jpg",
     bio: [
-      // [À PERSONNALISER] — remplace par ta vraie bio
-      "Deuxième développeur du projet, j'interviens sur le site du Bureau des Lycéens pour faire évoluer les fonctionnalités et améliorer l'expérience de tous les élèves.",
-      "J'aime particulièrement quand une interface devient à la fois simple à utiliser et agréable à regarder — sans sacrifier la performance.",
+      "Développeur web freelance. Je suis arrivé sur le BDL avec une mission simple : « juste quelques petites corrections ». 72h et 35 commits plus tard, j'avais fermé une faille de sécurité, viré Math.random() de la génération d'IDs, corrigé un N+1 qui chargeait chaque sondage en O(membres), et réécrit les politiques RLS de zéro.",
+      "Spécialisé React + TypeScript — le genre à écrire `as unknown as string` dans du code legacy et à en faire des cauchemars deux jours plus tard. J'aime les types qui disent la vérité, les requêtes SQL qu'on peut expliquer à voix haute, et les composants qui font exactement ce que leur nom promet.",
+      "En dehors du BDL, je bosse sur mes propres projets et clients via mymvweb.fr. Si tu veux un dev qui lit vraiment ton code avant de te répondre, tu sais où chercher.",
     ],
     stack: [
-      // [À PERSONNALISER] — ajuste tes compétences et niveaux
-      { name: "React / TypeScript", level: 80 },
-      { name: "UI / UX", level: 82 },
-      { name: "Tailwind CSS", level: 78 },
-      { name: "Supabase / SQL", level: 65 },
+      { name: "React / TypeScript", level: 90 },
+      { name: "UI / UX & Tailwind", level: 88 },
+      { name: "Supabase / PostgreSQL", level: 80 },
+      { name: "Sécurité & RLS", level: 78 },
+      { name: "Node.js / API", level: 72 },
     ],
     funFacts: [
-      // [À PERSONNALISER]
-      "Toujours partant pour discuter d'une nouvelle idée de fonctionnalité.",
+      "A remplacé Math.random() par crypto.randomUUID(). Dort mieux depuis.",
+      "Détecte un N+1 SQL à l'œil nu avant même d'ouvrir le Network tab.",
+      "TypeScript strict mode activé. Zéro `any`. Zéro regret.",
+      "Force-push sur main : son ennemi naturel, son cardio involontaire.",
     ],
     timeline: [
-      // [À PERSONNALISER]
-      { date: "2024", title: "Arrivée sur le projet", description: "Rejoint le développement du site du BDL." },
-      { date: "Aujourd'hui", title: "Contributions actives", description: "Travaille sur de nouvelles fonctionnalités avec Alexandre." },
+      { date: "Été 2026", title: "Le message fatidique", description: "Alexandre envoie un DM à 23h : « t'aurais 5 minutes pour jeter un œil à mon code ? ». Il n'y avait pas 5 minutes de prévu." },
+      { date: "7 septembre 2026", title: "Premier commit", description: "« Corrections sécurité, robustesse et bugs ». En réalité : 35+ correctifs, une faille critique fermée, et Math.random() sorti du projet à coups de pied." },
+      { date: "8 septembre 2026", title: "15 commits en un jour", description: "Recadrage photo refait, admin amélioré, UX corrigée. Alexandre a compris ce qu'il avait mis en prod. Les deux ont préféré ne pas en parler." },
+      { date: "Septembre 2026", title: "L'incident du force-push", description: "30+ commits effacés de GitHub en un clic. La légende dit qu'il recommencera." },
+      { date: "Aujourd'hui", title: "Toujours là", description: "À surveiller que personne ne force-push sur main. Encore." },
     ],
-    quote: "// TODO: écrire une citation qui claque ici",
+    quote: "« Le meilleur code, c'est celui qui n'existe pas. Le deuxième meilleur, c'est celui que j'écris. »",
     terminalBoot: [
       "whoami",
-      "> mael-vicq",
+      "> mael-vicq  |  @mv1234vm",
       "cat role.txt",
-      "> Développeur du site du BDL",
+      "> Développeur — Co-mainteneur du site BDL",
+      "git log --author='Maël' --oneline | wc -l",
+      "> 63 (sans compter ce qu'Alex a force-pushé)",
     ],
     socials: {
-      // [À PERSONNALISER] — ajoute ses vrais liens
-      github: "https://github.com/",
-      linkedin: "https://www.linkedin.com/",
+      github: "https://github.com/mv1234vm",
+      website: "https://mymvweb.fr",
+      email: "hello@mymvweb.fr",
     },
   },
 ];

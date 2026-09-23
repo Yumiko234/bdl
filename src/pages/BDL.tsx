@@ -279,6 +279,17 @@ const BDL = () => {
               </div>
             </div>
           </section>
+          {/* Crédits techniques */}
+          <section className="py-10 border-t border-border/50">
+            <div className="container mx-auto px-4 text-center">
+              <p className="text-sm text-muted-foreground">
+                Site officiel développé et maintenu par{" "}
+                <Link to="/developpers" className="font-medium text-foreground hover:text-accent transition-colors underline-offset-4 hover:underline">
+                  l'équipe technique du BDL
+                </Link>
+              </p>
+            </div>
+          </section>
         </MaintenanceOverlay>
       </main>
 

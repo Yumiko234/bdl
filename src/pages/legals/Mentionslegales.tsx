@@ -103,17 +103,23 @@ const MentionsLegales = () => {
 
       <LegalSection id="developpement" title="2. Développement et gestion technique du site">
         <p>Conception, développement et maintenance technique du Site :</p>
-        <div className="rounded-lg border border-border bg-muted/30 p-5">
-          <p className="font-semibold text-foreground">Alexandre Lejal</p>
-          <a
-            href="https://fr.linkedin.com/in/alexandre-lejal"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Profil LinkedIn
-          </a>
-
-          <p className="font-semibold text-foreground mt-6">Maël Vicq</p>
+        <div className="rounded-lg border border-border bg-muted/30 p-5 space-y-5">
+          <div>
+            <p className="font-semibold text-foreground">Alexandre Lejal</p>
+            <p className="text-sm text-muted-foreground">Fondateur &amp; consultant</p>
+            <div className="flex gap-4 mt-1 text-sm">
+              <a href="https://fr.linkedin.com/in/alexandre-lejal" target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors">LinkedIn</a>
+              <Link to="/developpers/alexandre-lejal" className="hover:text-accent transition-colors">Profil développeur →</Link>
+            </div>
+          </div>
+          <div>
+            <p className="font-semibold text-foreground">Maël Vicq</p>
+            <p className="text-sm text-muted-foreground">Développeur web — co-mainteneur</p>
+            <div className="flex gap-4 mt-1 text-sm">
+              <a href="https://mymvweb.fr" target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors">Site web</a>
+              <Link to="/developpers/mael-vicq" className="hover:text-accent transition-colors">Profil développeur →</Link>
+            </div>
+          </div>
         </div>
       </LegalSection>
 

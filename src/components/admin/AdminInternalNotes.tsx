@@ -25,6 +25,7 @@ interface InternalNote {
   created_at: string;
   updated_at: string;
   author_name?: string;
+  author_is_admin?: boolean;
 }
 
 /**
@@ -97,7 +98,24 @@ export const AdminInternalNotes = () => {
       namesById = Object.fromEntries((profs || []).map((p: any) => [p.id, p.full_name]));
     }
 
-    setNotes(rows.map((n) => ({ ...n, author_name: namesById[n.author_id] ?? "Membre de l'Exécutif" })));
+    // Identifie les auteurs ayant le rôle "administrator" (user_roles est lisible par les authentifiés).
+    let adminIds = new Set<string>();
+    if (authorIds.length > 0) {
+      const { data: adminRoles } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "administrator" as any)
+        .in("user_id", authorIds);
+      adminIds = new Set((adminRoles || []).map((r: any) => r.user_id));
+    }
+
+    setNotes(
+      rows.map((n) => ({
+        ...n,
+        author_name: namesById[n.author_id] ?? "Membre de l'Exécutif",
+        author_is_admin: adminIds.has(n.author_id),
+      }))
+    );
     setLoading(false);
   };
 
@@ -210,7 +228,16 @@ export const AdminInternalNotes = () => {
       ) : (
         <div className="space-y-3">
           {notes.map((note) => (
-            <Card key={note.id} className={`shadow-card ${note.is_pinned ? "border-primary/40 bg-primary/5" : ""}`}>
+            <Card
+              key={note.id}
+              className={`shadow-card ${
+                note.author_is_admin
+                  ? "border-amber-500/50 bg-amber-500/10"
+                  : note.is_pinned
+                  ? "border-primary/40 bg-primary/5"
+                  : ""
+              }`}
+            >
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -223,7 +250,14 @@ export const AdminInternalNotes = () => {
                       <CardTitle className="text-base">{note.title}</CardTitle>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Par {note.author_name} · {fmtDate(note.created_at)}
+                      {note.author_is_admin ? (
+                        <span className="font-semibold text-amber-700 dark:text-amber-400">
+                          Annonce de l'Administrateur
+                        </span>
+                      ) : (
+                        <>Par {note.author_name}</>
+                      )}{" "}
+                      · {fmtDate(note.created_at)}
                     </p>
                   </div>
 

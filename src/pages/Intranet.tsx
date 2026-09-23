@@ -29,6 +29,7 @@ interface InternalNote {
   is_pinned: boolean;
   created_at: string;
   author_name?: string;
+  author_is_admin?: boolean;
 }
 
 const ROLE_KEYS = [
@@ -182,7 +183,24 @@ const Intranet = () => {
       namesById = Object.fromEntries((profs || []).map((p: any) => [p.id, p.full_name]));
     }
 
-    setInternalNotes(rows.map((n) => ({ ...n, author_name: namesById[n.author_id] ?? "Exécutif" })));
+    // Identifie les auteurs ayant le rôle "administrator".
+    let adminIds = new Set<string>();
+    if (authorIds.length > 0) {
+      const { data: adminRoles } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "administrator" as any)
+        .in("user_id", authorIds);
+      adminIds = new Set((adminRoles || []).map((r: any) => r.user_id));
+    }
+
+    setInternalNotes(
+      rows.map((n) => ({
+        ...n,
+        author_name: namesById[n.author_id] ?? "Exécutif",
+        author_is_admin: adminIds.has(n.author_id),
+      }))
+    );
   };
 
   // administrator est considéré comme BDL member (rang 0 ≤ 5)
@@ -278,7 +296,16 @@ const Intranet = () => {
                 </div>
                 <div className="space-y-3">
                   {internalNotes.map((note) => (
-                    <Card key={note.id} className={note.is_pinned ? "border-primary/40 bg-primary/5 shadow-card" : "shadow-card"}>
+                    <Card
+                      key={note.id}
+                      className={
+                        note.author_is_admin
+                          ? "border-amber-500/50 bg-amber-500/10 shadow-card"
+                          : note.is_pinned
+                          ? "border-primary/40 bg-primary/5 shadow-card"
+                          : "shadow-card"
+                      }
+                    >
                       <CardContent className="p-5">
                         <div className="flex items-start justify-between gap-3 mb-1.5">
                           <h3 className="font-semibold text-sm flex items-center gap-2">
@@ -290,7 +317,13 @@ const Intranet = () => {
                           </span>
                         </div>
                         <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">{note.content}</p>
-                        <p className="text-xs text-muted-foreground/70 mt-2">— {note.author_name}</p>
+                        {note.author_is_admin ? (
+                          <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 mt-2">
+                            Annonce de l'Administrateur
+                          </p>
+                        ) : (
+                          <p className="text-xs text-muted-foreground/70 mt-2">— {note.author_name}</p>
+                        )}
                       </CardContent>
                     </Card>
                   ))}

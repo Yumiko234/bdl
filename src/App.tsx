@@ -42,6 +42,8 @@ const Legal            = lazy(() => import("./pages/legals/Legal"));
 const CGU              = lazy(() => import("./pages/legals/CGU"));
 const MentionsLegales  = lazy(() => import("./pages/legals/Mentionslegales"));
 const Confidentialite  = lazy(() => import("./pages/legals/Confidentialite"));
+const DevelopersHub    = lazy(() => import("./pages/developers/DevelopersHub"));
+const DeveloperProfile = lazy(() => import("./pages/developers/DeveloperProfile"));
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center">
@@ -68,6 +70,9 @@ const App = () => {
               <Route path="/legal/cgu" element={<CGU />} />
               <Route path="/legal/mentions-legales" element={<MentionsLegales />} />
               <Route path="/legal/confidentialite" element={<Confidentialite />} />
+
+              <Route path="/developpers" element={<DevelopersHub />} />
+              <Route path="/developpers/:slug" element={<DeveloperProfile />} />
 
               {/* Admin : /admin redirige vers la section par défaut */}
               <Route path="/admin" element={<Navigate to="/admin/news" replace />} />

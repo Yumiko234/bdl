@@ -46,7 +46,7 @@ interface InstagramPost {
 
 const INSTAGRAM_POSTS: InstagramPost[] = [
   {
-    url: "https://www.instagram.com/p/DdpL3qLiBSa/?img_index=1",
+    url: "https://www.instagram.com/p/DdrkyRTo99P/",
     isPinned: false,
   },
   {

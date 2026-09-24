@@ -29,7 +29,6 @@ const BDL = () => {
   const [regularMembers, setRegularMembers] = useState<Member[]>([]);
   const [content, setContent] = useState<Record<string, string>>({});
   const [profileSlugMap, setProfileSlugMap] = useState<Record<string, string>>({});
-  const SLUG_OVERRIDES: Record<string, string> = { elodie_roth: "elodie_roth-2026-2027" };
 
   useEffect(() => {
     loadMembers();
@@ -89,8 +88,13 @@ const BDL = () => {
         .eq("is_published", true);
 
       const map: Record<string, string> = {};
+      // Années d'abord (triées croissant : la plus récente écrase la plus ancienne)
+      (profiles || [])
+        .filter((p: any) => p.year_id !== null)
+        .sort((a: any, b: any) => a.slug.localeCompare(b.slug))
+        .forEach((p: any) => { map[p.person_slug] = p.slug; });
+      // Fiche globale override (URL canonique préférée)
       (profiles || []).filter((p: any) => p.year_id === null).forEach((p: any) => { map[p.person_slug] = p.slug; });
-      (profiles || []).filter((p: any) => p.year_id !== null).forEach((p: any) => { map[p.person_slug] = p.slug; });
       setProfileSlugMap(map);
     }
   };
@@ -148,7 +152,7 @@ const BDL = () => {
     const primaryRole = getPrimaryRole(member.roles);
     const gradient = getRoleGradient(member.roles);
     const baseSlug = generateMemberSlugStatic(member.full_name);
-    const slug = SLUG_OVERRIDES[baseSlug] || profileSlugMap[baseSlug] || baseSlug;
+    const slug = profileSlugMap[baseSlug] || baseSlug;
 
     return (
       <Link to={`/bdl/${slug}`} key={member.id}>

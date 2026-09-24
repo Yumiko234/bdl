@@ -57,7 +57,7 @@ const DeveloperProfile = () => {
   const others = developers.filter((d) => d.slug !== dev.slug);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0b0f1a]" style={{ ["--dev-accent" as string]: accent }}>
+    <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#0b0f1a]" style={{ ["--dev-accent" as string]: accent }}>
       <Navigation />
 
       <main className="flex-1 relative overflow-hidden">
@@ -67,7 +67,7 @@ const DeveloperProfile = () => {
         {/* Breadcrumb / retour */}
         <div className="relative container mx-auto px-4 pt-8">
           <div className="flex items-center justify-between flex-wrap gap-3">
-            <Link to="/developpers" className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition-colors font-mono">
+            <Link to="/developpers" className="inline-flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors font-mono">
               <ChevronLeft className="h-4 w-4" /> /developpers
             </Link>
             <div className="flex items-center gap-2">
@@ -75,7 +75,7 @@ const DeveloperProfile = () => {
                 <Link
                   key={o.slug}
                   to={`/developpers/${o.slug}`}
-                  className="text-xs font-mono px-3 py-1.5 rounded-full border border-white/10 text-slate-400 hover:text-white hover:border-white/25 transition-colors"
+                  className="text-xs font-mono px-3 py-1.5 rounded-full border border-black/10 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-black/25 dark:hover:border-white/25 transition-colors"
                 >
                   → voir {o.fullName.split(" ")[0]}
                 </Link>
@@ -87,7 +87,7 @@ const DeveloperProfile = () => {
         {/* Hero */}
         <section className="relative container mx-auto px-4 pt-12 pb-16 text-center">
           <div
-            className="h-32 w-32 mx-auto rounded-full flex items-center justify-center text-3xl font-bold text-white ring-4 ring-white/10 shadow-2xl"
+            className="h-32 w-32 mx-auto rounded-full flex items-center justify-center text-3xl font-bold text-white ring-4 ring-black/10 dark:ring-white/10 shadow-2xl"
             style={{ background: `linear-gradient(135deg, hsl(${accent}), rgba(255,255,255,0.08) 160%)` }}
           >
             {dev.avatarUrl ? (
@@ -97,13 +97,13 @@ const DeveloperProfile = () => {
             )}
           </div>
 
-          <h1 className="mt-6 text-4xl md:text-5xl font-bold text-white">{dev.fullName}</h1>
+          <h1 className="mt-6 text-4xl md:text-5xl font-bold text-slate-900 dark:text-white">{dev.fullName}</h1>
           {dev.handle && <p className="font-mono text-sm text-slate-500 mt-1">{dev.handle}</p>}
           <p className="mt-3 inline-block text-sm font-medium px-4 py-1.5 rounded-full border" style={{ color: `hsl(${accent})`, borderColor: `hsl(${accent} / 0.35)`, background: `hsl(${accent} / 0.08)` }}>
             {dev.role}
           </p>
 
-          <p className="mt-6 font-mono text-base md:text-lg text-slate-300 h-7">
+          <p className="mt-6 font-mono text-base md:text-lg text-slate-700 dark:text-slate-300 h-7">
             {typed}<span className="animate-pulse">▍</span>
           </p>
 
@@ -118,7 +118,7 @@ const DeveloperProfile = () => {
                     href={href}
                     target={key === "email" ? undefined : "_blank"}
                     rel="noopener noreferrer"
-                    className="h-10 w-10 rounded-full border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:border-white/25 transition-colors"
+                    className="h-10 w-10 rounded-full border border-black/10 dark:border-white/10 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-black/25 dark:hover:border-white/25 transition-colors"
                     title={key}
                   >
                     <Icon className="h-4 w-4" />
@@ -129,10 +129,10 @@ const DeveloperProfile = () => {
           )}
         </section>
 
-        {/* Terminal boot */}
+        {/* Terminal boot — garde toujours le style sombre (c'est un terminal) */}
         {dev.terminalBoot && dev.terminalBoot.length > 0 && (
           <section className="relative container mx-auto px-4 pb-16">
-            <div className="max-w-2xl mx-auto rounded-xl border border-white/10 bg-black/40 overflow-hidden shadow-2xl">
+            <div className="max-w-2xl mx-auto rounded-xl border border-white/10 bg-black/80 overflow-hidden shadow-2xl">
               <div className="flex items-center gap-1.5 px-4 py-3 border-b border-white/10 bg-white/[0.02]">
                 <span className="h-2.5 w-2.5 rounded-full bg-red-400/70" />
                 <span className="h-2.5 w-2.5 rounded-full bg-yellow-400/70" />
@@ -156,13 +156,13 @@ const DeveloperProfile = () => {
         {/* Bio + Skills */}
         <section className="relative container mx-auto px-4 pb-16">
           <div className="max-w-4xl mx-auto grid md:grid-cols-5 gap-6">
-            <div className="md:col-span-3 rounded-2xl border border-white/10 bg-white/[0.02] p-8 space-y-4">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+            <div className="md:col-span-3 rounded-2xl border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] p-8 space-y-4">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Code2 className="h-5 w-5" style={{ color: `hsl(${accent})` }} />
                 Biographie
               </h2>
               {dev.bio.map((p, i) => (
-                <p key={i} className="text-slate-400 leading-relaxed">{p}</p>
+                <p key={i} className="text-slate-600 dark:text-slate-400 leading-relaxed">{p}</p>
               ))}
 
               {dev.quote && (
@@ -172,18 +172,18 @@ const DeveloperProfile = () => {
               )}
             </div>
 
-            <div className="md:col-span-2 rounded-2xl border border-white/10 bg-white/[0.02] p-8 space-y-5">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+            <div className="md:col-span-2 rounded-2xl border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] p-8 space-y-5">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Sparkles className="h-5 w-5" style={{ color: `hsl(${accent})` }} />
                 {dev.skillsLabel ?? "Stack"}
               </h2>
               {dev.stack.map((skill) => (
                 <div key={skill.name}>
-                  <div className="flex justify-between text-xs font-mono text-slate-400 mb-1.5">
+                  <div className="flex justify-between text-xs font-mono text-slate-500 mb-1.5">
                     <span>{skill.name}</span>
                     <span>{skill.level}%</span>
                   </div>
-                  <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
+                  <div className="h-1.5 w-full rounded-full bg-black/10 dark:bg-white/10 overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-1000 ease-out"
                       style={{
@@ -202,20 +202,20 @@ const DeveloperProfile = () => {
         {dev.timeline && dev.timeline.length > 0 && (
           <section className="relative container mx-auto px-4 pb-16">
             <div className="max-w-2xl mx-auto">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2 mb-6">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-6">
                 <GitCommitHorizontal className="h-5 w-5" style={{ color: `hsl(${accent})` }} />
                 Parcours sur le projet
               </h2>
-              <div className="relative pl-6 space-y-6 border-l border-white/10">
+              <div className="relative pl-6 space-y-6 border-l border-black/10 dark:border-white/10">
                 {dev.timeline.map((entry, i) => (
                   <div key={i} className="relative">
                     <span
-                      className="absolute -left-[1.65rem] top-1 h-3 w-3 rounded-full ring-4 ring-[#0b0f1a]"
+                      className="absolute -left-[1.65rem] top-1 h-3 w-3 rounded-full ring-4 ring-background"
                       style={{ background: `hsl(${accent})` }}
                     />
                     <p className="text-xs font-mono text-slate-500">{entry.date}</p>
-                    <p className="font-semibold text-white">{entry.title}</p>
-                    {entry.description && <p className="text-sm text-slate-400 mt-0.5">{entry.description}</p>}
+                    <p className="font-semibold text-slate-900 dark:text-white">{entry.title}</p>
+                    {entry.description && <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">{entry.description}</p>}
                   </div>
                 ))}
               </div>
@@ -226,11 +226,11 @@ const DeveloperProfile = () => {
         {/* Fun facts */}
         {dev.funFacts && dev.funFacts.length > 0 && (
           <section className="relative container mx-auto px-4 pb-24">
-            <div className="max-w-2xl mx-auto rounded-2xl border border-dashed border-white/15 p-6">
+            <div className="max-w-2xl mx-auto rounded-2xl border border-dashed border-black/15 dark:border-white/15 p-6">
               <p className="text-xs font-mono uppercase tracking-widest text-slate-500 mb-3">// fun facts</p>
               <ul className="space-y-2">
                 {dev.funFacts.map((fact, i) => (
-                  <li key={i} className="text-slate-400 text-sm flex gap-2">
+                  <li key={i} className="text-slate-600 dark:text-slate-400 text-sm flex gap-2">
                     <span style={{ color: `hsl(${accent})` }}>▸</span>
                     {fact}
                   </li>
@@ -246,12 +246,20 @@ const DeveloperProfile = () => {
       <style>{`
         .dev-profile-grid {
           background-image:
-            linear-gradient(to right, rgba(255,255,255,0.035) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(255,255,255,0.035) 1px, transparent 1px);
+            linear-gradient(to right, rgba(0,0,0,0.035) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(0,0,0,0.035) 1px, transparent 1px);
           background-size: 40px 40px;
           mask-image: radial-gradient(ellipse at top, black 30%, transparent 75%);
         }
+        .dark .dev-profile-grid {
+          background-image:
+            linear-gradient(to right, rgba(255,255,255,0.035) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(255,255,255,0.035) 1px, transparent 1px);
+        }
         .dev-hero-glow {
+          background: radial-gradient(ellipse at center, hsl(${accent} / 0.12), transparent 70%);
+        }
+        .dark .dev-hero-glow {
           background: radial-gradient(ellipse at center, hsl(${accent} / 0.18), transparent 70%);
         }
       `}</style>

@@ -165,8 +165,7 @@ document.title = `BDL ${yearInfo.year_label} – Bureau des Lycéens`;
     const baseSlug = generateMemberSlug(member.full_name);
     // Priorité à la fiche spécifique à cette année si elle existe, sinon fiche globale,
     // sinon on retombe sur le slug "de base" comme avant (comportement historique).
-    const SLUG_OVERRIDES: Record<string, string> = { elodie_roth: "elodie_roth-2026-2027" };
-    const linkSlug = SLUG_OVERRIDES[baseSlug] || profileSlugMap[baseSlug] || baseSlug;
+    const linkSlug = profileSlugMap[baseSlug] || baseSlug;
 
     return (
       <Link to={`/bdl/${linkSlug}`} key={member.id}>

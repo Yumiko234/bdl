@@ -1,6 +1,6 @@
-// src/pages/BDLYearDetail.tsx
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom"; // Import Link conservé (Étape 3.D)
+import { useParams, Link } from "react-router-dom";
+import { useSEO } from "@/hooks/useSEO";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -29,6 +29,8 @@ interface Year {
 
 const BDLYearDetail = () => {
   const { year } = useParams<{ year: string }>();
+  const [pageTitle, setPageTitle] = useState("BDL – Bureau des Lycéens");
+  useSEO({ title: pageTitle });
   const [yearData, setYearData] = useState<Year | null>(null);
   const [executiveMembers, setExecutiveMembers] = useState<Member[]>([]);
   const [regularMembers, setRegularMembers] = useState<Member[]>([]);
@@ -57,8 +59,7 @@ const BDLYearDetail = () => {
       if (yearError) throw yearError;
       if (!yearInfo) throw new Error("not-found");
       setYearData(yearInfo);
-
-document.title = `BDL ${yearInfo.year_label} – Bureau des Lycéens`;
+      setPageTitle(`BDL ${yearInfo.year_label} – Bureau des Lycéens`);
 
       // Load members for this year
       const { data: members, error: membersError } = await supabase

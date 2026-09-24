@@ -46,11 +46,11 @@ interface InstagramPost {
 
 const INSTAGRAM_POSTS: InstagramPost[] = [
   {
-    url: "https://www.instagram.com/bdllgsaintandre/",  // ← Remplacer par l'URL du dernier post
+    url: "https://www.instagram.com/p/DdpL3qLiBSa/?img_index=1",
     isPinned: false,
   },
   {
-    url: "https://www.instagram.com/bdllgsaintandre/",  // ← Remplacer par l'URL du post épinglé
+    url: "https://www.instagram.com/p/DdpL3qLiBSa/?img_index=1",
     isPinned: true,
   },
 ];
@@ -101,20 +101,24 @@ const InstagramEmbed = ({ post }: { post: InstagramPost }) => {
     return () => { cancelled = true; };
   }, [post.url]);
 
+  const isProfile = !isEmbeddablePost(post.url);
+
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-8 text-center rounded-xl bg-muted/30 border border-dashed min-h-[200px]">
         <div className="w-12 h-12 rounded-full bg-pink-100 flex items-center justify-center">
           <Instagram className="h-6 w-6 text-pink-500" />
         </div>
-        <p className="text-sm text-muted-foreground">Aperçu indisponible</p>
+        <p className="text-sm font-medium">
+          {isProfile ? "Suivez-nous sur Instagram" : "Aperçu indisponible"}
+        </p>
         <a
           href={post.url}
           target="_blank"
           rel="noopener noreferrer"
           className="text-xs text-primary hover:underline flex items-center gap-1"
         >
-          Voir sur Instagram <ExternalLink className="h-3 w-3" />
+          {isProfile ? "@bdllgsaintandre" : "Voir sur Instagram"} <ExternalLink className="h-3 w-3" />
         </a>
       </div>
     );
@@ -199,7 +203,6 @@ const Index = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
-    document.title = "Bureau des Lycéens – Lycée Saint-André";
     loadPresidentMessage();
     loadPresidentProfile();
     loadLatestContent();

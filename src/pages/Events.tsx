@@ -154,7 +154,6 @@ export default function Events() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    document.title = "Événements – Bureau des Lycéens";
     loadEvents();
   }, []);
 

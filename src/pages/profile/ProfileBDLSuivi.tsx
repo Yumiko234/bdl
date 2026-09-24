@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
+import { useSEO } from "@/hooks/useSEO";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -50,21 +51,21 @@ interface MeetingAttendance {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const CATEGORY_CONFIG = {
-  petite:  { label: "Petite",  pts: 0.5, color: "bg-blue-100 text-blue-700 border-blue-200" },
-  normale: { label: "Normale", pts: 1.0, color: "bg-amber-100 text-amber-700 border-amber-200" },
-  grande:  { label: "Grande",  pts: 2.0, color: "bg-purple-100 text-purple-700 border-purple-200" },
+  petite:  { label: "Petite",  pts: 0.5, color: "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700" },
+  normale: { label: "Normale", pts: 1.0, color: "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-700" },
+  grande:  { label: "Grande",  pts: 2.0, color: "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-700" },
 };
 
 const STATUS_CONFIG = {
-  a_faire:  { label: "À faire",  color: "bg-gray-100 text-gray-600",    icon: <AlertCircle className="h-3 w-3" /> },
-  en_cours: { label: "En cours", color: "bg-blue-100 text-blue-700",    icon: <Clock className="h-3 w-3 animate-spin" /> },
-  terminee: { label: "Terminée", color: "bg-green-100 text-green-700",  icon: <CheckCircle2 className="h-3 w-3" /> },
+  a_faire:  { label: "À faire",  color: "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400",    icon: <AlertCircle className="h-3 w-3" /> },
+  en_cours: { label: "En cours", color: "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300",    icon: <Clock className="h-3 w-3 animate-spin" /> },
+  terminee: { label: "Terminée", color: "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300",  icon: <CheckCircle2 className="h-3 w-3" /> },
 };
 
 const ATTENDANCE_CONFIG = {
-  present: { label: "Présent",  color: "bg-green-100 text-green-700 border-green-200" },
-  absent:  { label: "Absent",   color: "bg-red-100 text-red-700 border-red-200" },
-  excuse:  { label: "Excusé",   color: "bg-amber-100 text-amber-700 border-amber-200" },
+  present: { label: "Présent",  color: "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700" },
+  absent:  { label: "Absent",   color: "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 border-red-200 dark:border-red-700" },
+  excuse:  { label: "Excusé",   color: "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-700" },
 };
 
 const fmtDate = (iso: string) =>
@@ -73,6 +74,7 @@ const fmtDate = (iso: string) =>
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const ProfileBDLSuivi = () => {
+  useSEO({ title: "Suivi BDL – Mon Profil", url: "/profile/bdl-suivi" });
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
@@ -88,7 +90,6 @@ const ProfileBDLSuivi = () => {
   }, [user, authLoading, navigate]);
 
   useEffect(() => {
-    document.title = "Suivi BDL – Mon Profil";
     if (user) loadData();
   }, [user]);
 
@@ -346,17 +347,17 @@ const ProfileBDLSuivi = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-3 gap-3">
-                  <div className="rounded-lg border bg-green-50 border-green-200 p-3 text-center">
-                    <p className="text-xl font-bold text-green-700">{presentCount}</p>
-                    <p className="text-xs text-green-700/80">Présent(e)</p>
+                  <div className="rounded-lg border bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-700 p-3 text-center">
+                    <p className="text-xl font-bold text-green-700 dark:text-green-300">{presentCount}</p>
+                    <p className="text-xs text-green-700/80 dark:text-green-400">Présent(e)</p>
                   </div>
-                  <div className="rounded-lg border bg-amber-50 border-amber-200 p-3 text-center">
-                    <p className="text-xl font-bold text-amber-700">{excusedCount}</p>
-                    <p className="text-xs text-amber-700/80">Excusé(e)</p>
+                  <div className="rounded-lg border bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-700 p-3 text-center">
+                    <p className="text-xl font-bold text-amber-700 dark:text-amber-300">{excusedCount}</p>
+                    <p className="text-xs text-amber-700/80 dark:text-amber-400">Excusé(e)</p>
                   </div>
-                  <div className="rounded-lg border bg-red-50 border-red-200 p-3 text-center">
-                    <p className="text-xl font-bold text-red-700">{absentCount}</p>
-                    <p className="text-xs text-red-700/80">Absent(e)</p>
+                  <div className="rounded-lg border bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-700 p-3 text-center">
+                    <p className="text-xl font-bold text-red-700 dark:text-red-300">{absentCount}</p>
+                    <p className="text-xs text-red-700/80 dark:text-red-400">Absent(e)</p>
                   </div>
                 </div>
                 <div className="space-y-1.5">

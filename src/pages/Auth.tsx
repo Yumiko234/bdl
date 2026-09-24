@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useSEO } from "@/hooks/useSEO";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -39,6 +40,7 @@ const CLASS_OPTIONS = [
 ];
 
 const Auth = () => {
+  useSEO({ title: "Connexion – Bureau des Lycéens", url: "/auth" });
   const [loginCredentials, setLoginCredentials] = useState({ email: "", password: "" });
   const [signupCredentials, setSignupCredentials] = useState({ 
     email: "", 
@@ -54,7 +56,6 @@ const Auth = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    document.title = "Connexion – Bureau des Lycéens";
     if (user) {
       navigate('/intranet');
     }

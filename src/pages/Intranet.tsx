@@ -3,7 +3,9 @@ import { Link, useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
+import { useSEO } from "@/hooks/useSEO";
 import { supabase } from "@/integrations/supabase/client";
+import { ROLE_KEYS, type RoleKey, rolePrecedence, roleLabel, getPrimaryRole } from "@/lib/roles";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,54 +34,6 @@ interface InternalNote {
   author_is_admin?: boolean;
 }
 
-const ROLE_KEYS = [
-  "administrator",
-  "president", "presidente",
-  "vice_president", "vice_presidente",
-  "secretary_general", "secretary_general2",
-  "communication_manager", "communication_manager2",
-  "bdl_member", "vie_scolaire",
-  "student",
-] as const;
-type RoleKey = typeof ROLE_KEYS[number];
-
-const rolePrecedence: Record<RoleKey, number> = {
-  administrator: 1,
-  president: 2,
-  presidente: 2,
-  vice_president: 3,
-  vice_presidente: 3,
-  secretary_general: 4,
-  secretary_general2: 4,
-  communication_manager: 5,
-  communication_manager2: 5,
-  bdl_member: 6,
-  vie_scolaire: 7,
-  student: 8
-};
-
-const roleLabel = (r: string) =>
-  r === "administrator"          ? "Administrateur" :
-  r === "president"              ? "Président" :
-  r === "presidente"             ? "Présidente" :
-  r === "vice_president"         ? "Vice-président" :
-  r === "vice_presidente"        ? "Vice-présidente" :
-  r === "secretary_general"      ? "Secrétaire Général" :
-  r === "secretary_general2"     ? "Secrétaire Générale" :
-  r === "communication_manager"  ? "Directeur de la Communauté et de la Communication" :
-  r === "communication_manager2" ? "Directrice de la Communauté et de la Communication" :
-  r === "vie_scolaire"           ? "Vie Scolaire" :
-  r === "bdl_member"             ? "Membre BDL" : "Étudiant";
-
-
-const getPrimaryRole = (roles: string[]): RoleKey => {
-  if (!roles.length) return "student";
-  return roles.reduce((best, r) => {
-    const rk = ROLE_KEYS.includes(r as RoleKey) ? (r    as RoleKey) : "student";
-    const bk = ROLE_KEYS.includes(best as RoleKey) ? (best as RoleKey) : "student";
-    return rolePrecedence[rk] < rolePrecedence[bk] ? rk : bk;
-  }, roles[0]) as RoleKey;
-};
 
 const getGreeting = () => {
   const now = new Date();
@@ -114,6 +68,7 @@ const PUBLIC_CARDS: QuickCard[] = [
 ];
 
 const Intranet = () => {
+  useSEO({ title: "Intranet – Bureau des Lycéens", url: "/intranet" });
   const { user, signOut, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
@@ -129,7 +84,6 @@ const Intranet = () => {
   }, [user, authLoading, navigate]);
 
   useEffect(() => {
-    document.title = "Intranet – Bureau des Lycéens";
     if (user) loadData();
   }, [user]);
 
@@ -141,9 +95,9 @@ const Intranet = () => {
         supabase.from("user_roles").select("role").eq("user_id", user!.id),
       ]);
 
-      if (profileData) setProfile(profileData as any);
+      if (profileData) setProfile({ full_name: profileData.full_name, email: profileData.email, avatar_url: profileData.avatar_url });
 
-      const roles = (rolesData || []).map((r: any) => r.role);
+      const roles = (rolesData || []).map((r: { role: string }) => r.role);
       setUserRoles(roles);
       const primary = getPrimaryRole(roles);
       setPrimaryRole(primary);
@@ -171,27 +125,18 @@ const Intranet = () => {
       return;
     }
 
-    const rows = (data || []) as any[];
-    const authorIds = Array.from(new Set(rows.map((n) => n.author_id).filter(Boolean)));
+    const rows = data ?? [];
+    const authorIds = Array.from(new Set(rows.map((n) => n.author_id).filter((id): id is string => id != null)));
 
     let namesById: Record<string, string> = {};
-    if (authorIds.length > 0) {
-      const { data: profs } = await supabase
-        .from("profiles")
-        .select("id, full_name")
-        .in("id", authorIds);
-      namesById = Object.fromEntries((profs || []).map((p: any) => [p.id, p.full_name]));
-    }
-
-    // Identifie les auteurs ayant le rôle "administrator".
     let adminIds = new Set<string>();
     if (authorIds.length > 0) {
-      const { data: adminRoles } = await supabase
-        .from("user_roles")
-        .select("user_id")
-        .eq("role", "administrator" as any)
-        .in("user_id", authorIds);
-      adminIds = new Set((adminRoles || []).map((r: any) => r.user_id));
+      const [{ data: profs }, { data: adminRoles }] = await Promise.all([
+        supabase.from("profiles").select("id, full_name").in("id", authorIds),
+        supabase.from("user_roles").select("user_id").eq("role", "administrator").in("user_id", authorIds),
+      ]);
+      namesById = Object.fromEntries((profs || []).map((p: { id: string; full_name: string }) => [p.id, p.full_name]));
+      adminIds = new Set((adminRoles || []).map((r: { user_id: string }) => r.user_id));
     }
 
     setInternalNotes(

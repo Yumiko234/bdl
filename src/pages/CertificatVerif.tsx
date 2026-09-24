@@ -13,6 +13,7 @@ import {
   Shield, Calendar, Loader2, RotateCcw, QrCode,
 } from "lucide-react";
 import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
+import { useSEO } from "@/hooks/useSEO";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -45,7 +46,7 @@ export default function CertificatVerif() {
   const [multipleFound, setMultipleFound] = useState(false);
   const [autoTriggered, setAutoTriggered] = useState(false);
 
-  document.title = "Verification Certificat - Bureau des Lycéens"
+  useSEO({ title: "Vérification Certificat – Bureau des Lycéens", url: "/certificat-verif" });
 
   // ── Core verify logic ───────────────────────────────────────────────────────
 
@@ -279,7 +280,7 @@ export default function CertificatVerif() {
                       </p>
                     )}
 
-                    <div className="rounded-xl border-2 border-amber-300 bg-white p-6 space-y-4 shadow-sm">
+                    <div className="rounded-xl border-2 border-amber-300 bg-card p-6 space-y-4 shadow-sm">
                       <div className="text-center space-y-1 border-b border-amber-200 pb-4">
                         <Award className="h-10 w-10 text-amber-500 mx-auto" />
                         <p className="text-xs font-bold uppercase tracking-widest text-amber-700">
@@ -342,7 +343,7 @@ export default function CertificatVerif() {
                       </div>
                     </div>
 
-                    <div className="bg-white border border-red-200 rounded-lg p-4 text-sm text-muted-foreground space-y-1">
+                    <div className="bg-card border border-red-200 dark:border-red-800 rounded-lg p-4 text-sm text-muted-foreground space-y-1">
                       <p className="font-medium text-foreground">Raisons possibles :</p>
                       <ul className="list-disc list-inside space-y-0.5 ml-1">
                         <li>L'identifiant n'est pas strictement identique à celui de la base (majuscules/minuscules incluses).</li>

@@ -6,7 +6,7 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Menu, X, User, LogOut, LayoutDashboard, Ticket } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import logoBdl from "@/assets/logo-bdl.jpeg";
 import GlobalBanner from "./GlobalBanner";
 import { useAuth } from "@/hooks/useAuth";
@@ -27,27 +27,27 @@ const Navigation = () => {
     checkUnreadTickets();
   }, [user]);
 
-  const checkUnreadTickets = async () => {
+  const checkUnreadTickets = useCallback(async () => {
     if (!user) return;
     const { data: tickets } = await supabase
       .from("support_tickets")
       .select("id")
       .eq("requester_user_id", user.id);
     if (!tickets?.length) { setUnreadTickets(0); return; }
-    const results = await Promise.all(
-      (tickets as { id: string }[]).map(async ({ id }) => {
-        const lastSeen = (() => { try { return localStorage.getItem(`ticket_seen_${id}`) || "1970-01-01T00:00:00Z"; } catch { return "1970-01-01T00:00:00Z"; } })();
-        const { count } = await supabase
-          .from("support_messages")
-          .select("id", { count: "exact", head: true })
-          .eq("ticket_id", id)
-          .eq("is_staff", true)
-          .gt("created_at", lastSeen);
-        return (count ?? 0) > 0;
-      })
-    );
-    setUnreadTickets(results.filter(Boolean).length);
-  };
+
+    const ids = (tickets as { id: string }[]).map(({ id }) => id);
+    const { data: messages } = await supabase
+      .from("support_messages")
+      .select("ticket_id, created_at")
+      .in("ticket_id", ids)
+      .eq("is_staff", true);
+
+    const unread = ids.filter((id) => {
+      const lastSeen = (() => { try { return localStorage.getItem(`ticket_seen_${id}`) || "1970-01-01T00:00:00Z"; } catch { return "1970-01-01T00:00:00Z"; } })();
+      return (messages || []).some((m) => m.ticket_id === id && m.created_at > lastSeen);
+    });
+    setUnreadTickets(unread.length);
+  }, [user]);
 
   useEffect(() => {
     const handler = (e: Event) => {

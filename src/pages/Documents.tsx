@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSEO } from "@/hooks/useSEO";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { FileText, Download, Search, Eye, X, Loader2 } from "lucide-react";
+import { FileText, Download, Search, Eye, X, Loader2, RotateCcw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
@@ -69,6 +69,7 @@ const Documents = () => {
   const [previewTitle, setPreviewTitle] = useState("");
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewSlow, setPreviewSlow] = useState(false);
+  const slowTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([
     "reglement",
     "compte-rendu",
@@ -78,7 +79,6 @@ const Documents = () => {
   ]);
 
   useEffect(() => {
-    document.title = "Documents – Bureau des Lycéens";
     loadDocuments();
   }, []);
 
@@ -224,7 +224,14 @@ const Documents = () => {
                                       variant="outline"
                                       size="sm"
                                       className="gap-1.5"
-                                      onClick={() => { setPreviewUrl(doc.file_url!); setPreviewTitle(doc.title); setPreviewLoading(true); setPreviewSlow(false); setTimeout(() => setPreviewSlow(true), 5000); }}
+                                      onClick={() => {
+                                        if (slowTimeoutRef.current) clearTimeout(slowTimeoutRef.current);
+                                        setPreviewUrl(doc.file_url!);
+                                        setPreviewTitle(doc.title);
+                                        setPreviewLoading(true);
+                                        setPreviewSlow(false);
+                                        slowTimeoutRef.current = setTimeout(() => setPreviewSlow(true), 5000);
+                                      }}
                                     >
                                       <Eye className="h-4 w-4" />
                                       Aperçu
@@ -281,7 +288,7 @@ const Documents = () => {
       <Footer />
 
       {/* PDF Preview Dialog */}
-      <Dialog open={!!previewUrl} onOpenChange={(open) => { if (!open) { setPreviewUrl(null); setPreviewLoading(false); } }}>
+      <Dialog open={!!previewUrl} onOpenChange={(open) => { if (!open) { if (slowTimeoutRef.current) clearTimeout(slowTimeoutRef.current); setPreviewUrl(null); setPreviewLoading(false); setPreviewSlow(false); } }}>
         <DialogContent className="max-w-4xl w-full h-[85vh] flex flex-col p-0 gap-0">
           <DialogHeader className="px-6 py-4 border-b shrink-0">
             <DialogTitle className="truncate pr-8">{previewTitle}</DialogTitle>
@@ -289,12 +296,38 @@ const Documents = () => {
           <div className="flex-1 min-h-0 relative">
             {previewLoading && (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background z-10">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="text-sm text-muted-foreground">Chargement de l'aperçu…</p>
-                {previewSlow ? (
-                  <p className="text-xs text-orange-500 font-medium">Le chargement est long — essayez de recharger la page.</p>
+                {!previewSlow ? (
+                  <>
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <p className="text-sm text-muted-foreground">Chargement de l'aperçu…</p>
+                    <p className="text-xs text-muted-foreground">Le chargement peut prendre quelques secondes.</p>
+                  </>
                 ) : (
-                  <p className="text-xs text-muted-foreground">Le chargement peut prendre quelques secondes.</p>
+                  <>
+                    <div className="text-orange-500 text-4xl">⏱</div>
+                    <p className="text-sm font-medium text-foreground">Google Drive ne répond pas.</p>
+                    <p className="text-xs text-muted-foreground text-center max-w-xs">
+                      Le serveur de prévisualisation met trop de temps à charger.<br />Réessayez ou ouvrez directement le fichier.
+                    </p>
+                    <div className="flex gap-2 mt-1">
+                      <Button
+                        size="sm"
+                        variant="default"
+                        className="gap-1.5"
+                        onClick={() => window.location.reload()}
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" />
+                        Recharger la page
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => previewUrl && window.open(previewUrl, "_blank", "noopener,noreferrer")}
+                      >
+                        Ouvrir dans Drive
+                      </Button>
+                    </div>
+                  </>
                 )}
               </div>
             )}
@@ -304,7 +337,7 @@ const Documents = () => {
                 className="w-full h-full border-0"
                 title={previewTitle}
                 sandbox="allow-scripts allow-same-origin"
-                onLoad={() => setPreviewLoading(false)}
+                onLoad={() => { if (slowTimeoutRef.current) clearTimeout(slowTimeoutRef.current); setPreviewLoading(false); }}
               />
             )}
           </div>

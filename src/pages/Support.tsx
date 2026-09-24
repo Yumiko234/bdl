@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useSEO } from "@/hooks/useSEO";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -49,16 +50,16 @@ interface Message {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-  pending:     { label: "En attente",   color: "bg-amber-100 text-amber-800 border-amber-300",    icon: <Clock className="h-3 w-3" /> },
-  in_progress: { label: "En cours",    color: "bg-blue-100 text-blue-800 border-blue-300",        icon: <Loader2 className="h-3 w-3 animate-spin" /> },
-  resolved:    { label: "Traité",      color: "bg-green-100 text-green-800 border-green-300",     icon: <CheckCircle2 className="h-3 w-3" /> },
-  accepted:    { label: "Acceptée",    color: "bg-green-100 text-green-800 border-green-300",     icon: <CheckCircle2 className="h-3 w-3" /> },
+  pending:     { label: "En attente",   color: "bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700",    icon: <Clock className="h-3 w-3" /> },
+  in_progress: { label: "En cours",    color: "bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-700",        icon: <Loader2 className="h-3 w-3 animate-spin" /> },
+  resolved:    { label: "Traité",      color: "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 border-green-300 dark:border-green-700",     icon: <CheckCircle2 className="h-3 w-3" /> },
+  accepted:    { label: "Acceptée",    color: "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 border-green-300 dark:border-green-700",     icon: <CheckCircle2 className="h-3 w-3" /> },
   refused:     { label: "Refusée",     color: "bg-red-100 text-red-800 border-red-300",           icon: <XCircle className="h-3 w-3" /> },
-  closed:      { label: "Clôturé",     color: "bg-gray-100 text-gray-600 border-gray-300",        icon: <XCircle className="h-3 w-3" /> },
+  closed:      { label: "Clôturé",     color: "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-600",        icon: <XCircle className="h-3 w-3" /> },
 };
 
 const StatusBadge = ({ status }: { status: string }) => {
-  const cfg = STATUS_CONFIG[status] ?? { label: status, color: "bg-gray-100 text-gray-600 border-gray-300", icon: null };
+  const cfg = STATUS_CONFIG[status] ?? { label: status, color: "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-600", icon: null };
   return (
     <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${cfg.color}`}>
       {cfg.icon}{cfg.label}
@@ -72,6 +73,7 @@ const formatDate = (iso: string) =>
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 const Support = () => {
+  useSEO({ title: "Support – Bureau des Lycéens", url: "/support" });
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
@@ -94,6 +96,7 @@ const Support = () => {
   const [reply, setReply] = useState("");
   const [sendingReply, setSendingReply] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Profile
   const [profile, setProfile] = useState<{ full_name: string; email: string } | null>(null);
@@ -102,11 +105,11 @@ const Support = () => {
 
   // ── Load profile & tickets ───────────────────────────────────────────────────
   useEffect(() => {
-    document.title = "Support – Bureau des Lycéens"
     if (user) {
       loadProfile();
       loadTickets();
     }
+    return () => { if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current); };
   }, [user]);
 
   const loadProfile = async () => {
@@ -154,7 +157,8 @@ const Support = () => {
       .eq("ticket_id", ticketId)
       .order("created_at", { ascending: true });
     setMessages((data || []) as Message[]);
-    setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+    scrollTimeoutRef.current = setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
   };
 
   // ── Create ticket ────────────────────────────────────────────────────────────
@@ -436,7 +440,7 @@ const Support = () => {
                       </div>
 
                       {form.ticket_type === "audience" && (
-                        <div className="p-4 bg-blue-50 rounded-lg border border-blue-200 text-sm text-blue-800">
+                        <div className="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700 text-sm text-blue-800 dark:text-blue-200">
                           <strong>ℹ️ Demande d'audience</strong> — Votre demande sera examinée par le Président,
                           la Vice-Présidente, la Secrétaire Générale ou le Directeur de la Communication.
                           Vous serez notifié(e) de la décision ici.

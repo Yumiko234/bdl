@@ -40,7 +40,6 @@ const Contact = () => {
   const [contactInfos, setContactInfos] = useState<ContactInfo[]>([]);
 
   useEffect(() => {
-    document.title = "Contact – Bureau des Lycéens";
     loadContactInfos();
   }, []);
 
@@ -69,6 +68,8 @@ const Contact = () => {
       return;
     }
 
+    // Client-side rate limit (UX only — bypassable). Real enforcement must be done
+    // server-side via Supabase RLS or an Edge Function with IP-based throttling.
     try {
       const last = localStorage.getItem("contact_last_submit");
       if (last && Date.now() - parseInt(last) < 30 * 60 * 1000) {
@@ -79,8 +80,6 @@ const Contact = () => {
     } catch {}
 
     setLoading(true);
-
-    const { data: { user } } = await supabase.auth.getUser();
 
     // "audience" → ticket_type audience, tout le reste → support
     const ticketType = formData.type === "audience" ? "audience" : "support";

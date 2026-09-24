@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { useSEO } from "@/hooks/useSEO";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -69,7 +71,6 @@ interface Answer {
 interface QcmResult {
   name: string;
   value: number;
-  [key: string]: any;
 }
 
 interface ResultsData {
@@ -120,6 +121,8 @@ const renderCustomLabel = (props: any) => {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const Sondage = () => {
+  useSEO({ title: "Sondages – Bureau des Lycéens", url: "/sondage" });
+  const { user } = useAuth();
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [selectedSurvey, setSelectedSurvey] = useState<Survey | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -132,7 +135,6 @@ const Sondage = () => {
   const [results, setResults] = useState<ResultsData | null>(null);
 
   useEffect(() => {
-    document.title = "Sondages – Bureau des Lycéens";
     loadSurveys();
   }, []);
 
@@ -164,19 +166,28 @@ const Sondage = () => {
       return [];
     }
 
-    const result: Question[] = await Promise.all(
-      (qData || []).map(async (q: any) => {
-        if (q.question_type === "qcm") {
-          const { data: opts } = await supabase
-            .from("survey_options")
-            .select("*")
-            .eq("question_id", q.id)
-            .order("display_order");
-          return { ...q, options: opts || [] };
-        }
-        return { ...q, options: [] };
-      })
-    );
+    const questions = qData || [];
+    const qcmIds = questions.filter((q: any) => q.question_type === "qcm").map((q: any) => q.id);
+
+    // Fetch all options in one query instead of one per QCM question
+    let optsByQuestion: Record<string, Option[]> = {};
+    if (qcmIds.length > 0) {
+      const { data: allOpts } = await supabase
+        .from("survey_options")
+        .select("*")
+        .in("question_id", qcmIds)
+        .order("display_order");
+
+      (allOpts || []).forEach((opt: any) => {
+        if (!optsByQuestion[opt.question_id]) optsByQuestion[opt.question_id] = [];
+        optsByQuestion[opt.question_id].push(opt);
+      });
+    }
+
+    const result: Question[] = questions.map((q: any) => ({
+      ...q,
+      options: q.question_type === "qcm" ? (optsByQuestion[q.id] || []) : [],
+    }));
 
     setQuestions(result);
     return result;
@@ -184,43 +195,47 @@ const Sondage = () => {
 
   // ── load results for closed non-form surveys ──────────────────────────────
   const loadResults = async (surveyId: string, qs: Question[]) => {
-    const entries = await Promise.all(
-      qs.map(async (question) => {
-        if (question.question_type === "qcm") {
-          const { data: qcmAnswers } = await supabase
-            .from("survey_answers")
-            .select("option_id")
-            .eq("question_id", question.id)
-            .not("option_id", "is", null);
+    const qcmQs = qs.filter((q) => q.question_type === "qcm");
+    const textQs = qs.filter((q) => q.question_type !== "qcm");
+    const allIds = qs.map((q) => q.id);
 
-          const optionCounts: Record<string, number> = {};
-          (qcmAnswers || []).forEach((ans: any) => {
-            if (ans.option_id) {
-              optionCounts[ans.option_id] = (optionCounts[ans.option_id] || 0) + 1;
-            }
-          });
+    if (!allIds.length) return;
 
-          return [question.id, {
-            type: "qcm" as const,
-            options: question.options.map((opt) => ({
-              name: opt.option_text,
-              value: optionCounts[opt.id] || 0,
-            })),
-          }] as const;
-        } else {
-          const { data: textAnswers } = await supabase
-            .from("survey_answers")
-            .select("text_answer")
-            .eq("question_id", question.id)
-            .not("text_answer", "is", null);
+    const [{ data: qcmAnswers }, { data: textAnswers }] = await Promise.all([
+      qcmQs.length > 0
+        ? supabase.from("survey_answers").select("question_id, option_id").in("question_id", qcmQs.map((q) => q.id)).not("option_id", "is", null)
+        : Promise.resolve({ data: [] as { question_id: string; option_id: string }[], error: null }),
+      textQs.length > 0
+        ? supabase.from("survey_answers").select("question_id, text_answer").in("question_id", textQs.map((q) => q.id)).not("text_answer", "is", null)
+        : Promise.resolve({ data: [] as { question_id: string; text_answer: string }[], error: null }),
+    ]);
 
-          return [question.id, {
-            type: "text" as const,
-            answers: (textAnswers || []).map((a: any) => a.text_answer),
-          }] as const;
-        }
-      })
-    );
+    const qcmByQuestion: Record<string, Record<string, number>> = {};
+    (qcmAnswers || []).forEach((ans: { question_id: string; option_id: string }) => {
+      if (!qcmByQuestion[ans.question_id]) qcmByQuestion[ans.question_id] = {};
+      qcmByQuestion[ans.question_id][ans.option_id] = (qcmByQuestion[ans.question_id][ans.option_id] || 0) + 1;
+    });
+
+    const textByQuestion: Record<string, string[]> = {};
+    (textAnswers || []).forEach((ans: { question_id: string; text_answer: string }) => {
+      if (!textByQuestion[ans.question_id]) textByQuestion[ans.question_id] = [];
+      textByQuestion[ans.question_id].push(ans.text_answer);
+    });
+
+    const entries = qs.map((question) => {
+      if (question.question_type === "qcm") {
+        const counts = qcmByQuestion[question.id] || {};
+        return [question.id, {
+          type: "qcm" as const,
+          options: question.options.map((opt) => ({ name: opt.option_text, value: counts[opt.id] || 0 })),
+        }] as const;
+      } else {
+        return [question.id, {
+          type: "text" as const,
+          answers: textByQuestion[question.id] || [],
+        }] as const;
+      }
+    });
 
     setResults(Object.fromEntries(entries));
   };
@@ -262,7 +277,8 @@ const Sondage = () => {
 
     const qs = await loadQuestions(survey.id);
 
-    if (survey.status === "closed" && !survey.is_form) {
+    // Results are only shown to authenticated users
+    if (survey.status === "closed" && !survey.is_form && user) {
       await loadResults(survey.id, qs);
     }
   };
@@ -625,10 +641,10 @@ const Sondage = () => {
                                   return (
                                     <div
                                       key={question.id}
-                                      className="flex items-start gap-3 border border-blue-200 rounded-lg p-4 bg-blue-50/50"
+                                      className="flex items-start gap-3 border border-blue-200 dark:border-blue-800 rounded-lg p-4 bg-blue-50/50 dark:bg-blue-950/30"
                                     >
-                                      <Info className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
-                                      <p className="text-sm text-blue-800">
+                                      <Info className="h-5 w-5 text-blue-500 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                                      <p className="text-sm text-blue-800 dark:text-blue-300">
                                         {question.question_text}
                                       </p>
                                     </div>
@@ -744,9 +760,23 @@ const Sondage = () => {
                           </div>
                         )}
 
+                      {/* ═══ CLOSED + not a form + not authenticated → prompt login ═══ */}
+                      {selectedSurvey.status === "closed" &&
+                        !selectedSurvey.is_form &&
+                        !user && (
+                          <div className="text-center py-12 space-y-3">
+                            <EyeOff className="h-12 w-12 text-muted-foreground mx-auto" />
+                            <h3 className="text-xl font-semibold">Résultats réservés</h3>
+                            <p className="text-muted-foreground text-sm">
+                              Connectez-vous pour consulter les résultats de ce sondage.
+                            </p>
+                          </div>
+                        )}
+
                       {/* ═══ CLOSED + not a form → show results ═══ */}
                       {selectedSurvey.status === "closed" &&
                         !selectedSurvey.is_form &&
+                        user &&
                         results && (
                           <>
                             <h3 className="text-2xl font-bold border-b pb-2">
@@ -760,10 +790,10 @@ const Sondage = () => {
                                   return (
                                     <div
                                       key={question.id}
-                                      className="flex items-start gap-3 border border-blue-200 rounded-lg p-4 bg-blue-50/50"
+                                      className="flex items-start gap-3 border border-blue-200 dark:border-blue-800 rounded-lg p-4 bg-blue-50/50 dark:bg-blue-950/30"
                                     >
-                                      <Info className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />
-                                      <p className="text-sm text-blue-800">
+                                      <Info className="h-5 w-5 text-blue-500 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                                      <p className="text-sm text-blue-800 dark:text-blue-300">
                                         {question.question_text}
                                       </p>
                                     </div>

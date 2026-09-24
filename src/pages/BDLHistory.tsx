@@ -62,7 +62,6 @@ const BDLHistory = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    document.title = "Historique – Bureau des Lycéens";
     loadData();
   }, []);
 

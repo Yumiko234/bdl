@@ -3,8 +3,10 @@ import { useNavigate, useParams } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
+import { useSEO } from "@/hooks/useSEO";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ROLE_KEYS, type RoleKey, rolePrecedence, roleLabel, getPrimaryRole } from "@/lib/roles";
 
 // ─── Admin sub-components ─────────────────────────────────────────────────────
 import { AdminDashboard }          from "@/components/admin/AdminDashboard";
@@ -44,54 +46,15 @@ import {
   ChevronRight, LayoutDashboard, MessageSquare
 } from "lucide-react";
 
-// ─── Role helpers ─────────────────────────────────────────────────────────────
-const ROLE_KEYS = [
-  "administrator",
-  "president", "presidente",
-  "vice_president", "vice_presidente",
-  "secretary_general", "secretary_general2",
-  "communication_manager", "communication_manager2",
-  "bdl_member", "vie_scolaire",
-  "student",
-] as const;
-type RoleKey = typeof ROLE_KEYS[number];
-
-const rolePrecedence: Record<RoleKey, number> = {
-  administrator: 1,
-  president: 2,
-  presidente: 2,
-  vice_president: 3,
-  vice_presidente: 3,
-  secretary_general: 4,
-  secretary_general2: 4,
-  communication_manager: 5,
-  communication_manager2: 5,
-  vie_scolaire: 6,
-  bdl_member: 7,
-  student: 8,
-};
-
-const roleLabel = (r: string) =>
-  r === "administrator"          ? "Administrateur" :
-  r === "president"              ? "Président" :
-  r === "presidente"             ? "Présidente" :
-  r === "vice_president"         ? "Vice-président" :
-  r === "vice_presidente"        ? "Vice-présidente" :
-  r === "secretary_general"      ? "Secrétaire Général" :
-  r === "secretary_general2"     ? "Secrétaire Générale" :
-  r === "communication_manager"  ? "Dir. ComCom" :
-  r === "communication_manager2" ? "Dir. ComCom" :
-  r === "vie_scolaire"           ? "Vie Scolaire" :
-  r === "bdl_member"             ? "Membre BDL" : "Étudiant";
-
-const getPrimaryRole = (roles: string[]): RoleKey => {
-  if (!roles.length) return "student";
-  return roles.reduce((best, r) => {
-    const rk  = ROLE_KEYS.includes(r as RoleKey)    ? (r    as RoleKey) : "student";
-    const bk  = ROLE_KEYS.includes(best as RoleKey) ? (best as RoleKey) : "student";
-    return rolePrecedence[rk] < rolePrecedence[bk] ? rk : bk;
-  }, roles[0]) as RoleKey;
-};
+// ─── Audience request type ────────────────────────────────────────────────────
+interface AudienceRequest {
+  id: string;
+  subject: string;
+  message: string;
+  requester_name: string;
+  requester_email: string;
+  status: "pending" | "approved" | "rejected";
+}
 
 // ─── Nav items definition ─────────────────────────────────────────────────────
 interface NavItem {
@@ -136,6 +99,7 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 const Admin = () => {
+  useSEO({ title: "Administration – Bureau des Lycéens" });
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { section } = useParams<{ section: string }>();
@@ -167,11 +131,10 @@ const Admin = () => {
   }, [activeSection, mobileOpen]);
   
   const [presidentMessage, setPresidentMessage] = useState("");
-  const [audienceRequests, setAudienceRequests] = useState<any[]>([]);
+  const [audienceRequests, setAudienceRequests] = useState<AudienceRequest[]>([]);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    document.title = "Administration – Bureau des Lycéens";
     if (!authLoading && !user) {
       navigate("/auth");
       return;
@@ -196,13 +159,13 @@ const Admin = () => {
         .select("role")
         .eq("user_id", user!.id);
 
-      const roles = (rolesData || []).map((r: any) => r.role);
+      const roles = (rolesData || []).map((r: { role: string }) => r.role);
       setUserRoles(roles);
       const primary = getPrimaryRole(roles);
       setPrimaryRole(primary);
 
       // administrator + tous les rôles BDL ont accès
-      const isBDLStaff = roles.some((r: any) =>
+      const isBDLStaff = roles.some((r) =>
         ['administrator', 'president', 'presidente', 'vice_president', 'vice_presidente', 'secretary_general', 'secretary_general2', 'communication_manager', 'communication_manager2', 'bdl_member'].includes(r)
       );
 
@@ -213,7 +176,7 @@ const Admin = () => {
       }
 
       const { data: profileData } = await supabase.from("profiles").select("full_name").eq("id", user!.id).maybeSingle();
-      if (profileData) setUserProfile(profileData as any);
+      if (profileData) setUserProfile({ full_name: profileData.full_name });
     } catch (err) {
       console.error(err);
     } finally {
@@ -400,7 +363,7 @@ const Admin = () => {
             <p className="font-semibold text-sm truncate">{userProfile?.full_name ?? user?.email}</p>
             <Badge
               variant="secondary"
-              className={`text-[10px] h-4 ${primaryRole === 'administrator' ? 'bg-red-100 text-red-700' : ''}`}
+              className={`text-[10px] h-4 ${primaryRole === 'administrator' ? 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300' : ''}`}
             >
               {primaryRole === 'administrator' && '👑 '}{roleLabel(primaryRole)}
             </Badge>

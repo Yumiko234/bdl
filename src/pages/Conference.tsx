@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
+import { useSEO } from "@/hooks/useSEO";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -83,10 +84,10 @@ function CtrlBtn({
       : "bg-muted text-muted-foreground hover:bg-muted/70 hover:text-foreground",
     red: "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow",
     green: on
-      ? "bg-green-100 text-green-700 border border-green-200"
+      ? "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700"
       : "bg-muted text-muted-foreground hover:bg-muted/70",
     amber: on
-      ? "bg-amber-100 text-amber-700 border border-amber-200 animate-pulse"
+      ? "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-700 animate-pulse"
       : "bg-muted text-muted-foreground hover:bg-muted/70",
   };
   return (
@@ -104,13 +105,13 @@ function CtrlBtn({
 function RoleBadge({ role }: { role: ParticipantRole }) {
   if (role === "moderator")
     return (
-      <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-xs gap-1">
+      <Badge className="bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-700 text-xs gap-1">
         <Crown className="h-2.5 w-2.5" />Modérateur
       </Badge>
     );
   if (role === "speaker")
     return (
-      <Badge className="bg-green-100 text-green-700 border-green-200 text-xs gap-1">
+      <Badge className="bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700 text-xs gap-1">
         <Mic className="h-2.5 w-2.5" />Speaker
       </Badge>
     );
@@ -126,7 +127,7 @@ function initials(name: string) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function ConferencePage() {
-  document.title = "Conférence - Bureau des Lycéens"
+  useSEO({ title: "Conférence – Bureau des Lycéens", url: "/conference" });
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
@@ -975,7 +976,7 @@ export default function ConferencePage() {
     <div className="h-screen bg-background flex flex-col overflow-hidden">
 
       {/* ── Top bar ─────────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-4 py-2 bg-white border-b border-border shadow-sm flex-shrink-0">
+      <div className="flex items-center justify-between px-4 py-2 bg-background border-b border-border shadow-sm flex-shrink-0">
         <div className="flex items-center gap-3 min-w-0">
           <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
@@ -1004,7 +1005,7 @@ export default function ConferencePage() {
       <div className="flex flex-1 min-h-0">
 
         {/* ── Video grid ────────────────────────────────────────────────────── */}
-        <div className="flex-1 flex flex-col min-w-0 bg-slate-100">
+        <div className="flex-1 flex flex-col min-w-0 bg-slate-100 dark:bg-slate-900/50">
           <div className="flex-1 p-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 content-start overflow-auto">
 
             {/* Local tile */}
@@ -1055,11 +1056,11 @@ export default function ConferencePage() {
                   {isModerator && p.user_id !== user?.id && (
                     <div className="absolute top-2 right-2 hidden group-hover:flex gap-1 z-20">
                       {!p.is_muted && (
-                        <button onClick={() => forceMute(p.user_id)} className="bg-white/90 hover:bg-red-100 text-red-600 rounded-full p-1.5 shadow" title="Couper micro">
+                        <button onClick={() => forceMute(p.user_id)} className="bg-background/90 hover:bg-red-100 dark:hover:bg-red-900/40 text-red-600 rounded-full p-1.5 shadow" title="Couper micro">
                           <MicOff className="h-3.5 w-3.5" />
                         </button>
                       )}
-                      <button onClick={() => demoteToAudience(p.user_id)} className="bg-white/90 hover:bg-orange-100 text-orange-600 rounded-full p-1.5 shadow" title="Rétrograder">
+                      <button onClick={() => demoteToAudience(p.user_id)} className="bg-background/90 hover:bg-orange-100 dark:hover:bg-orange-900/40 text-orange-600 rounded-full p-1.5 shadow" title="Rétrograder">
                         <X className="h-3.5 w-3.5" />
                       </button>
                     </div>
@@ -1103,7 +1104,7 @@ export default function ConferencePage() {
           </div>
 
           {/* ── Controls bar ─────────────────────────────────────────────────── */}
-          <div className="flex-shrink-0 bg-white border-t border-border px-4 py-3 space-y-2 shadow-sm">
+          <div className="flex-shrink-0 bg-background border-t border-border px-4 py-3 space-y-2 shadow-sm">
 
             {/* Raised-hand alert */}
             {isModerator && raisedHands.length > 0 && (
@@ -1199,7 +1200,7 @@ export default function ConferencePage() {
 
         {/* ── Side panel ────────────────────────────────────────────────────── */}
         {(showChat || showPeers) && (
-          <div className="w-80 flex-shrink-0 bg-white border-l border-border flex flex-col min-h-0 shadow-sm">
+          <div className="w-80 flex-shrink-0 bg-background border-l border-border flex flex-col min-h-0 shadow-sm">
 
             {/* Chat */}
             {showChat && (

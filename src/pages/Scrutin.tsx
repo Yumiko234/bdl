@@ -69,6 +69,8 @@ const Scrutin = () => {
   const navigate = useNavigate();
 
   const [scrutins, setScrutins] = useState<Scrutin[]>([]);
+  const scrutinsRef = useRef<Scrutin[]>([]);
+  const loadGenRef = useRef(0);
   const [votes, setVotes] = useState<Record<string, VoteData[]>>({});
   const [myVotes, setMyVotes] = useState<Record<string, MyVote>>({});
   const [loading, setLoading] = useState(true);
@@ -100,16 +102,16 @@ const Scrutin = () => {
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   useEffect(() => {
-    if (user) {
-      checkVotingRights();
-      // Si la liste s'est chargée avant que la session soit résolue,
-      // on récupère maintenant le vote de l'utilisateur pour chaque scrutin.
-      scrutins.forEach((s) => loadMyVote(s.id));
+    if (!user) return;
+    checkVotingRights();
+    // Catch-up : si les scrutins étaient déjà chargés avant la résolution de la session,
+    // on charge les votes maintenant. Si scrutins est vide, loadScrutins s'en charge.
+    if (scrutinsRef.current.length > 0) {
+      loadMyVotesBatch(scrutinsRef.current.map((s) => s.id));
     }
   }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    document.title = "Scrutins – Bureau des Lycéens";
     loadScrutins();
   }, [currentPage, searchQuery]);
 
@@ -202,6 +204,7 @@ const Scrutin = () => {
   };
 
   const loadScrutins = async () => {
+    const gen = ++loadGenRef.current;
     setLoading(true);
 
     // Neutralise les caractères qui permettraient d'injecter des filtres
@@ -249,6 +252,8 @@ const Scrutin = () => {
       return;
     }
 
+    if (gen !== loadGenRef.current) return;
+    scrutinsRef.current = data || [];
     setScrutins(data || []);
 
     const initialOpenDetails: Record<string, boolean> = {};
@@ -257,9 +262,11 @@ const Scrutin = () => {
     });
     setOpenDetails(initialOpenDetails);
 
-    await Promise.all((data || []).map((scrutin) => {
-      return Promise.all([loadMyVote(scrutin.id), loadVotes(scrutin.id)]);
-    }));
+    const ids = (data || []).map((s) => s.id);
+    await Promise.all([
+      loadMyVotesBatch(ids),
+      ...((data || []).map((s) => loadVotes(s.id))),
+    ]);
 
     setLoading(false);
   };
@@ -286,23 +293,29 @@ const Scrutin = () => {
     setVotes((prev) => ({ ...prev, [scrutinId]: (data as any) || [] }));
   };
 
+  const loadMyVotesBatch = async (scrutinIds: string[]) => {
+    if (!user || scrutinIds.length === 0) return;
+    const { data, error } = await supabase
+      .from("scrutin_votes")
+      .select("scrutin_id, vote")
+      .in("scrutin_id", scrutinIds)
+      .eq("user_id", user.id);
+    if (error) { console.error("Error loading my votes batch:", error); return; }
+    const newVotes: Record<string, MyVote> = {};
+    (data || []).forEach((v: any) => { newVotes[v.scrutin_id] = { vote: v.vote }; });
+    setMyVotes((prev) => ({ ...prev, ...newVotes }));
+  };
+
   const loadMyVote = async (scrutinId: string) => {
     if (!user) return;
-
     const { data, error } = await supabase
       .from("scrutin_votes")
       .select("vote")
       .eq("scrutin_id", scrutinId)
       .eq("user_id", user.id)
       .maybeSingle();
-
-    if (error) {
-      console.error(`Error loading vote for ${scrutinId}:`, error);
-    }
-
-    if (data) {
-      setMyVotes((prev) => ({ ...prev, [scrutinId]: data }));
-    }
+    if (error) { console.error(`Error loading vote for ${scrutinId}:`, error); return; }
+    if (data) setMyVotes((prev) => ({ ...prev, [scrutinId]: data }));
   };
 
   const openConfirmDialog = (
@@ -411,9 +424,9 @@ const Scrutin = () => {
     if (hasVoted) return "opacity-50 cursor-not-allowed";
 
     switch (voteValue) {
-      case "pour": return "hover:bg-green-100 hover:border-green-600 hover:text-green-700";
-      case "contre": return "hover:bg-red-100 hover:border-red-600 hover:text-red-700";
-      case "abstention": return "hover:bg-blue-100 hover:border-blue-600 hover:text-blue-700";
+      case "pour": return "hover:bg-green-100 dark:hover:bg-green-900/40 hover:border-green-600 hover:text-green-700 dark:hover:text-green-300";
+      case "contre": return "hover:bg-red-100 dark:hover:bg-red-900/40 hover:border-red-600 hover:text-red-700 dark:hover:text-red-300";
+      case "abstention": return "hover:bg-blue-100 dark:hover:bg-blue-900/40 hover:border-blue-600 hover:text-blue-700 dark:hover:text-blue-300";
     }
   };
 
@@ -705,8 +718,8 @@ const Scrutin = () => {
                                     <Badge
                                       className={`text-sm py-1 px-4 self-start md:self-center ${
                                         estAdopte
-                                          ? "bg-green-100 text-green-800 border-green-200 hover:bg-green-100"
-                                          : "bg-red-100 text-red-800 border-red-200 hover:bg-red-100"
+                                          ? "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 border-green-200 dark:border-green-700 hover:bg-green-100 dark:hover:bg-green-900/40"
+                                          : "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300 border-red-200 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-900/40"
                                       }`}
                                       variant="outline"
                                     >
@@ -861,9 +874,9 @@ const Scrutin = () => {
             <p className="font-semibold text-lg">{confirmDialog.scrutinTitle}</p>
           </div>
 
-          <div className="bg-amber-50 border border-amber-200 rounded-md p-4 flex gap-3">
-            <div className="text-amber-600 mt-0.5">⚠️</div>
-            <p className="text-sm text-amber-800">
+          <div className="bg-amber-100/60 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700 rounded-md p-4 flex gap-3">
+            <div className="text-amber-600 dark:text-amber-400 mt-0.5">⚠️</div>
+            <p className="text-sm text-amber-800 dark:text-amber-300">
               Attention : une fois enregistré, votre vote ne pourra plus être modifié.
             </p>
           </div>

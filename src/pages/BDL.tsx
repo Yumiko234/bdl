@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSEO } from "@/hooks/useSEO";
-import { Link } from "react-router-dom"; // Modification Étape 3.C
+import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
@@ -34,8 +34,6 @@ const BDL = () => {
     loadMembers();
     loadContent();
   }, []);
-  
-  document.title = "Le BDL – Bureau des Lycéens";
 
   const loadContent = async () => {
     const { data } = await supabase
@@ -288,7 +286,7 @@ const BDL = () => {
             <div className="container mx-auto px-4 text-center">
               <p className="text-sm text-muted-foreground">
                 Site officiel développé et maintenu par{" "}
-                <Link to="/developpers" className="font-medium text-foreground hover:text-accent transition-colors underline-offset-4 hover:underline">
+                <Link to="/developers" className="font-medium text-foreground hover:text-accent transition-colors underline-offset-4 hover:underline">
                   l'équipe technique du BDL
                 </Link>
               </p>

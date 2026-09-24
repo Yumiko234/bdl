@@ -9,6 +9,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar, Pin, Clock, Share2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
+import { safeHtml } from "@/lib/sanitize";
 
 const CATEGORY_LABELS: Record<string, string> = {
   actualites: "Actualités",
@@ -25,9 +28,6 @@ const readingTime = (html: string): number => {
   const words = text.trim().split(/\s+/).filter(Boolean).length;
   return Math.max(1, Math.ceil(words / 200));
 };
-import { supabase } from "@/integrations/supabase/client";
-import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
-import { safeHtml } from "@/lib/sanitize";
 
 interface NewsArticle {
   id: string;
@@ -66,7 +66,6 @@ const Actualites = () => {
 
   useEffect(() => {
     const fetchNews = async () => {
-      document.title = "Actualités – Bureau des Lycéens";
       const { data, error } = await supabase
         .from("news")
         .select("*")

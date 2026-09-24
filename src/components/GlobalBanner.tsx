@@ -39,6 +39,8 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   none: null,
 };
 
+const DISMISSED_KEY = "banner_dismissed_id";
+
 const GlobalBanner = () => {
   const [banner, setBanner] = useState<Banner | null>(null);
   const [dismissed, setDismissed] = useState(false);
@@ -58,8 +60,22 @@ const GlobalBanner = () => {
       .maybeSingle();
 
     if (!error && data) {
-      setBanner(data as unknown as Banner);
+      const loaded = data as unknown as Banner;
+      try {
+        const dismissedId = localStorage.getItem(DISMISSED_KEY);
+        if (dismissedId === loaded.id) {
+          setDismissed(true);
+        }
+      } catch {}
+      setBanner(loaded);
     }
+  };
+
+  const handleDismiss = () => {
+    if (banner) {
+      try { localStorage.setItem(DISMISSED_KEY, banner.id); } catch {}
+    }
+    setDismissed(true);
   };
 
   if (!banner || dismissed) return null;
@@ -89,7 +105,7 @@ const GlobalBanner = () => {
             {banner.message}
           </p>
           <button
-            onClick={() => setDismissed(true)}
+            onClick={handleDismiss}
             className="absolute right-4 top-1/2 -translate-y-1/2 opacity-60 hover:opacity-100 transition-opacity"
             style={{ color: banner.text_color || "#000000" }}
             aria-label="Fermer le bandeau"

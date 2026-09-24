@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSEO } from "@/hooks/useSEO";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -153,6 +153,7 @@ const Actualites = () => {
   const [activeCategory, setActiveCategory] = useState<string>("Toutes");
   const [reactions, setReactions] = useState<ReactionsMap>({});
   const [myReactions, setMyReactions] = useState<MyReactionsMap>({});
+  const myProfileNameRef = useRef<string>("");
 
   useEffect(() => {
     const fetchNews = async () => {
@@ -192,6 +193,9 @@ const Actualites = () => {
       (profiles ?? []).forEach((p: { id: string; full_name: string }) => { nameById[p.id] = p.full_name; });
     }
 
+    // Stocke le prénom de l'utilisateur connecté depuis le profil
+    if (user && nameById[user.id]) myProfileNameRef.current = nameById[user.id];
+
     // Construit la map reactions[newsId][emoji] = [prénom…]
     const map: ReactionsMap = {};
     (rawReactions ?? []).forEach((r: { news_id: string; emoji: string; user_id: string }) => {
@@ -227,14 +231,17 @@ const Actualites = () => {
     if (!user) return;
     const isMine = myReactions[newsId]?.has(emoji);
 
-    // Optimistic update
+    // Optimistic update — utilise le prénom du profil (fiable) ou fallback metadata
+    const myName = myProfileNameRef.current || user.user_metadata?.full_name || "Vous";
     setReactions((prev) => {
       const updated = { ...prev };
       if (!updated[newsId]) updated[newsId] = {};
       const names = updated[newsId][emoji] ? [...updated[newsId][emoji]] : [];
-      const myName = user.user_metadata?.full_name ?? "Vous";
       if (isMine) {
-        updated[newsId] = { ...updated[newsId], [emoji]: names.filter((n) => n !== myName) };
+        // Retire le premier occurrence du nom (le nôtre)
+        const idx = names.indexOf(myName);
+        const newNames = idx >= 0 ? [...names.slice(0, idx), ...names.slice(idx + 1)] : names.slice(0, -1);
+        updated[newsId] = { ...updated[newsId], [emoji]: newNames };
       } else {
         updated[newsId] = { ...updated[newsId], [emoji]: [...names, myName] };
       }
@@ -254,11 +261,13 @@ const Actualites = () => {
         .eq("user_id", user.id)
         .eq("emoji", emoji);
       if (error) { toast.error("Erreur"); loadReactions([newsId]); }
+      else { loadReactions([newsId]); }
     } else {
       const { error } = await supabase
         .from("news_reactions")
         .insert({ news_id: newsId, user_id: user.id, emoji });
       if (error) { toast.error("Erreur"); loadReactions([newsId]); }
+      else { loadReactions([newsId]); }
     }
   };
 

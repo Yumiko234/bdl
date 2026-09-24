@@ -67,20 +67,27 @@ const InstagramEmbed = ({ post }: { post: InstagramPost }) => {
   useEffect(() => {
     if (!isEmbeddablePost(post.url)) return;
     let cancelled = false;
+    let checkTimer: ReturnType<typeof setTimeout>;
+    let fallbackTimer: ReturnType<typeof setTimeout>;
 
-    const processEmbeds = () => {
+    const tryProcess = () => {
+      if (cancelled) return;
       if (typeof (window as any).instgrm !== "undefined") {
         (window as any).instgrm.Embeds.process();
-        // Délai pour laisser l'iframe se monter
-        const t = setTimeout(() => {
+        fallbackTimer = setTimeout(() => {
           if (cancelled) return;
           const iframe = containerRef.current?.querySelector("iframe");
           if (iframe) setLoaded(true);
           else setError(true);
-        }, 3500);
-        return () => clearTimeout(t);
+        }, 4000);
+      } else {
+        // instgrm pas encore dispo : réessayer dans 200ms
+        checkTimer = setTimeout(tryProcess, 200);
       }
     };
+
+    // Timeout de sécurité global : si rien ne se passe après 8s → erreur
+    const globalTimeout = setTimeout(() => { if (!cancelled) setError(true); }, 8000);
 
     const existingScript = document.querySelector(
       'script[src="https://www.instagram.com/embed.js"]'
@@ -91,14 +98,19 @@ const InstagramEmbed = ({ post }: { post: InstagramPost }) => {
       script.src = "https://www.instagram.com/embed.js";
       script.async = true;
       script.defer = true;
-      script.onload = () => { if (!cancelled) processEmbeds(); };
+      script.onload = () => { if (!cancelled) tryProcess(); };
       script.onerror = () => { if (!cancelled) setError(true); };
       document.body.appendChild(script);
     } else {
-      processEmbeds();
+      tryProcess();
     }
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      clearTimeout(checkTimer);
+      clearTimeout(fallbackTimer);
+      clearTimeout(globalTimeout);
+    };
   }, [post.url]);
 
   const isProfile = !isEmbeddablePost(post.url);
@@ -125,7 +137,7 @@ const InstagramEmbed = ({ post }: { post: InstagramPost }) => {
   }
 
   return (
-    <div className="relative min-h-[480px]">
+    <div className="relative min-h-[480px] max-h-[700px] overflow-hidden rounded-xl">
       {/* Skeleton */}
       {!loaded && (
         <div className="absolute inset-0 flex items-center justify-center">

@@ -56,7 +56,8 @@ export const developers: Developer[] = [
     skillsLabel: "Droit",
     stack: [
       { name: "Diplomatie", level: 100 },
-      { name: "Droi constit", level: 85 },
+      { name: "Droit constit", level: 50 },
+      { name: "Droit privé", level: 80},
       { name: "Institutions judiciaires", level: 88 },
       { name: "Eco po", level: 5 },
     ],
@@ -66,12 +67,12 @@ export const developers: Developer[] = [
       "Les chiffres mentionnés sont 100% authentiques.",
     ],
     timeline: [
-      { date: "Septembre 2025", title: "Découverte", description: "Je décopuvre que le BDL a un site internet, malheureusement totalement inactif depuis 2020 et fait avec Wix."},
+      { date: "Septembre 2025", title: "Découverte", description: "Je découvre que le BDL a un site internet, malheureusement totalement inactif depuis 2020 et fait avec Wix."},
       { date: "Octobre 2025", title: "Lancement du projet", description: "Première version du site du BDL, de zéro. De base j'étais en voyage scolaire à NYC." },
       { date: "Février 2026", title: "Refonte complète", description: "Nouvelle architecture, back-office et système de comptes." },
-      { date: "Aujourd'hui", title: "Amélioration continue", description: "De nouvelles fonctionnalités ajoutées régulièrement, avec Maël." },
+      { date: "Aujourd'hui", title: "Consultant", description: "Présent en tant que consultant auprès du Bureau et l'exécutif pour les conseiller." },
     ],
-    quote: "« Là où nait l'ambition, s'léève la grandeur » ; c'est de moi !",
+    quote: "« Là où nait l'ambition, s'élève la grandeur » ; c'est de moi !",
     terminalBoot: [
       "whoami",
       "> alexandre-lejal",

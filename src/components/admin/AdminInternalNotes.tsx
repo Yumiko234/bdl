@@ -14,7 +14,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Plus, Pin, Pencil, Trash2, Loader2, Megaphone, Lock } from "lucide-react";
+import { Plus, Pin, Pencil, Trash2, Loader2, Megaphone, Lock, EyeOff, Eye, Clock } from "lucide-react";
 
 interface InternalNote {
   id: string;
@@ -22,6 +22,8 @@ interface InternalNote {
   content: string;
   author_id: string;
   is_pinned: boolean;
+  is_visible: boolean;
+  expires_at: string | null;
   created_at: string;
   updated_at: string;
   author_name?: string;
@@ -44,7 +46,7 @@ export const AdminInternalNotes = () => {
 
   const [showForm, setShowForm] = useState(false);
   const [editingNote, setEditingNote] = useState<InternalNote | null>(null);
-  const [form, setForm] = useState({ title: "", content: "", is_pinned: false });
+  const [form, setForm] = useState({ title: "", content: "", is_pinned: false, is_visible: true, expires_at: "" });
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -76,7 +78,7 @@ export const AdminInternalNotes = () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("bdl_internal_notes")
-      .select("id, title, content, author_id, is_pinned, created_at, updated_at")
+      .select("id, title, content, author_id, is_pinned, is_visible, expires_at, created_at, updated_at")
       .order("is_pinned", { ascending: false })
       .order("created_at", { ascending: false });
 
@@ -121,13 +123,19 @@ export const AdminInternalNotes = () => {
 
   const openCreate = () => {
     setEditingNote(null);
-    setForm({ title: "", content: "", is_pinned: false });
+    setForm({ title: "", content: "", is_pinned: false, is_visible: true, expires_at: "" });
     setShowForm(true);
   };
 
   const openEdit = (note: InternalNote) => {
     setEditingNote(note);
-    setForm({ title: note.title, content: note.content, is_pinned: note.is_pinned });
+    setForm({
+      title: note.title,
+      content: note.content,
+      is_pinned: note.is_pinned,
+      is_visible: note.is_visible,
+      expires_at: note.expires_at ? note.expires_at.slice(0, 16) : "",
+    });
     setShowForm(true);
   };
 
@@ -138,6 +146,8 @@ export const AdminInternalNotes = () => {
     }
     setSaving(true);
 
+    const expiresAt = form.expires_at ? new Date(form.expires_at).toISOString() : null;
+
     if (editingNote) {
       const { error } = await supabase
         .from("bdl_internal_notes")
@@ -145,6 +155,8 @@ export const AdminInternalNotes = () => {
           title: form.title.trim(),
           content: form.content.trim(),
           is_pinned: form.is_pinned,
+          is_visible: form.is_visible,
+          expires_at: expiresAt,
           updated_at: new Date().toISOString(),
         })
         .eq("id", editingNote.id);
@@ -156,6 +168,8 @@ export const AdminInternalNotes = () => {
         title: form.title.trim(),
         content: form.content.trim(),
         is_pinned: form.is_pinned,
+        is_visible: form.is_visible,
+        expires_at: expiresAt,
         author_id: user!.id,
       });
 
@@ -175,6 +189,15 @@ export const AdminInternalNotes = () => {
       .eq("id", note.id);
     if (error) toast.error("Erreur : " + error.message);
     else await loadNotes();
+  };
+
+  const handleToggleVisible = async (note: InternalNote) => {
+    const { error } = await supabase
+      .from("bdl_internal_notes")
+      .update({ is_visible: !note.is_visible })
+      .eq("id", note.id);
+    if (error) toast.error("Erreur : " + error.message);
+    else { toast.success(note.is_visible ? "Note masquée." : "Note réaffichée."); await loadNotes(); }
   };
 
   const handleDelete = async (id: string) => {
@@ -231,7 +254,9 @@ export const AdminInternalNotes = () => {
             <Card
               key={note.id}
               className={`shadow-card ${
-                note.author_is_admin
+                !note.is_visible
+                  ? "opacity-60 border-dashed"
+                  : note.author_is_admin
                   ? "border-amber-500/50 bg-amber-500/10"
                   : note.is_pinned
                   ? "border-primary/40 bg-primary/5"
@@ -245,6 +270,17 @@ export const AdminInternalNotes = () => {
                       {note.is_pinned && (
                         <Badge className="gap-1 bg-primary text-primary-foreground">
                           <Pin className="h-3 w-3" /> Épinglée
+                        </Badge>
+                      )}
+                      {!note.is_visible && (
+                        <Badge variant="secondary" className="gap-1">
+                          <EyeOff className="h-3 w-3" /> Masquée
+                        </Badge>
+                      )}
+                      {note.expires_at && (
+                        <Badge variant="outline" className="gap-1 text-orange-600 border-orange-400">
+                          <Clock className="h-3 w-3" />
+                          Expire le {new Date(note.expires_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
                         </Badge>
                       )}
                       <CardTitle className="text-base">{note.title}</CardTitle>
@@ -265,6 +301,11 @@ export const AdminInternalNotes = () => {
                     <div className="flex items-center gap-1 flex-shrink-0">
                       <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => handleTogglePin(note)} title={note.is_pinned ? "Désépingler" : "Épingler"}>
                         <Pin className={`h-3.5 w-3.5 ${note.is_pinned ? "text-primary" : "text-muted-foreground"}`} />
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => handleToggleVisible(note)} title={note.is_visible ? "Masquer" : "Réafficher"}>
+                        {note.is_visible
+                          ? <Eye className="h-3.5 w-3.5 text-muted-foreground" />
+                          : <EyeOff className="h-3.5 w-3.5 text-orange-500" />}
                       </Button>
                       <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => openEdit(note)}>
                         <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
@@ -334,6 +375,36 @@ export const AdminInternalNotes = () => {
                   checked={form.is_pinned}
                   onCheckedChange={(v) => setForm({ ...form, is_pinned: v })}
                 />
+              </div>
+              <div className="flex items-center justify-between rounded-lg border p-3">
+                <div>
+                  <Label className="text-sm">Visible</Label>
+                  <p className="text-xs text-muted-foreground">Désactiver masque la note sans la supprimer.</p>
+                </div>
+                <Switch
+                  checked={form.is_visible}
+                  onCheckedChange={(v) => setForm({ ...form, is_visible: v })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1.5">
+                  <Clock className="h-3.5 w-3.5" />
+                  Masquer automatiquement le (optionnel)
+                </Label>
+                <Input
+                  type="datetime-local"
+                  value={form.expires_at}
+                  onChange={(e) => setForm({ ...form, expires_at: e.target.value })}
+                />
+                {form.expires_at && (
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, expires_at: "" })}
+                    className="text-xs text-muted-foreground hover:text-destructive underline"
+                  >
+                    Effacer la date
+                  </button>
+                )}
               </div>
             </div>
             <div className="flex items-center justify-end gap-3 p-6 border-t">

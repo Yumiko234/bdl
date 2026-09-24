@@ -113,9 +113,12 @@ const Intranet = () => {
   };
 
   const loadInternalNotes = async () => {
+    const now = new Date().toISOString();
     const { data, error } = await supabase
       .from("bdl_internal_notes")
-      .select("id, title, content, is_pinned, created_at, author_id")
+      .select("id, title, content, is_pinned, is_visible, expires_at, created_at, author_id")
+      .eq("is_visible", true)
+      .or(`expires_at.is.null,expires_at.gt.${now}`)
       .order("is_pinned", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(5);

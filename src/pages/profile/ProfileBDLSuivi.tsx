@@ -188,7 +188,36 @@ const ProfileBDLSuivi = () => {
       recorded_at: new Date().toISOString(),
     }, { onConflict: "meeting_id,member_id" });
     setAbsenceRequests((prev) => prev.filter((r) => r.meeting_id !== meetingId));
+    setMeetingAttendance((prev) => {
+      const existing = prev.find((a) => a.meeting?.id === meetingId);
+      if (existing) return prev.map((a) => a.meeting?.id === meetingId ? { ...a, status: "present" } : a);
+      return prev;
+    });
     toast.success("Absence annulée, vous serez marqué présent.");
+  };
+
+  const handleDeclarePresent = async (meetingId: string) => {
+    const { error } = await supabase.from("bdl_meeting_attendance").upsert({
+      meeting_id: meetingId,
+      member_id: user!.id,
+      status: "present",
+      recorded_at: new Date().toISOString(),
+    }, { onConflict: "meeting_id,member_id" });
+    if (error) { toast.error("Erreur : " + error.message); return; }
+    setMeetingAttendance((prev) => {
+      const existing = prev.find((a) => a.meeting?.id === meetingId);
+      if (existing) return prev.map((a) => a.meeting?.id === meetingId ? { ...a, status: "present" } : a);
+      return [...prev, { id: `temp-${meetingId}`, status: "present", meeting: { id: meetingId, title: "", meeting_date: "" } } as any];
+    });
+    toast.success("Présence confirmée !");
+  };
+
+  const handleCancelPresence = async (meetingId: string) => {
+    const { error } = await supabase.from("bdl_meeting_attendance")
+      .delete().eq("meeting_id", meetingId).eq("member_id", user!.id);
+    if (error) { toast.error("Erreur : " + error.message); return; }
+    setMeetingAttendance((prev) => prev.filter((a) => a.meeting?.id !== meetingId));
+    toast.success("Déclaration de présence annulée.");
   };
 
   const handleSubmitAbsence = async () => {
@@ -416,9 +445,16 @@ const ProfileBDLSuivi = () => {
               <CardContent className="space-y-2">
                 {upcomingMeetings.map((m) => {
                   const absReq = absenceRequests.find((r) => r.meeting_id === m.id);
+                  const attRecord = meetingAttendance.find((a) => a.meeting?.id === m.id);
                   const isAbsent = !!absReq;
+                  const isPresent = !isAbsent && attRecord?.status === "present";
+                  const bgClass = isAbsent
+                    ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"
+                    : isPresent
+                    ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
+                    : "bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-800";
                   return (
-                    <div key={m.id} className={`p-2.5 rounded-lg border text-sm space-y-2 ${isAbsent ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800" : "bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-800"}`}>
+                    <div key={m.id} className={`p-2.5 rounded-lg border text-sm space-y-2 ${bgClass}`}>
                       <div className="flex items-center justify-between gap-3 flex-wrap">
                         <div className="min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
@@ -428,10 +464,15 @@ const ProfileBDLSuivi = () => {
                                 Absence signalée
                               </span>
                             )}
+                            {isPresent && (
+                              <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold bg-green-100 text-green-700 border-green-200 dark:bg-green-900/40 dark:text-green-300 dark:border-green-700">
+                                Présence confirmée
+                              </span>
+                            )}
                           </div>
                           <p className="text-xs text-muted-foreground">{fmtDate(m.meeting_date)}</p>
                         </div>
-                        <div className="flex gap-1.5 flex-shrink-0">
+                        <div className="flex gap-1.5 flex-shrink-0 flex-wrap justify-end">
                           {isAbsent ? (
                             <Button
                               size="sm"
@@ -443,15 +484,38 @@ const ProfileBDLSuivi = () => {
                               Je serai présent
                             </Button>
                           ) : (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="gap-1 h-7 text-xs text-red-600 border-red-300 hover:bg-red-50"
-                              onClick={() => openAbsenceModal(m.id, m.title)}
-                            >
-                              <UserX className="h-3 w-3" />
-                              Signaler une absence
-                            </Button>
+                            <>
+                              {!isPresent && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="gap-1 h-7 text-xs text-green-700 border-green-300 hover:bg-green-50"
+                                  onClick={() => handleDeclarePresent(m.id)}
+                                >
+                                  <UserCheck className="h-3 w-3" />
+                                  Je serai présent
+                                </Button>
+                              )}
+                              {isPresent && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="gap-1 h-7 text-xs text-muted-foreground"
+                                  onClick={() => handleCancelPresence(m.id)}
+                                >
+                                  Annuler
+                                </Button>
+                              )}
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="gap-1 h-7 text-xs text-red-600 border-red-300 hover:bg-red-50"
+                                onClick={() => openAbsenceModal(m.id, m.title)}
+                              >
+                                <UserX className="h-3 w-3" />
+                                Signaler une absence
+                              </Button>
+                            </>
                           )}
                         </div>
                       </div>

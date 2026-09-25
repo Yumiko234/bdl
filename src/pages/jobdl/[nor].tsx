@@ -46,6 +46,7 @@ const injectDiffIntoContent = (htmlContent: string, modifications: Modification[
   }));
 
   let tokenIdx = 0, tokenOffset = 0;
+  let lastSpan: HTMLSpanElement | null = null;
   const parser = new DOMParser();
   const doc = parser.parseFromString(htmlContent, "text/html");
 
@@ -61,6 +62,21 @@ const injectDiffIntoContent = (htmlContent: string, modifications: Modification[
     const originalText = textNode.textContent || "";
     if (!originalText) return;
     let remaining = originalText, annotatedHTML = "";
+
+    // Flush leading "removed" tokens: append to the previous span so they
+    // stay inline in the preceding paragraph and don't bleed into headings.
+    while (tokenIdx < tokens.length && tokens[tokenIdx].type === "removed") {
+      const del = doc.createElement("del");
+      del.className = "diff-removed";
+      del.textContent = tokens[tokenIdx].value;
+      if (lastSpan) {
+        lastSpan.appendChild(del);
+      } else {
+        textNode.parentNode?.insertBefore(del, textNode);
+      }
+      tokenIdx++;
+    }
+
     while (remaining.length > 0 && tokenIdx < tokens.length) {
       const token = tokens[tokenIdx];
       if (token.type === "removed") {
@@ -85,15 +101,24 @@ const injectDiffIntoContent = (htmlContent: string, modifications: Modification[
     const span = doc.createElement("span");
     span.innerHTML = annotatedHTML;
     textNode.parentNode?.replaceChild(span, textNode);
+    lastSpan = span;
   };
 
   collectTextNodes(doc.body).forEach(processTextNode);
-  const allIns = doc.body.querySelectorAll("ins.diff-added");
-  if (allIns.length > 0) {
+
+  // Place date after the LAST diff annotation (ins or del) in document order
+  const allAnnotations = [
+    ...Array.from(doc.body.querySelectorAll<Element>("ins.diff-added")),
+    ...Array.from(doc.body.querySelectorAll<Element>("del.diff-removed")),
+  ];
+  if (allAnnotations.length > 0) {
+    const last = allAnnotations.reduce((prev, cur) =>
+      prev.compareDocumentPosition(cur) & Node.DOCUMENT_POSITION_FOLLOWING ? cur : prev
+    );
     const sup = doc.createElement("sup");
     sup.className = "diff-date";
     sup.textContent = `[${dateStr}]`;
-    allIns[allIns.length - 1].insertAdjacentElement("afterend", sup);
+    last.insertAdjacentElement("afterend", sup);
   }
   return doc.body.innerHTML;
 };

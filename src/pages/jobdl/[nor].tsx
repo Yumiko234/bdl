@@ -508,8 +508,7 @@ const JobdlArticle = () => {
     if (!entry) return;
     setPdfLoading(true);
     try {
-      const bodyHTML = injectDiffIntoContent(entry.content, entry.modifications || []);
-      await exportToPDF(entry, bodyHTML);
+      await exportToPDF(entry, entry.content);
     } catch (err) {
       console.error("Erreur export PDF :", err);
     } finally {

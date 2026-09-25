@@ -43,7 +43,7 @@ export const developers: Developer[] = [
     slug: "alexandre-lejal",
     fullName: "Alexandre Lejal",
     handle: "@Yumiko234",
-    role: "Consultant — Fondateur du site",
+    role: "Consultant — Fondateur et propriétaire du site",
     tagline: "Je suis censé être en L1 Droit, qu'est-ce que je fou là ?",
     accent: "217 91% 55%", 
     avatarInitials: "AL",

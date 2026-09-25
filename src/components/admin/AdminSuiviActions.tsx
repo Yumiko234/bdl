@@ -156,6 +156,7 @@ export const SuiviActionsManagement = () => {
   const [notes, setNotes] = useState<Note[]>([]);
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [attendance, setAttendance] = useState<Attendance[]>([]);
+  const [absenceRequests, setAbsenceRequests] = useState<Array<{ meeting_id: string; member_id: string; reason: string }>>([]);
   const [currentUser, setCurrentUser] = useState<{ id: string; name: string } | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -190,7 +191,7 @@ export const SuiviActionsManagement = () => {
         const { data: p } = await supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle();
         setCurrentUser({ id: user.id, name: (p as any)?.full_name ?? "Staff" });
       }
-      await Promise.all([loadMembers(), loadActions(), loadNotes(), loadMeetings(), loadAttendance()]);
+      await Promise.all([loadMembers(), loadActions(), loadNotes(), loadMeetings(), loadAttendance(), loadAbsenceRequests()]);
       setLoading(false);
     })();
   }, []);
@@ -249,6 +250,13 @@ export const SuiviActionsManagement = () => {
       .from("bdl_meeting_attendance")
       .select("id, meeting_id, member_id, status");
     if (!error && data) setAttendance(data as unknown as Attendance[]);
+  };
+
+  const loadAbsenceRequests = async () => {
+    const { data } = await supabase
+      .from("bdl_meeting_absence_requests")
+      .select("meeting_id, member_id, reason");
+    if (data) setAbsenceRequests(data as Array<{ meeting_id: string; member_id: string; reason: string }>);
   };
 
   // ── Stats computation ────────────────────────────────────────────────────────
@@ -668,6 +676,9 @@ export const SuiviActionsManagement = () => {
               const meetingAttendance = attendance.filter((a) => a.meeting_id === meeting.id);
               const presentCount = meetingAttendance.filter((a) => a.status === "present").length;
               const isOpen = expandedMeeting === meeting.id;
+              const today = new Date().toISOString().slice(0, 10);
+              const isFuture = meeting.meeting_date >= today;
+              const pendingValidations = isFuture ? 0 : absenceRequests.filter((r) => r.meeting_id === meeting.id).length;
 
               return (
                 <Card key={meeting.id} className="shadow-card overflow-hidden">
@@ -681,7 +692,19 @@ export const SuiviActionsManagement = () => {
                         <ClipboardList className="h-5 w-5" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm">{meeting.title}</p>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-semibold text-sm">{meeting.title}</p>
+                          {isFuture && (
+                            <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700">
+                              Provisoire
+                            </span>
+                          )}
+                          {pendingValidations > 0 && (
+                            <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-700">
+                              {pendingValidations} à valider
+                            </span>
+                          )}
+                        </div>
                         <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5 flex-wrap">
                           <span className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
@@ -721,33 +744,75 @@ export const SuiviActionsManagement = () => {
 
                   {isOpen && (
                     <div className="border-t px-4 pb-4 pt-3 space-y-1.5">
+                      {!isFuture && pendingValidations > 0 && (
+                        <p className="text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-2 flex items-center gap-1.5 mb-2">
+                          <StickyNote className="h-3.5 w-3.5 shrink-0" />
+                          {pendingValidations} demande(s) d'absence à valider — cliquez "Excusé" ou "Absent" pour confirmer.
+                        </p>
+                      )}
                       {members.map((member) => {
                         const current = meetingAttendance.find((a) => a.member_id === member.id)?.status;
+                        const absenceReq = absenceRequests.find((r) => r.meeting_id === meeting.id && r.member_id === member.id);
+                        const needsValidation = !isFuture && !!absenceReq;
                         return (
-                          <div key={member.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/20">
-                            <Avatar className="h-7 w-7 flex-shrink-0">
-                              {member.avatar_url && <img src={member.avatar_url} alt={member.full_name} loading="lazy" className="h-7 w-7 rounded-full object-cover" />}
-                              <AvatarFallback className="text-[10px] bg-primary text-primary-foreground">{getInitials(member.full_name)}</AvatarFallback>
-                            </Avatar>
-                            <span className="flex-1 min-w-0 text-sm truncate">{member.full_name}</span>
-                            <div className="flex items-center gap-1 flex-shrink-0">
-                              {!member.hasAccount ? (
-                                <span className="text-xs text-muted-foreground italic">Pas de compte</span>
-                              ) : (["present", "excuse", "absent"] as const).map((status) => (
-                                <button
-                                  key={status}
-                                  onClick={() => setMemberAttendance(meeting.id, member.id, status)}
-                                  className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs font-semibold transition-all ${
-                                    current === status
-                                      ? ATTENDANCE_CONFIG[status].color + " ring-1 ring-offset-1 ring-current"
-                                      : "bg-background text-muted-foreground border-border hover:bg-muted/50"
-                                  }`}
-                                >
-                                  {ATTENDANCE_CONFIG[status].icon}
-                                  <span className="hidden sm:inline">{ATTENDANCE_CONFIG[status].label}</span>
-                                </button>
-                              ))}
+                          <div key={member.id} className={`p-2 rounded-lg hover:bg-muted/20 ${needsValidation ? "bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800" : ""}`}>
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-7 w-7 flex-shrink-0">
+                                {member.avatar_url && <img src={member.avatar_url} alt={member.full_name} loading="lazy" className="h-7 w-7 rounded-full object-cover" />}
+                                <AvatarFallback className="text-[10px] bg-primary text-primary-foreground">{getInitials(member.full_name)}</AvatarFallback>
+                              </Avatar>
+                              <span className="flex-1 min-w-0 text-sm truncate">{member.full_name}</span>
+                              <div className="flex items-center gap-1 flex-shrink-0 flex-wrap justify-end">
+                                {!member.hasAccount ? (
+                                  <span className="text-xs text-muted-foreground italic">Pas de compte</span>
+                                ) : needsValidation ? (
+                                  <>
+                                    <span className="text-xs text-amber-700 dark:text-amber-400 mr-1">Valider :</span>
+                                    <button
+                                      onClick={() => setMemberAttendance(meeting.id, member.id, "excuse")}
+                                      className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs font-semibold transition-all ${
+                                        current === "excuse"
+                                          ? ATTENDANCE_CONFIG.excuse.color + " ring-1 ring-offset-1 ring-current"
+                                          : "bg-background text-muted-foreground border-border hover:bg-muted/50"
+                                      }`}
+                                    >
+                                      {ATTENDANCE_CONFIG.excuse.icon}
+                                      <span className="hidden sm:inline">Excusé</span>
+                                    </button>
+                                    <button
+                                      onClick={() => setMemberAttendance(meeting.id, member.id, "absent")}
+                                      className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs font-semibold transition-all ${
+                                        current === "absent"
+                                          ? ATTENDANCE_CONFIG.absent.color + " ring-1 ring-offset-1 ring-current"
+                                          : "bg-background text-muted-foreground border-border hover:bg-muted/50"
+                                      }`}
+                                    >
+                                      {ATTENDANCE_CONFIG.absent.icon}
+                                      <span className="hidden sm:inline">Injustifié</span>
+                                    </button>
+                                  </>
+                                ) : (["present", "excuse", "absent"] as const).map((status) => (
+                                  <button
+                                    key={status}
+                                    onClick={() => setMemberAttendance(meeting.id, member.id, status)}
+                                    className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs font-semibold transition-all ${
+                                      current === status
+                                        ? ATTENDANCE_CONFIG[status].color + " ring-1 ring-offset-1 ring-current"
+                                        : "bg-background text-muted-foreground border-border hover:bg-muted/50"
+                                    }`}
+                                  >
+                                    {ATTENDANCE_CONFIG[status].icon}
+                                    <span className="hidden sm:inline">{ATTENDANCE_CONFIG[status].label}</span>
+                                  </button>
+                                ))}
+                              </div>
                             </div>
+                            {absenceReq && (
+                              <p className="text-xs text-amber-700 dark:text-amber-400 mt-1 pl-10 flex items-center gap-1">
+                                <StickyNote className="h-3 w-3 shrink-0" />
+                                <span className="italic">"{absenceReq.reason || "Absence signalée sans motif"}"</span>
+                              </p>
+                            )}
                           </div>
                         );
                       })}

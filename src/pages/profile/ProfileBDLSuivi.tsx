@@ -10,10 +10,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSEO } from "@/hooks/useSEO";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from "@/components/ui/dialog";
 import {
   Target, CheckCircle2, Clock, AlertCircle,
   Star, ArrowLeft, StickyNote, Calendar, TrendingUp,
-  Award, Loader2, CalendarClock,
+  Award, Loader2, CalendarClock, MessageSquare, Send, UserCheck, UserX,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -45,7 +49,18 @@ interface Note {
 interface MeetingAttendance {
   id: string;
   status: "present" | "absent" | "excuse";
-  meeting: { title: string; meeting_date: string } | null;
+  meeting: { id: string; title: string; meeting_date: string } | null;
+}
+
+interface UpcomingMeeting {
+  id: string;
+  title: string;
+  meeting_date: string;
+}
+
+interface AbsenceRequest {
+  meeting_id: string;
+  reason: string;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -81,9 +96,16 @@ const ProfileBDLSuivi = () => {
   const [actions, setActions] = useState<Action[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
   const [meetingAttendance, setMeetingAttendance] = useState<MeetingAttendance[]>([]);
+  const [upcomingMeetings, setUpcomingMeetings] = useState<UpcomingMeeting[]>([]);
+  const [absenceRequests, setAbsenceRequests] = useState<AbsenceRequest[]>([]);
   const [profile, setProfile] = useState<{ full_name: string; avatar_url: string | null } | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"all" | "a_faire" | "en_cours" | "terminee">("all");
+
+  // Modal justification d'absence
+  const [absenceModal, setAbsenceModal] = useState<{ meetingId: string; meetingTitle: string } | null>(null);
+  const [absenceReason, setAbsenceReason] = useState("");
+  const [savingAbsence, setSavingAbsence] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -126,22 +148,60 @@ const ProfileBDLSuivi = () => {
       }));
       setNotes(mappedNotes);
 
-      // Présences aux réunions
-      const { data: att, error: attErr } = await supabase
-        .from("bdl_meeting_attendance")
-        .select("id, status, meeting:bdl_meetings(title, meeting_date)")
-        .eq("member_id", user!.id);
-      if (attErr) throw attErr;
-      const sortedAttendance = ((att || []) as unknown as MeetingAttendance[]).sort(
+      // Présences aux réunions + prochaines réunions + justifications existantes
+      const today = new Date().toISOString().slice(0, 10);
+      const [attRes, upcomingRes, absRes] = await Promise.all([
+        supabase.from("bdl_meeting_attendance").select("id, status, meeting:bdl_meetings(id, title, meeting_date)").eq("member_id", user!.id),
+        supabase.from("bdl_meetings").select("id, title, meeting_date").gte("meeting_date", today).order("meeting_date", { ascending: true }),
+        supabase.from("bdl_meeting_absence_requests").select("meeting_id, reason").eq("member_id", user!.id),
+      ]);
+      if (attRes.error) throw attRes.error;
+      const sortedAttendance = ((attRes.data || []) as unknown as MeetingAttendance[]).sort(
         (a, b) => (b.meeting?.meeting_date ?? "").localeCompare(a.meeting?.meeting_date ?? "")
       );
       setMeetingAttendance(sortedAttendance);
+      const upcomingList = (upcomingRes.data || []) as UpcomingMeeting[];
+      setUpcomingMeetings(upcomingList);
+      setAbsenceRequests((absRes.data || []) as AbsenceRequest[]);
     } catch (err) {
       console.error(err);
       toast.error("Erreur lors du chargement du suivi.");
     } finally {
       setLoading(false);
     }
+  };
+
+  const openAbsenceModal = (meetingId: string, meetingTitle: string) => {
+    const existing = absenceRequests.find((r) => r.meeting_id === meetingId);
+    setAbsenceReason(existing?.reason ?? "");
+    setAbsenceModal({ meetingId, meetingTitle });
+  };
+
+  const handleCancelAbsenceDeclaration = async (meetingId: string) => {
+    const { error } = await supabase.from("bdl_meeting_absence_requests")
+      .delete().eq("meeting_id", meetingId).eq("member_id", user!.id);
+    if (error) { toast.error("Erreur : " + error.message); return; }
+    setAbsenceRequests((prev) => prev.filter((r) => r.meeting_id !== meetingId));
+    toast.success("Absence annulée, vous serez marqué présent.");
+  };
+
+  const handleSubmitAbsence = async () => {
+    if (!absenceModal) return;
+    setSavingAbsence(true);
+    const { error } = await supabase.from("bdl_meeting_absence_requests").upsert({
+      meeting_id: absenceModal.meetingId,
+      member_id: user!.id,
+      reason: absenceReason.trim(),
+      submitted_at: new Date().toISOString(),
+    }, { onConflict: "meeting_id,member_id" });
+    setSavingAbsence(false);
+    if (error) { toast.error("Erreur : " + error.message); return; }
+    toast.success("Absence signalée.");
+    setAbsenceRequests((prev) => {
+      const filtered = prev.filter((r) => r.meeting_id !== absenceModal.meetingId);
+      return [...filtered, { meeting_id: absenceModal.meetingId, reason: absenceReason.trim() }];
+    });
+    setAbsenceModal(null);
   };
 
   // ── Stats ────────────────────────────────────────────────────────────────────
@@ -331,6 +391,80 @@ const ProfileBDLSuivi = () => {
             </div>
           )}
 
+          {/* ── Prochaines réunions ── */}
+          {upcomingMeetings.length > 0 && (
+            <Card className="shadow-card">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <CalendarClock className="h-4 w-4 text-primary" />
+                  Prochaines réunions
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {upcomingMeetings.map((m) => {
+                  const absReq = absenceRequests.find((r) => r.meeting_id === m.id);
+                  const isAbsent = !!absReq;
+                  return (
+                    <div key={m.id} className={`p-2.5 rounded-lg border text-sm space-y-2 ${isAbsent ? "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800" : "bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-800"}`}>
+                      <div className="flex items-center justify-between gap-3 flex-wrap">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-medium truncate">{m.title}</p>
+                            {isAbsent && (
+                              <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold bg-red-100 text-red-700 border-red-200 dark:bg-red-900/40 dark:text-red-300 dark:border-red-700">
+                                Absence signalée
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground">{fmtDate(m.meeting_date)}</p>
+                        </div>
+                        <div className="flex gap-1.5 flex-shrink-0">
+                          {isAbsent ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="gap-1 h-7 text-xs"
+                              onClick={() => handleCancelAbsenceDeclaration(m.id)}
+                            >
+                              <UserCheck className="h-3 w-3" />
+                              Je serai présent
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="gap-1 h-7 text-xs text-red-600 border-red-300 hover:bg-red-50"
+                              onClick={() => openAbsenceModal(m.id, m.title)}
+                            >
+                              <UserX className="h-3 w-3" />
+                              Signaler une absence
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                      {isAbsent && (
+                        <div className="flex items-center justify-between gap-2 pl-1">
+                          <p className="text-xs text-muted-foreground italic truncate">
+                            <MessageSquare className="h-3 w-3 inline mr-1" />
+                            {absReq.reason || "Aucun motif fourni"}
+                          </p>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 px-2 text-xs flex-shrink-0"
+                            onClick={() => openAbsenceModal(m.id, m.title)}
+                          >
+                            Modifier
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          )}
+
           {/* ── Présence aux réunions ── */}
           {meetingAttendance.length > 0 && (
             <Card className="shadow-card">
@@ -360,20 +494,41 @@ const ProfileBDLSuivi = () => {
                     <p className="text-xs text-red-700/80 dark:text-red-400">Absent(e)</p>
                   </div>
                 </div>
+
+                {/* Historique */}
                 <div className="space-y-1.5">
-                  {meetingAttendance.map((a) => (
-                    <div key={a.id} className="flex items-center justify-between gap-3 p-2.5 rounded-lg bg-muted/20 text-sm">
-                      <div className="min-w-0">
-                        <p className="font-medium truncate">{a.meeting?.title ?? "Réunion"}</p>
-                        {a.meeting?.meeting_date && (
-                          <p className="text-xs text-muted-foreground">{fmtDate(a.meeting.meeting_date)}</p>
-                        )}
+                  {meetingAttendance.length > 0 && (
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Historique</p>
+                  )}
+                  {meetingAttendance.map((a) => {
+                    const meetingId = a.meeting?.id;
+                    const hasRequest = meetingId ? absenceRequests.some((r) => r.meeting_id === meetingId) : false;
+                    return (
+                      <div key={a.id} className="flex items-center justify-between gap-3 p-2.5 rounded-lg bg-muted/20 text-sm">
+                        <div className="min-w-0">
+                          <p className="font-medium truncate">{a.meeting?.title ?? "Réunion"}</p>
+                          {a.meeting?.meeting_date && (
+                            <p className="text-xs text-muted-foreground">{fmtDate(a.meeting.meeting_date)}</p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          {a.status === "absent" && meetingId && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 px-2 text-xs text-amber-600 hover:text-amber-700"
+                              onClick={() => openAbsenceModal(meetingId, a.meeting?.title ?? "Réunion")}
+                            >
+                              {hasRequest ? "✓ Justif. envoyée" : "Justifier"}
+                            </Button>
+                          )}
+                          <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${ATTENDANCE_CONFIG[a.status].color}`}>
+                            {ATTENDANCE_CONFIG[a.status].label}
+                          </span>
+                        </div>
                       </div>
-                      <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold flex-shrink-0 ${ATTENDANCE_CONFIG[a.status].color}`}>
-                        {ATTENDANCE_CONFIG[a.status].label}
-                      </span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
@@ -502,6 +657,41 @@ const ProfileBDLSuivi = () => {
       </main>
 
       <Footer />
+
+      {/* Modal justification d'absence */}
+      <Dialog open={!!absenceModal} onOpenChange={(open) => { if (!open) setAbsenceModal(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4 text-primary" />
+              Signaler une absence
+            </DialogTitle>
+          </DialogHeader>
+          {absenceModal && (
+            <div className="space-y-4 py-2">
+              <p className="text-sm text-muted-foreground">
+                Réunion : <span className="font-medium text-foreground">{absenceModal.meetingTitle}</span>
+              </p>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium">Motif (optionnel)</label>
+                <Textarea
+                  rows={4}
+                  placeholder="Expliquez brièvement la raison de votre absence…"
+                  value={absenceReason}
+                  onChange={(e) => setAbsenceReason(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAbsenceModal(null)}>Annuler</Button>
+            <Button onClick={handleSubmitAbsence} disabled={savingAbsence} className="gap-1.5">
+              {savingAbsence ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+              Signaler mon absence
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

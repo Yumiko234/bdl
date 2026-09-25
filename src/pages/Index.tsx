@@ -61,11 +61,12 @@ const isEmbeddablePost = (url: string) => /\/(p|reel|tv)\//.test(url);
 
 const InstagramEmbed = ({ post }: { post: InstagramPost }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [loaded, setLoaded] = useState(false);
-  const [error, setError] = useState(!isEmbeddablePost(post.url));
+  const [embedLoaded, setEmbedLoaded] = useState(false);
+
+  const embeddable = isEmbeddablePost(post.url);
 
   useEffect(() => {
-    if (!isEmbeddablePost(post.url)) return;
+    if (!embeddable) return;
     let cancelled = false;
     let checkTimer: ReturnType<typeof setTimeout>;
     let fallbackTimer: ReturnType<typeof setTimeout>;
@@ -77,29 +78,20 @@ const InstagramEmbed = ({ post }: { post: InstagramPost }) => {
         fallbackTimer = setTimeout(() => {
           if (cancelled) return;
           const iframe = containerRef.current?.querySelector("iframe");
-          if (iframe) setLoaded(true);
-          else setError(true);
+          if (iframe) setEmbedLoaded(true);
         }, 4000);
       } else {
-        // instgrm pas encore dispo : réessayer dans 200ms
         checkTimer = setTimeout(tryProcess, 200);
       }
     };
 
-    // Timeout de sécurité global : si rien ne se passe après 8s → erreur
-    const globalTimeout = setTimeout(() => { if (!cancelled) setError(true); }, 8000);
-
-    const existingScript = document.querySelector(
-      'script[src="https://www.instagram.com/embed.js"]'
-    );
-
+    const existingScript = document.querySelector('script[src="https://www.instagram.com/embed.js"]');
     if (!existingScript) {
       const script = document.createElement("script");
       script.src = "https://www.instagram.com/embed.js";
       script.async = true;
       script.defer = true;
       script.onload = () => { if (!cancelled) tryProcess(); };
-      script.onerror = () => { if (!cancelled) setError(true); };
       document.body.appendChild(script);
     } else {
       tryProcess();
@@ -109,45 +101,40 @@ const InstagramEmbed = ({ post }: { post: InstagramPost }) => {
       cancelled = true;
       clearTimeout(checkTimer);
       clearTimeout(fallbackTimer);
-      clearTimeout(globalTimeout);
     };
-  }, [post.url]);
+  }, [post.url, embeddable]);
 
-  const isProfile = !isEmbeddablePost(post.url);
-
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center gap-3 py-8 text-center rounded-xl bg-muted/30 border border-dashed min-h-[200px]">
-        <div className="w-12 h-12 rounded-full bg-pink-100 flex items-center justify-center">
-          <Instagram className="h-6 w-6 text-pink-500" />
-        </div>
-        <p className="text-sm font-medium">
-          {isProfile ? "Suivez-nous sur Instagram" : "Aperçu indisponible"}
-        </p>
-        <a
-          href={post.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs text-primary hover:underline flex items-center gap-1"
-        >
-          {isProfile ? "@bdllgsaintandre" : "Voir sur Instagram"} <ExternalLink className="h-3 w-3" />
-        </a>
+  // Carte de fallback — toujours visible si l'embed ne charge pas
+  const fallbackCard = (
+    <a
+      href={post.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex flex-col items-center justify-center gap-4 py-10 rounded-xl border bg-gradient-to-br from-pink-50 to-purple-50 dark:from-pink-950/30 dark:to-purple-950/30 border-pink-200 dark:border-pink-800 hover:shadow-md transition-shadow min-h-[220px] text-center px-6"
+    >
+      <div className="w-14 h-14 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center shadow-md">
+        <Instagram className="h-7 w-7 text-white" />
       </div>
-    );
-  }
+      <div className="space-y-1">
+        <p className="font-semibold text-foreground">Voir cette publication</p>
+        <p className="text-sm text-muted-foreground">@bdllgsaintandre</p>
+      </div>
+      <span className="text-xs text-pink-600 dark:text-pink-400 font-medium flex items-center gap-1">
+        Ouvrir sur Instagram <ExternalLink className="h-3 w-3" />
+      </span>
+    </a>
+  );
+
+  if (!embeddable) return fallbackCard;
 
   return (
-    <div className="relative min-h-[480px] max-h-[700px] overflow-hidden rounded-xl">
-      {/* Skeleton */}
-      {!loaded && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-full rounded-xl bg-muted/40 animate-pulse h-[460px] border" />
-        </div>
-      )}
+    <div className="relative">
+      {/* Carte toujours visible en dessous — l'embed se superpose si il charge */}
+      {!embedLoaded && fallbackCard}
 
       <div
         ref={containerRef}
-        className={`transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
+        className={`max-h-[700px] overflow-hidden rounded-xl transition-opacity duration-500 ${embedLoaded ? "opacity-100" : "opacity-0 absolute inset-0 pointer-events-none"}`}
       >
         <blockquote
           className="instagram-media"

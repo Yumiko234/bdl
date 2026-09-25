@@ -181,8 +181,12 @@ const ProfileBDLSuivi = () => {
     const { error: reqErr } = await supabase.from("bdl_meeting_absence_requests")
       .delete().eq("meeting_id", meetingId).eq("member_id", user!.id);
     if (reqErr) { toast.error("Erreur : " + reqErr.message); return; }
-    await supabase.from("bdl_meeting_attendance")
-      .delete().eq("meeting_id", meetingId).eq("member_id", user!.id);
+    await supabase.from("bdl_meeting_attendance").upsert({
+      meeting_id: meetingId,
+      member_id: user!.id,
+      status: "present",
+      recorded_at: new Date().toISOString(),
+    }, { onConflict: "meeting_id,member_id" });
     setAbsenceRequests((prev) => prev.filter((r) => r.meeting_id !== meetingId));
     toast.success("Absence annulée, vous serez marqué présent.");
   };

@@ -747,15 +747,21 @@ export const SuiviActionsManagement = () => {
                       {!isFuture && pendingValidations > 0 && (
                         <p className="text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-2 flex items-center gap-1.5 mb-2">
                           <StickyNote className="h-3.5 w-3.5 shrink-0" />
-                          {pendingValidations} demande(s) d'absence à valider — cliquez "Excusé" ou "Absent" pour confirmer.
+                          {pendingValidations} demande(s) d'absence à valider — cliquez "Présent", "Excusé" ou "Injustifié" pour confirmer.
                         </p>
                       )}
                       {members.map((member) => {
                         const current = meetingAttendance.find((a) => a.member_id === member.id)?.status;
                         const absenceReq = absenceRequests.find((r) => r.meeting_id === meeting.id && r.member_id === member.id);
-                        const needsValidation = !isFuture && !!absenceReq;
+                        const hasAbsenceReq = !!absenceReq;
+                        // Labels adaptés : "Injustifié" si demande d'absence, "Absent" sinon
+                        const BUTTONS: { status: AttendanceStatus; label: string }[] = [
+                          { status: "present", label: "Présent" },
+                          { status: "excuse",  label: "Excusé" },
+                          { status: "absent",  label: hasAbsenceReq ? "Injustifié" : "Absent" },
+                        ];
                         return (
-                          <div key={member.id} className={`p-2 rounded-lg hover:bg-muted/20 ${needsValidation ? "bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800" : ""}`}>
+                          <div key={member.id} className={`p-2 rounded-lg hover:bg-muted/20 ${hasAbsenceReq ? "bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800" : ""}`}>
                             <div className="flex items-center gap-3">
                               <Avatar className="h-7 w-7 flex-shrink-0">
                                 {member.avatar_url && <img src={member.avatar_url} alt={member.full_name} loading="lazy" className="h-7 w-7 rounded-full object-cover" />}
@@ -765,33 +771,7 @@ export const SuiviActionsManagement = () => {
                               <div className="flex items-center gap-1 flex-shrink-0 flex-wrap justify-end">
                                 {!member.hasAccount ? (
                                   <span className="text-xs text-muted-foreground italic">Pas de compte</span>
-                                ) : needsValidation ? (
-                                  <>
-                                    <span className="text-xs text-amber-700 dark:text-amber-400 mr-1">Valider :</span>
-                                    <button
-                                      onClick={() => setMemberAttendance(meeting.id, member.id, "excuse")}
-                                      className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs font-semibold transition-all ${
-                                        current === "excuse"
-                                          ? ATTENDANCE_CONFIG.excuse.color + " ring-1 ring-offset-1 ring-current"
-                                          : "bg-background text-muted-foreground border-border hover:bg-muted/50"
-                                      }`}
-                                    >
-                                      {ATTENDANCE_CONFIG.excuse.icon}
-                                      <span className="hidden sm:inline">Excusé</span>
-                                    </button>
-                                    <button
-                                      onClick={() => setMemberAttendance(meeting.id, member.id, "absent")}
-                                      className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs font-semibold transition-all ${
-                                        current === "absent"
-                                          ? ATTENDANCE_CONFIG.absent.color + " ring-1 ring-offset-1 ring-current"
-                                          : "bg-background text-muted-foreground border-border hover:bg-muted/50"
-                                      }`}
-                                    >
-                                      {ATTENDANCE_CONFIG.absent.icon}
-                                      <span className="hidden sm:inline">Injustifié</span>
-                                    </button>
-                                  </>
-                                ) : (["present", "excuse", "absent"] as const).map((status) => (
+                                ) : BUTTONS.map(({ status, label }) => (
                                   <button
                                     key={status}
                                     onClick={() => setMemberAttendance(meeting.id, member.id, status)}
@@ -802,15 +782,15 @@ export const SuiviActionsManagement = () => {
                                     }`}
                                   >
                                     {ATTENDANCE_CONFIG[status].icon}
-                                    <span className="hidden sm:inline">{ATTENDANCE_CONFIG[status].label}</span>
+                                    <span className="hidden sm:inline">{label}</span>
                                   </button>
                                 ))}
                               </div>
                             </div>
-                            {absenceReq && (
+                            {absenceReq && absenceReq.reason && (
                               <p className="text-xs text-amber-700 dark:text-amber-400 mt-1 pl-10 flex items-center gap-1">
                                 <StickyNote className="h-3 w-3 shrink-0" />
-                                <span className="italic">"{absenceReq.reason || "Absence signalée sans motif"}"</span>
+                                <span className="italic">"{absenceReq.reason}"</span>
                               </p>
                             )}
                           </div>

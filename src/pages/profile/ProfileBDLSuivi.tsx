@@ -178,9 +178,11 @@ const ProfileBDLSuivi = () => {
   };
 
   const handleCancelAbsenceDeclaration = async (meetingId: string) => {
-    const { error } = await supabase.from("bdl_meeting_absence_requests")
+    const { error: reqErr } = await supabase.from("bdl_meeting_absence_requests")
       .delete().eq("meeting_id", meetingId).eq("member_id", user!.id);
-    if (error) { toast.error("Erreur : " + error.message); return; }
+    if (reqErr) { toast.error("Erreur : " + reqErr.message); return; }
+    await supabase.from("bdl_meeting_attendance")
+      .delete().eq("meeting_id", meetingId).eq("member_id", user!.id);
     setAbsenceRequests((prev) => prev.filter((r) => r.meeting_id !== meetingId));
     toast.success("Absence annulée, vous serez marqué présent.");
   };
@@ -188,14 +190,21 @@ const ProfileBDLSuivi = () => {
   const handleSubmitAbsence = async () => {
     if (!absenceModal) return;
     setSavingAbsence(true);
-    const { error } = await supabase.from("bdl_meeting_absence_requests").upsert({
+    const { error: reqErr } = await supabase.from("bdl_meeting_absence_requests").upsert({
       meeting_id: absenceModal.meetingId,
       member_id: user!.id,
       reason: absenceReason.trim(),
       submitted_at: new Date().toISOString(),
     }, { onConflict: "meeting_id,member_id" });
+    if (reqErr) { setSavingAbsence(false); toast.error("Erreur : " + reqErr.message); return; }
+    // Pré-enregistrer l'absence dans l'attendance (l'exécutif pourra valider après)
+    await supabase.from("bdl_meeting_attendance").upsert({
+      meeting_id: absenceModal.meetingId,
+      member_id: user!.id,
+      status: "absent",
+      recorded_at: new Date().toISOString(),
+    }, { onConflict: "meeting_id,member_id" });
     setSavingAbsence(false);
-    if (error) { toast.error("Erreur : " + error.message); return; }
     toast.success("Absence signalée.");
     setAbsenceRequests((prev) => {
       const filtered = prev.filter((r) => r.meeting_id !== absenceModal.meetingId);

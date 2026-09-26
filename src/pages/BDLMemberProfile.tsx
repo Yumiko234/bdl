@@ -39,6 +39,8 @@ interface YearEntry {
   anecdote: string | null;
   age: number | null;
   bdl_class: string | null;
+  start_year: number | null;
+  end_year: number | null;
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -135,7 +137,7 @@ const BDLMemberProfile = () => {
       // --- Fiches années depuis bdl_member_profiles ---
       const { data: profileYears } = await supabase
         .from("bdl_member_profiles")
-        .select("year_id, role, photo_url, biography, career_path, anecdote, age, class, bdl_years(year_label, is_current)")
+        .select("year_id, role, photo_url, biography, career_path, anecdote, age, class, bdl_years(year_label, is_current, start_year, end_year)")
         .eq("person_slug", data.person_slug)
         .eq("is_published", true)
         .not("year_id", "is", null);
@@ -153,6 +155,8 @@ const BDLMemberProfile = () => {
           anecdote: p.anecdote,
           age: p.age,
           bdl_class: p.class,
+          start_year: p.bdl_years?.start_year ?? null,
+          end_year: p.bdl_years?.end_year ?? null,
         };
       });
 
@@ -160,7 +164,7 @@ const BDLMemberProfile = () => {
       // Complète les années qui n'ont pas de fiche détaillée (ilike pour la casse)
       const { data: historical } = await supabase
         .from("bdl_historical_members")
-        .select("role, year_id, bdl_years(year_label, is_current)")
+        .select("role, year_id, bdl_years(year_label, is_current, start_year, end_year)")
         .ilike("full_name", data.full_name);
 
       (historical || []).forEach((h: any) => {
@@ -176,6 +180,8 @@ const BDLMemberProfile = () => {
             anecdote: null,
             age: null,
             bdl_class: null,
+            start_year: h.bdl_years?.start_year ?? null,
+            end_year: h.bdl_years?.end_year ?? null,
           };
         }
       });
@@ -257,6 +263,15 @@ const BDLMemberProfile = () => {
   const displayClass = currentYearEntry?.bdl_class || profile.class;
   const latestYear = yearEntries[0];
 
+  // Plage complète (ex: "2023-2026") au lieu de la seule dernière année
+  const yearsWithRange = yearEntries.filter((y) => y.start_year != null && y.end_year != null);
+  const rangeLabel = (() => {
+    if (yearsWithRange.length === 0) return latestYear?.year_label ?? "";
+    const minStart = Math.min(...yearsWithRange.map((y) => y.start_year as number));
+    const maxEnd = Math.max(...yearsWithRange.map((y) => y.end_year as number));
+    return `${minStart}-${maxEnd}`;
+  })();
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navigation />
@@ -305,7 +320,7 @@ const BDLMemberProfile = () => {
                     </Badge>
                   ) : (
                     <Badge className="bg-white/15 text-white border-white/25 text-sm py-1 px-3">
-                      Ancien membre — {latestYear?.year_label}
+                      Ancien membre — {rangeLabel}
                     </Badge>
                   )
                 )}

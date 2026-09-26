@@ -446,7 +446,7 @@ const Scrutin = () => {
       vie_scolaire: "Vie Scolaire",
       student: "Étudiant"
     };
-    const rolePriority = ["president", "vice_president", "secretary_general", "communication_manager", "bdl_member"];
+    const rolePriority = ["president", "vice_president", "vice_presidente", "secretary_general", "secretary_general2", "communication_manager", "communication_manager2", "bdl_member"];
     for (const priority of rolePriority) {
       if (profile.user_roles.some((r) => r.role === priority)) {
         return roleLabels[priority] || "Membre BDL";

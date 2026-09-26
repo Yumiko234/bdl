@@ -71,7 +71,7 @@ const BDLHistory = () => {
         supabase.from("bdl_years").select("*").order("start_year", { ascending: false }),
         supabase
           .from("bdl_historical_members")
-          .select("full_name, role, avatar_url, bdl_years(year_label)")
+          .select("full_name, role, avatar_url, bdl_years(start_year, end_year)")
           .eq("is_honorary", true)
           .order("display_order", { ascending: true }),
       ]);
@@ -80,10 +80,54 @@ const BDLHistory = () => {
       setYears(yearsRes.data || []);
 
       if (!honoraryRes.error && honoraryRes.data) {
-        const names = honoraryRes.data.map((m: any) => m.full_name);
+        // Un membre honorifique peut avoir une ligne par année (ex: 23-24, 24-25, 25-26).
+        // On regroupe donc par personne et on fusionne les années en une seule plage,
+        // au lieu de générer une carte par ligne (ce qui créait des clés React dupliquées
+        // et ne laissait apparaître que la dernière année).
+        const grouped: Record<
+          string,
+          {
+            full_name: string;
+            role: string;
+            avatar_url: string | null;
+            minStart: number;
+            maxEnd: number;
+            lastStart: number;
+          }
+        > = {};
+
+        honoraryRes.data.forEach((m: any) => {
+          const key = toPersonSlug(m.full_name);
+          const start = m.bdl_years?.start_year;
+          const end = m.bdl_years?.end_year;
+
+          if (!grouped[key]) {
+            grouped[key] = {
+              full_name: m.full_name,
+              role: m.role,
+              avatar_url: m.avatar_url ?? null,
+              minStart: start,
+              maxEnd: end,
+              lastStart: start,
+            };
+          } else {
+            const g = grouped[key];
+            if (start != null) g.minStart = Math.min(g.minStart, start);
+            if (end != null) g.maxEnd = Math.max(g.maxEnd, end);
+            // On garde le rôle de l'année la plus récente
+            if (start != null && start > g.lastStart) {
+              g.role = m.role;
+              g.lastStart = start;
+            }
+            if (!g.avatar_url && m.avatar_url) {
+              g.avatar_url = m.avatar_url;
+            }
+          }
+        });
+
+        const personSlugs = Object.keys(grouped);
         const slugMap: Record<string, string> = {};
-        if (names.length > 0) {
-          const personSlugs = names.map(toPersonSlug);
+        if (personSlugs.length > 0) {
           const { data: profiles } = await supabase
             .from("bdl_member_profiles")
             .select("person_slug, slug, year_id")
@@ -92,15 +136,18 @@ const BDLHistory = () => {
             .is("year_id", null);
           (profiles || []).forEach((p: any) => { slugMap[p.person_slug] = p.slug; });
         }
+
         setHonorary(
-          honoraryRes.data.map((m: any) => {
-            const personSlug = toPersonSlug(m.full_name);
+          personSlugs.map((key) => {
+            const g = grouped[key];
+            const label =
+              g.minStart != null && g.maxEnd != null ? `${g.minStart}-${g.maxEnd}` : "";
             return {
-              full_name: m.full_name,
-              role: m.role,
-              avatar_url: m.avatar_url ?? null,
-              year_label: (m.bdl_years as any)?.year_label ?? "",
-              profile_slug: slugMap[personSlug] ?? personSlug,
+              full_name: g.full_name,
+              role: g.role,
+              avatar_url: g.avatar_url,
+              year_label: label,
+              profile_slug: slugMap[key] ?? key,
             };
           })
         );

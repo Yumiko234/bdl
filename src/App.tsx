@@ -31,6 +31,7 @@ const Sondage          = lazy(() => import("./pages/Sondage"));
 const Intranet         = lazy(() => import("./pages/Intranet"));
 const Auth             = lazy(() => import("./pages/Auth"));
 const Admin            = lazy(() => import("./pages/Admin"));
+const AdminMemberActionLog = lazy(() => import("./pages/AdminMemberActionLog"));
 const Contact          = lazy(() => import("./pages/Contact"));
 const Support          = lazy(() => import("./pages/Support"));
 const Conference       = lazy(() => import("./pages/Conference"));
@@ -81,6 +82,8 @@ const App = () => {
 
               {/* Admin : /admin redirige vers la section par défaut */}
               <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+              {/* Historique complet d'un membre (qui a fait quoi, quand) — slug = user_id */}
+              <Route path="/admin/actions/:slug" element={<AdminMemberActionLog />} />
               <Route path="/admin/:section" element={<Admin />} />
 
               <Route path="/etablissement" element={<Etablissement />} />

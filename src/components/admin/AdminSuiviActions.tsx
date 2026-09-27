@@ -14,7 +14,9 @@ import {
   Star, TrendingUp, Users, Target, StickyNote, X, Save,
   ChevronDown, ChevronUp, Award, BarChart2, Calendar,
   UserCheck, UserX, UserMinus, CalendarClock, ClipboardList,
+  History,
 } from "lucide-react";
+import { MemberActionLogDrawer } from "@/components/admin/MemberActionLogDrawer";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Cell, RadarChart, PolarGrid,
@@ -642,6 +644,9 @@ export const SuiviActionsManagement = () => {
                   <span className="hidden sm:block">{s.done}/{s.totalActions} terminées</span>
                   <span className="font-bold text-amber-600">{s.totalPoints.toFixed(1)} pts</span>
                 </div>
+                <Button size="sm" variant="ghost" onClick={() => setSelectedMember(s.member.id)} className="gap-1 text-xs text-muted-foreground">
+                  <History className="h-3 w-3" /> <span className="hidden sm:inline">Historique</span>
+                </Button>
                 <Button size="sm" variant="outline" disabled={!s.member.hasAccount} title={s.member.hasAccount ? undefined : "Fiche sans compte lié"} onClick={() => openCreateAction(s.member.id)} className="hidden sm:flex gap-1 text-xs">
                   <Plus className="h-3 w-3" /> Action
                 </Button>
@@ -852,6 +857,14 @@ export const SuiviActionsManagement = () => {
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <Button
                       size="sm"
+                      variant="ghost"
+                      className="gap-1 text-xs text-muted-foreground"
+                      onClick={(e) => { e.stopPropagation(); setSelectedMember(s.member.id); }}
+                    >
+                      <History className="h-3 w-3" /> <span className="hidden sm:inline">Historique</span>
+                    </Button>
+                    <Button
+                      size="sm"
                       variant="outline"
                       className="gap-1 text-xs"
                       disabled={!s.member.hasAccount}
@@ -1053,6 +1066,13 @@ export const SuiviActionsManagement = () => {
           );
         })}
       </div>
+
+      {/* ── Drawer historique d'un membre ── */}
+      <MemberActionLogDrawer
+        memberId={selectedMember}
+        memberName={members.find((m) => m.id === selectedMember)?.full_name}
+        onOpenChange={(open) => { if (!open) setSelectedMember(null); }}
+      />
 
       {/* ── Action Form Modal ── */}
       {showActionForm && (

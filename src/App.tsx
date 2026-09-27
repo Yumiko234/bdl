@@ -34,6 +34,7 @@ const Admin            = lazy(() => import("./pages/Admin"));
 const AdminMemberActionLog = lazy(() => import("./pages/AdminMemberActionLog"));
 const Contact          = lazy(() => import("./pages/Contact"));
 const Support          = lazy(() => import("./pages/Support"));
+const FAQ              = lazy(() => import("./pages/FAQ"));
 const Conference       = lazy(() => import("./pages/Conference"));
 const CertificatVerif  = lazy(() => import("./pages/CertificatVerif"));
 const Confirm          = lazy(() => import("./pages/Confirm"));
@@ -77,8 +78,8 @@ const App = () => {
               <Route path="/legal/mentions-legales" element={<MentionsLegales />} />
               <Route path="/legal/confidentialite" element={<Confidentialite />} />
 
-              <Route path="/developpers" element={<DevelopersHub />} />
-              <Route path="/developpers/:slug" element={<DeveloperProfile />} />
+              <Route path="/developers" element={<DevelopersHub />} />
+              <Route path="/developers/:slug" element={<DeveloperProfile />} />
 
               {/* Admin : /admin redirige vers la section par défaut */}
               <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
@@ -86,30 +87,40 @@ const App = () => {
               <Route path="/admin/actions/:slug" element={<AdminMemberActionLog />} />
               <Route path="/admin/:section" element={<Admin />} />
 
+
               <Route path="/etablissement" element={<Etablissement />} />
               <Route path="/bdl" element={<BDL />} />
               <Route path="/bdl/historique" element={<BDLHistory />} />
               <Route path="/bdl/historique/:year" element={<BDLYearDetail />} />
               <Route path="/bdl/:slug" element={<BDLMemberProfile />} />
+
+
               <Route path="/clubs" element={<Clubs />} />
               <Route path="/actualites" element={<Actualites />} />
               <Route path="/events" element={<Events />} />
               <Route path="/calendrier" element={<Calendrier />} />
               <Route path="/documents" element={<Documents />} />
-              <Route path="/contact" element={<Contact />} />
               <Route path="/jo" element={<JOBDL />} />
               <Route path="/jo/:nor" element={<JobdlArticle />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/intranet" element={<Intranet />} />
               <Route path="/scrutin" element={<Scrutin />} />
+
+              <Route path="/contact" element={<Contact />} />
               <Route path="/support" element={<Support />} />
+              <Route path="/faq" element={<FAQ />} />
+              
               <Route path="/certificat-verif" element={<CertificatVerif />} />
               <Route path="/conference" element={<Conference />} />
               <Route path="/sondage" element={<Sondage />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/bdl-profile" element={<ProfileBDLSuivi />} />
+
+
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/confirm" element={<Confirm />} />
+
+
               <Route path="*" element={<NotFound />} />
             </Routes>
             </div>

@@ -45,7 +45,7 @@ const DeveloperProfile = () => {
           <div className="text-center space-y-4 px-4">
             <h1 className="text-2xl font-bold">404 — Développeur introuvable</h1>
             <p className="text-muted-foreground">Ce profil n'existe pas (encore ?).</p>
-            <Link to="/developpers"><Button><ChevronLeft className="h-4 w-4 mr-2" />Retour au hub</Button></Link>
+            <Link to="/developers"><Button><ChevronLeft className="h-4 w-4 mr-2" />Retour au hub</Button></Link>
           </div>
         </main>
         <Footer />
@@ -74,7 +74,7 @@ const DeveloperProfile = () => {
               {others.map((o) => (
                 <Link
                   key={o.slug}
-                  to={`/developpers/${o.slug}`}
+                  to={`/developers/${o.slug}`}
                   className="text-xs font-mono px-3 py-1.5 rounded-full border border-black/10 dark:border-white/10 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:border-black/25 dark:hover:border-white/25 transition-colors"
                 >
                   → voir {o.fullName.split(" ")[0]}

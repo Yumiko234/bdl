@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { Link } from "react-router-dom";
 import { useSEO } from "@/hooks/useSEO";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -29,33 +30,7 @@ const categoryLabels: Record<string, string> = {
   jobdl: "JoBDL",
 };
 
-const faq = [
-  {
-    question: "Comment rejoindre le BDL en tant que membre ?",
-    answer:
-      "Pour devenir membre du BDL, vous devez être élève au Lycée général Saint-André et vous présenter à la Vie Scolaire ou à un membre de l'Exécutif. Renseignez-vous auprès de la Secrétaire Générale pour plus d'informations.",
-  },
-  {
-    question: "Comment puis-je contacter le BDL ?",
-    answer:
-      "Vous pouvez nous contacter via le formulaire de contact sur notre site ou nous envoyer un email à contact@bdl-saintandre.fr",
-  },
-  {
-    question: "Comment créer un nouveau club ?",
-    answer:
-      "La création de club n'est malheureusement pas possible pour le moment.",
-  },
-  {
-    question: "Comment accéder à l'intranet ?",
-    answer:
-      "Vous avez la possibilité de vous créer un compte via le formulaire dédié sur la page intranet. Veuillez renseigner des informations valides. En cas de perte ou de problème, contactez la Secrétaire Générale du BDL.",
-  },
-  {
-    question: "Puis-je proposer un événement ?",
-    answer:
-      "Absolument ! Le BDL encourage toutes les initiatives. Soumettez votre projet via le formulaire de contact en détaillant votre idée, le public visé et le budget estimé. Le BDL étudiera votre proposition et vous répondra sous 15 jours.",
-  },
-];
+// La FAQ générale sur le BDL a été déplacée vers sa propre page : src/pages/FAQ.tsx
 
 const Documents = () => {
   useSEO({
@@ -260,26 +235,15 @@ const Documents = () => {
           </div>
         </section>
 
-        {/* FAQ */}
+        {/* Lien vers la FAQ générale (déplacée sur sa propre page) */}
         <section className="py-16 bg-muted/30">
-          <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
-              <h2 className="text-4xl font-bold mb-8">Foire Aux Questions</h2>
-              <div className="space-y-4">
-                {faq.map((item, index) => (
-                  <Card key={index} className="shadow-card">
-                    <CardContent className="p-6">
-                      <h3 className="text-xl font-bold mb-3 text-primary">
-                        {item.question}
-                      </h3>
-                      <p className="text-foreground leading-relaxed">
-                        {item.answer}
-                      </p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
+          <div className="container mx-auto px-4 text-center">
+            <p className="text-lg text-muted-foreground">
+              Une question sur le BDL, l'adhésion ou les clubs ?{" "}
+              <Link to="/faq" className="text-primary font-semibold hover:underline">
+                Consultez notre FAQ
+              </Link>
+            </p>
           </div>
         </section>
         </MaintenanceOverlay>

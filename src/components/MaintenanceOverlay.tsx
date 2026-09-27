@@ -17,7 +17,7 @@ interface MaintenanceOverlayProps {
 }
 
 // Pages toujours accessibles quoi qu'il arrive
-const BYPASS_PATHS = ["/admin", "/auth", "/intranet", "/contact", "/support"];
+const BYPASS_PATHS = ["/admin", "/auth", "/intranet", "/contact", "/support", "/faq", "/legal"];
 
 const isBypassPath = () =>
   BYPASS_PATHS.some((p) => window.location.pathname.startsWith(p));
@@ -57,16 +57,6 @@ export const MaintenanceOverlay = ({ children }: MaintenanceOverlayProps) => {
     if (data) {
       const staffRoles = [
         "administrator",
-        "president",
-        "presidente",
-        "vice_president",
-        "vice_presidente",
-        "secretary_general",
-        "secretary_general2",
-        "communication_manager",
-        "communication_manager2",
-        "bdl_member",
-        "vie_scolaire",
       ];
       setIsBDLStaff(data.some((r: any) => staffRoles.includes(r.role)));
     }
@@ -133,7 +123,7 @@ export const MaintenanceOverlay = ({ children }: MaintenanceOverlayProps) => {
         )}
 
         <p className="text-xs text-muted-foreground italic pt-2">
-          — Bureau des Lycéens, Lycée Saint-André
+          — L'Équipe Technique
         </p>
       </div>
     </div>

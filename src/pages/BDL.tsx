@@ -127,7 +127,7 @@ const BDL = () => {
     const priority = [
       'president', 'presidente',
       'vice_president', 'vice_presidente',
-      'secretary_general', 'secretary_general',
+      'secretary_general', 'secretary_general2',
       'communication_manager', 'communication_manager2',
       'bdl_member'];
     for (const role of priority) {
@@ -287,7 +287,7 @@ const BDL = () => {
               <p className="text-sm text-muted-foreground">
                 Site officiel développé et maintenu par{" "}
                 <Link to="/developers" className="font-medium text-foreground hover:text-accent transition-colors underline-offset-4 hover:underline">
-                  l'équipe technique du BDL
+                  l'Équipe Technique du BDL
                 </Link>
               </p>
             </div>

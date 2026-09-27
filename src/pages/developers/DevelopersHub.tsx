@@ -7,7 +7,7 @@ import { developers } from "@/data/developers";
 
 const DevelopersHub = () => {
   const [typed, setTyped] = useState("");
-  const fullText = "// équipe technique du site";
+  const fullText = "// Équipe Technique du site";
 
   useEffect(() => {
     document.title = "Développeurs – Bureau des Lycéens";
@@ -54,7 +54,7 @@ const DevelopersHub = () => {
             {developers.map((dev) => (
               <Link
                 key={dev.slug}
-                to={`/developpers/${dev.slug}`}
+                to={`/developers/${dev.slug}`}
                 className="dev-select-card group relative rounded-2xl border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.03] p-8 flex flex-col items-center text-center gap-4 transition-all duration-300 hover:-translate-y-1.5 hover:border-black/20 dark:hover:border-white/20"
                 style={{ ["--dev-accent" as string]: dev.accent }}
               >
@@ -91,7 +91,7 @@ const DevelopersHub = () => {
 
           <div className="flex items-center justify-center gap-2 text-slate-400 dark:text-slate-600 font-mono text-xs mt-16">
             <Code2 className="h-3.5 w-3.5" />
-            <span>bdl-saintandre.fr/developpers</span>
+            <span>bdl-saintandre.fr/developers</span>
           </div>
         </section>
       </main>

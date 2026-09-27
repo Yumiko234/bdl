@@ -77,7 +77,7 @@ export const developers: Developer[] = [
       "whoami",
       "> alexandre-lejal",
       "cat role.txt",
-      "> Fondateur & développeur du site du BDL",
+      "> Fondateur & propriétaire du site du BDL",
     ],
     socials: {
       github: "https://github.com/Yumiko234",

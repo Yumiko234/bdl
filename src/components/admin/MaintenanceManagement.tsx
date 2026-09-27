@@ -16,6 +16,7 @@ const AVAILABLE_ROUTES = [
   { path: "/",             label: "Accueil" },
   { path: "/etablissement",label: "L'Établissement" },
   { path: "/bdl",          label: "Le BDL" },
+  { path: "/developers",   label: "Équipe Technique"},
   { path: "/clubs",        label: "Clubs" },
   { path: "/actualites",   label: "Actualités" },
   { path: "/events",       label: "Événements" },
@@ -333,7 +334,7 @@ export const MaintenanceManagement = () => {
               <div className="flex gap-2 p-3 rounded-lg bg-blue-50 border border-blue-200 text-xs text-blue-800">
                 <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
                 <p>
-                  Les pages <strong>/admin</strong>, <strong>/auth</strong>, <strong>/intranet</strong>, <strong>/support</strong> et <strong>/contact</strong> restent toujours accessibles. Le staff BDL n'est jamais bloqué.
+                  Les pages <strong>/admin</strong>, <strong>/auth</strong>, <strong>/intranet</strong>, <strong>/faq</strong>, <strong>/support</strong> et <strong>/contact</strong> restent toujours accessibles.
                 </p>
               </div>
             </div>

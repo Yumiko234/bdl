@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { roleLabel } from "@/lib/roles";
 import {
   Shield, Ban, Mail, Lock, Search, AlertTriangle,
   CheckCircle, ChevronDown, ChevronUp, Clock,
@@ -42,22 +43,6 @@ interface AuthUserStats {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const ROLE_LABELS: Record<string, string> = {
-  administrator:          "Administrateur",
-  president:              "Président",
-  presidente:             "Présidente",
-  vice_president:         "Vice-Président",
-  vice_presidente:        "Vice-Présidente",
-  secretary_general:      "Secrétaire Général",
-  secretary_general2:     "Secrétaire Générale",
-  communication_manager:  "Directeur ComCom",
-  communication_manager2: "Directrice ComCom",
-  vie_scolaire:           "Vie Scolaire",
-  bdl_member:             "Membre BDL",
-  student:                "Étudiant",
-};
-
-const getRoleLabel = (role: string) => ROLE_LABELS[role] ?? role;
 
 const ROLE_PRIORITY: Record<string, number> = {
   administrator: 1, president: 2, presidente: 2,
@@ -330,7 +315,7 @@ export const AdminManagement = () => {
                             <Badge variant="destructive" className="text-xs">Banni</Badge>
                           )}
                           <Badge variant="secondary" className="text-xs">
-                            {getRoleLabel(primary)}
+                            {roleLabel(primary)}
                           </Badge>
                         </div>
                         <p className="text-xs text-muted-foreground truncate">{user.email}</p>
@@ -400,7 +385,7 @@ export const AdminManagement = () => {
                                 {user.roles.length === 0
                                   ? <Badge variant="outline" className="text-xs">Étudiant</Badge>
                                   : user.roles.map((r) => (
-                                    <Badge key={r} variant="secondary" className="text-xs">{getRoleLabel(r)}</Badge>
+                                    <Badge key={r} variant="secondary" className="text-xs">{roleLabel(r)}</Badge>
                                   ))}
                               </div>
                             </div>
@@ -413,7 +398,7 @@ export const AdminManagement = () => {
                               {user.roles.length === 0
                                 ? <Badge variant="outline" className="text-xs">Étudiant</Badge>
                                 : user.roles.map((r) => (
-                                  <Badge key={r} variant="secondary" className="text-xs">{getRoleLabel(r)}</Badge>
+                                  <Badge key={r} variant="secondary" className="text-xs">{roleLabel(r)}</Badge>
                                 ))}
                             </div>
                           </div>

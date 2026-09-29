@@ -80,6 +80,13 @@ const Navigation = () => {
   ];
 
   return (
+    <>
+    <a
+      href="#main-content"
+      className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-1/2 focus:-translate-x-1/2 focus:z-[200] focus:bg-background focus:text-foreground focus:border focus:border-border focus:px-4 focus:py-2 focus:rounded-md focus:text-sm focus:font-medium focus:shadow-md"
+    >
+      Aller au contenu principal
+    </a>
     <header className="sticky top-0 z-50 w-full">
       <nav className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b border-border">
         <div className="container mx-auto px-4">
@@ -97,7 +104,7 @@ const Navigation = () => {
             {/* Nav links + Auth groupés à droite */}
             <div className="hidden xl:flex items-center gap-1">
               {navItems.map((item) => (
-                <Link key={item.path} to={item.path}>
+                <Link key={item.path} to={item.path} aria-current={location.pathname === item.path ? "page" : undefined}>
                   <Button size="sm" variant={location.pathname === item.path ? "default" : "ghost"} className="font-medium">
                     {item.label}
                   </Button>
@@ -176,7 +183,7 @@ const Navigation = () => {
         <div className="xl:hidden fixed inset-0 top-20 z-40 bg-background overflow-y-auto border-t">
           <div className="px-4 py-4 space-y-1">
             {navItems.map((item) => (
-              <Link key={item.path} to={item.path} onClick={() => setIsMenuOpen(false)}>
+              <Link key={item.path} to={item.path} onClick={() => setIsMenuOpen(false)} aria-current={location.pathname === item.path ? "page" : undefined}>
                 <Button variant={location.pathname === item.path ? "default" : "ghost"} className="w-full justify-start">
                   {item.label}
                 </Button>
@@ -230,6 +237,7 @@ const Navigation = () => {
         </div>
       )}
     </header>
+    </>
   );
 };
 

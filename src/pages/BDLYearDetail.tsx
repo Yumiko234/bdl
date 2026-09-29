@@ -225,7 +225,7 @@ const BDLYearDetail = () => {
         <section className="py-16 gradient-institutional text-white">
           <div className="container mx-auto px-4">
             {/* Breadcrumb */}
-            <nav className="text-xs text-white/60 flex items-center gap-1.5 flex-wrap mb-6">
+            <nav className="text-xs text-white/75 flex items-center gap-1.5 flex-wrap mb-6">
               <Link to="/" className="hover:text-white transition-colors">Accueil</Link>
               <span>/</span>
               <Link to="/bdl" className="hover:text-white transition-colors">Le BDL</Link>

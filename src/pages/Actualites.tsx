@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useSEO } from "@/hooks/useSEO";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -8,12 +8,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Calendar, Pin, Clock, Share2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 import { safeHtml } from "@/lib/sanitize";
+import { roleLabel } from "@/lib/roles";
 
 const CATEGORY_LABELS: Record<string, string> = {
   actualites: "Actualités",
@@ -51,18 +52,6 @@ interface NewsArticle {
 type ReactionsMap = Record<string, Record<string, string[]>>;
 // myReactions[newsId] = Set des emojis posés par l'utilisateur connecté
 type MyReactionsMap = Record<string, Set<string>>;
-
-const roleLabels: Record<string, string> = {
-  "administrator": "Administrateur",
-  "president": "Président",
-  "presidente": "Présidente",
-  "vice_president": "Vice-Président",
-  "vice_presidente": "Vice-Présidente",
-  "secretary_general": "Secrétaire Général",
-  "secretary_general2": "Secrétaire Générale",
-  "communication_manager": "Directeur de la Communication et de la Communauté",
-  "communication_manager2": "Directrice de la Communication et de la Communauté",
-};
 
 // ─── Barre de réactions ────────────────────────────────────────────────────────
 
@@ -141,16 +130,15 @@ function ReactionBar({
 
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
+const PAGE_SIZE = 10;
+
 const Actualites = () => {
-  useSEO({
-    title: "Actualités – Bureau des Lycéens",
-    description: "Toutes les actualités du Bureau des Lycéens du Lycée Saint-André.",
-    url: "/actualites",
-  });
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeCategory = searchParams.get("cat") ?? "Toutes";
   const [news, setNews] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeCategory, setActiveCategory] = useState<string>("Toutes");
+  const [page, setPage] = useState(PAGE_SIZE);
   const [reactions, setReactions] = useState<ReactionsMap>({});
   const [myReactions, setMyReactions] = useState<MyReactionsMap>({});
   const myProfileNameRef = useRef<string>("");
@@ -273,11 +261,55 @@ const Actualites = () => {
 
   const categories = ["Toutes", ...Array.from(new Set(news.map((n) => n.category).filter(Boolean)))];
   const filteredNews = activeCategory === "Toutes" ? news : news.filter((n) => n.category === activeCategory);
+  const visibleNews = filteredNews.slice(0, page);
+  const hasMore = page < filteredNews.length;
+
+  const handleCategoryChange = (cat: string) => {
+    setPage(PAGE_SIZE);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (cat === "Toutes") next.delete("cat"); else next.set("cat", cat);
+      return next;
+    }, { replace: true });
+  };
 
   const getRoleLabel = (role: string | null): string | null => {
     if (!role) return null;
-    return roleLabels[role] || role;
+    return roleLabel(role);
   };
+
+  const newsJsonLd = useMemo(() => {
+    if (!visibleNews.length) return undefined;
+    return {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      "name": "Actualités – Bureau des Lycéens",
+      "url": "https://bdl-saintandre.fr/actualites",
+      "itemListElement": visibleNews.slice(0, 20).map((item, idx) => ({
+        "@type": "ListItem",
+        "position": idx + 1,
+        "item": {
+          "@type": "BlogPosting",
+          "headline": item.title,
+          "datePublished": item.published_at,
+          "url": `https://bdl-saintandre.fr/actualites#article-${item.id}`,
+          "author": item.author_name ? { "@type": "Person", "name": item.author_name } : undefined,
+          "publisher": {
+            "@type": "Organization",
+            "name": "Bureau des Lycéens – Lycée Saint-André",
+            "url": "https://bdl-saintandre.fr"
+          }
+        }
+      }))
+    };
+  }, [visibleNews]);
+
+  useSEO({
+    title: "Actualités – Bureau des Lycéens",
+    description: "Toutes les actualités du Bureau des Lycéens du Lycée Saint-André.",
+    url: "/actualites",
+    jsonLd: newsJsonLd,
+  });
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -287,7 +319,7 @@ const Actualites = () => {
         <MaintenanceOverlay>
         <section className="py-16 gradient-institutional text-white">
           <div className="container mx-auto px-4">
-            <nav className="text-xs text-white/60 flex items-center gap-1.5 flex-wrap mb-6">
+            <nav className="text-xs text-white/75 flex items-center gap-1.5 flex-wrap mb-6">
               <Link to="/" className="hover:text-white transition-colors">Accueil</Link>
               <span>/</span>
               <span className="text-white/90 font-medium">Actualités</span>
@@ -310,7 +342,7 @@ const Actualites = () => {
                   {categories.map((cat) => (
                     <button
                       key={cat}
-                      onClick={() => setActiveCategory(cat)}
+                      onClick={() => handleCategoryChange(cat)}
                       className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
                         activeCategory === cat
                           ? "bg-primary text-primary-foreground border-primary"
@@ -344,7 +376,7 @@ const Actualites = () => {
                 <p className="text-center text-muted-foreground py-8">Aucune actualité pour le moment</p>
               ) : (
                 <TooltipProvider delayDuration={200}>
-                  {filteredNews.map((item) => (
+                  {visibleNews.map((item) => (
                     <Card
                       key={item.id}
                       id={`article-${item.id}`}
@@ -431,6 +463,16 @@ const Actualites = () => {
                       </CardContent>
                     </Card>
                   ))}
+                  {hasMore && (
+                    <div className="flex justify-center pt-2">
+                      <button
+                        onClick={() => setPage((p) => p + PAGE_SIZE)}
+                        className="px-6 py-2 rounded-full border border-border text-sm font-medium text-muted-foreground hover:border-primary/50 hover:text-foreground transition-colors"
+                      >
+                        Charger plus ({filteredNews.length - page} restants)
+                      </button>
+                    </div>
+                  )}
                 </TooltipProvider>
               )}
             </div>

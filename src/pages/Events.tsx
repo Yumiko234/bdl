@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSEO } from "@/hooks/useSEO";
 import { supabase } from "@/integrations/supabase/client";
 import Navigation from "@/components/Navigation";
@@ -14,6 +14,7 @@ import { fr } from "date-fns/locale";
 import { toast } from "sonner";
 import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 import { safeHtml } from "@/lib/sanitize";
+import { roleLabel } from "@/lib/roles";
 
 interface Event {
   _key: string;
@@ -145,13 +146,9 @@ function EventCard({ event, getRoleLabel, past = false }: { event: Event; getRol
 }
 
 export default function Events() {
-  useSEO({
-    title: "Événements – Bureau des Lycéens",
-    description: "Tous les événements à venir et passés organisés par le Bureau des Lycéens du Lycée Saint-André.",
-    url: "/events",
-  });
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pastLimit, setPastLimit] = useState(5);
 
   useEffect(() => {
     loadEvents();
@@ -198,21 +195,38 @@ export default function Events() {
   const upcomingEvents = events.filter((e) => getEnd(e) >= today);
   const pastEvents    = events.filter((e) => getEnd(e) <  today).reverse();
 
-  const getRoleLabel = (role: string | null): string => {
-    const roleLabels: { [key: string]: string } = {
-  administrator: "Administrateur",
-  president: "Président",
-  presidente: "Présidente",
-  vice_president: "Vice-Président",
-  vice_presidente: "Vice-Présidente",
-  secretary_general: "Secrétaire Général",
-  secretary_general2: "Secrétaire Générale",
-  communication_manager: "Directeur de la Communication et de la Communauté",
-  communication_manager2: "Directrice de la Communication et de la Communauté",
-  bdl_member: "Membre du BDL",
+  const getRoleLabel = (role: string | null): string => role ? roleLabel(role) : "BDL";
+
+  const visiblePast = pastEvents.slice(0, pastLimit);
+
+  const eventsJsonLd = useMemo(() => {
+    if (!upcomingEvents.length) return undefined;
+    return {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      "name": "Événements du Bureau des Lycéens",
+      "url": "https://bdl-saintandre.fr/events",
+      "itemListElement": upcomingEvents.slice(0, 10).map((event, idx) => ({
+        "@type": "ListItem",
+        "position": idx + 1,
+        "item": {
+          "@type": "Event",
+          "name": event.title,
+          "startDate": event.start_date,
+          "endDate": event.end_date || event.start_date,
+          "location": { "@type": "Place", "name": "Lycée Saint-André", "address": "Bordeaux, France" },
+          "organizer": { "@type": "Organization", "name": "Bureau des Lycéens – Lycée Saint-André", "url": "https://bdl-saintandre.fr" }
+        }
+      }))
     };
-    return role ? roleLabels[role] || "BDL" : "BDL";
-  };
+  }, [upcomingEvents]);
+
+  useSEO({
+    title: "Événements – Bureau des Lycéens",
+    description: "Tous les événements à venir et passés organisés par le Bureau des Lycéens du Lycée Saint-André.",
+    url: "/events",
+    jsonLd: eventsJsonLd,
+  });
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -223,7 +237,7 @@ export default function Events() {
         {/* En-tête harmonisée avec la page Actualités */}
         <section className="py-16 gradient-institutional text-white">
           <div className="container mx-auto px-4">
-            <nav className="text-xs text-white/60 flex items-center gap-1.5 flex-wrap mb-6">
+            <nav className="text-xs text-white/75 flex items-center gap-1.5 flex-wrap mb-6">
               <Link to="/" className="hover:text-white transition-colors">Accueil</Link>
               <span>/</span>
               <span className="text-white/90 font-medium">Événements</span>
@@ -288,7 +302,17 @@ export default function Events() {
                   {pastEvents.length > 0 && (
                     <div className="space-y-4 pt-4">
                       <h3 className="text-xl font-semibold text-muted-foreground">Passés</h3>
-                      {pastEvents.map((event) => <EventCard key={event._key} event={event} getRoleLabel={getRoleLabel} past />)}
+                      {visiblePast.map((event) => <EventCard key={event._key} event={event} getRoleLabel={getRoleLabel} past />)}
+                      {pastLimit < pastEvents.length && (
+                        <div className="flex justify-center pt-2">
+                          <button
+                            onClick={() => setPastLimit((l) => l + 5)}
+                            className="px-6 py-2 rounded-full border border-border text-sm font-medium text-muted-foreground hover:border-primary/50 hover:text-foreground transition-colors"
+                          >
+                            Voir plus ({pastEvents.length - pastLimit} restants)
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </>

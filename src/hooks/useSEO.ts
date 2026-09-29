@@ -5,12 +5,13 @@ interface SEOProps {
   description?: string;
   image?: string;
   url?: string;
+  jsonLd?: Record<string, unknown>;
 }
 
 const BASE_URL = "https://bdl-saintandre.fr";
 const DEFAULT_IMAGE = `${BASE_URL}/logo-bdl.jpeg`;
 
-export function useSEO({ title, description, image, url }: SEOProps) {
+export function useSEO({ title, description, image, url, jsonLd }: SEOProps) {
   const resolvedImage = image ?? DEFAULT_IMAGE;
   useEffect(() => {
     document.title = title;
@@ -53,5 +54,17 @@ export function useSEO({ title, description, image, url }: SEOProps) {
       }
       link.href = canonical;
     }
-  }, [title, description, image, url]);
+
+    const SEO_SCRIPT_ID = "seo-jsonld";
+    const existing = document.getElementById(SEO_SCRIPT_ID);
+    if (jsonLd) {
+      const script = (existing as HTMLScriptElement | null) ?? document.createElement("script");
+      script.setAttribute("type", "application/ld+json");
+      script.id = SEO_SCRIPT_ID;
+      script.textContent = JSON.stringify(jsonLd);
+      if (!existing) document.head.appendChild(script);
+    } else if (existing) {
+      existing.remove();
+    }
+  }, [title, description, image, url, jsonLd]);
 }

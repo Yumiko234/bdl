@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useSEO } from "@/hooks/useSEO";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -38,20 +38,28 @@ const Documents = () => {
     description: "Règlements, comptes-rendus, formulaires et Journal Officiel du Bureau des Lycéens.",
     url: "/documents",
   });
+  const [searchParams, setSearchParams] = useSearchParams();
   const [documents, setDocuments] = useState<Document[]>([]);
-  const [search, setSearch] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewTitle, setPreviewTitle] = useState("");
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewSlow, setPreviewSlow] = useState(false);
   const slowTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([
-    "reglement",
-    "compte-rendu",
-    "formulaire",
-    "autre",
-    "jobdl",
-  ]);
+
+  const ALL_CATS = ["reglement", "compte-rendu", "formulaire", "autre", "jobdl"];
+  const search = searchParams.get("q") ?? "";
+  const selectedCategories: string[] = (() => {
+    const raw = searchParams.get("cats");
+    return raw ? raw.split(",").filter(Boolean) : ALL_CATS;
+  })();
+
+  const setSearch = (val: string) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (val) next.set("q", val); else next.delete("q");
+      return next;
+    }, { replace: true });
+  };
 
   useEffect(() => {
     loadDocuments();
@@ -71,11 +79,14 @@ const Documents = () => {
   };
 
   const handleCategoryToggle = (category: string) => {
-    setSelectedCategories((prev) =>
-      prev.includes(category)
-        ? prev.filter((c) => c !== category)
-        : [...prev, category]
-    );
+    const next = selectedCategories.includes(category)
+      ? selectedCategories.filter((c) => c !== category)
+      : [...selectedCategories, category];
+    setSearchParams((prev) => {
+      const u = new URLSearchParams(prev);
+      if (next.length === ALL_CATS.length) u.delete("cats"); else u.set("cats", next.join(","));
+      return u;
+    }, { replace: true });
   };
 
   const filteredDocuments = documents.filter((doc) => {

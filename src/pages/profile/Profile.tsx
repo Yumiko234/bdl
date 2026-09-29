@@ -22,6 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { User, Mail, Shield, Trash, MailMinus } from "lucide-react";
 import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
+import { roleLabel } from "@/lib/roles";
 
 interface UserProfile {
   full_name: string;
@@ -210,26 +211,6 @@ const Profile = () => {
     }
   };
 
-  /* ===================== ROLES LABEL ===================== */
-
-  const getRoleLabel = (role: string): string => {
-    const labels: Record<string, string> = {
-      administrator: "Administrateur",
-      president: "Président",
-      presidente: "Présidente",
-      vice_president: "Vice-Président",
-      vice_presidente: "Vice-Présidente",
-      secretary_general: "Secrétaire Général",
-      secretary_general2: "Secrétaire Générale",
-      communication_manager: "Directeur ComCom",
-      communication_manager2: "Directrice ComCom",
-      bdl_member: "Membre BDL",
-      vie_scolaire: "Vie Scolaire",
-      student: "Étudiant"
-    };
-    return labels[role] || role;
-  };
-
   /* ===================== RENDER ===================== */
 
   if (authLoading || loading) {
@@ -404,7 +385,7 @@ const Profile = () => {
                 <CardContent className="flex flex-wrap gap-2">
                   {profile.roles.map(role => (
                     <Badge key={role} variant="secondary">
-                      {getRoleLabel(role)}
+                      {roleLabel(role)}
                     </Badge>
                   ))}
                 </CardContent>

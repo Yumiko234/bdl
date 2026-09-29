@@ -69,7 +69,7 @@ const App = () => {
         <ScrollToTopButton />
         <ErrorBoundary key={location.pathname.split('/')[1]}>
           <Suspense fallback={<PageLoader />}>
-            <div key={location.pathname.split('/')[1]} className="page-fade-in">
+            <div key={location.pathname.split('/')[1]} id="main-content" tabIndex={-1} className="page-fade-in outline-none">
             <Routes>
               <Route path="/" element={<Index />} />
 

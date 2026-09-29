@@ -27,6 +27,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
+import { roleLabel } from "@/lib/roles";
 
 interface Scrutin {
   id: string;
@@ -432,24 +433,10 @@ const Scrutin = () => {
 
   const getRoleLabel = (profile: VoteData["profiles"]) => {
     if (!profile?.user_roles || profile.user_roles.length === 0) return "Membre BDL";
-    const roleLabels: Record<string, string> = {
-      administrator: "Administrateur",
-      president: "Président",
-      presidente: "Présidente",
-      vice_president: "Vice-Président",
-      vice_presidente: "Vice-Présidente",
-      secretary_general: "Secrétaire Général",
-      secretary_general2: "Secrétaire Générale",
-      communication_manager: "Directeur ComCom",
-      communication_manager2: "Directrice ComCom",
-      bdl_member: "Membre BDL",
-      vie_scolaire: "Vie Scolaire",
-      student: "Étudiant"
-    };
-    const rolePriority = ["president", "vice_president", "vice_presidente", "secretary_general", "secretary_general2", "communication_manager", "communication_manager2", "bdl_member"];
+    const rolePriority = ["president", "presidente", "vice_president", "vice_presidente", "secretary_general", "secretary_general2", "communication_manager", "communication_manager2", "bdl_member"];
     for (const priority of rolePriority) {
       if (profile.user_roles.some((r) => r.role === priority)) {
-        return roleLabels[priority] || "Membre BDL";
+        return roleLabel(priority);
       }
     }
     return "Membre BDL";

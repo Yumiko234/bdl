@@ -16,7 +16,7 @@ import {
   Hand, PhoneOff, MessageSquare, Users, Settings,
   Send, Crown, Shield, Loader2, X, Check, Volume2,
   Radio, LogIn, Clock, AlertCircle, Minimize2, Maximize2,
-  ArrowLeft,
+  ArrowLeft, Link2,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -65,6 +65,185 @@ const ICE: RTCConfiguration = {
     { urls: "stun:stun1.l.google.com:19302" },
   ],
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Pre-call setup modal (device selection + camera preview)
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface PreCallProps {
+  confTitle: string;
+  isCreate: boolean;
+  defaultAudioIn: string;
+  defaultAudioOut: string;
+  onConfirm: (audioIn: string, audioOut: string) => void;
+  onCancel: () => void;
+}
+
+function PreCallSetup({ confTitle, isCreate, defaultAudioIn, defaultAudioOut, onConfirm, onCancel }: PreCallProps) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const [audioIns, setAudioIns] = useState<MediaDeviceInfo[]>([]);
+  const [audioOuts, setAudioOuts] = useState<MediaDeviceInfo[]>([]);
+  const [videoIns, setVideoIns] = useState<MediaDeviceInfo[]>([]);
+  const [selAudioIn, setSelAudioIn] = useState(defaultAudioIn);
+  const [selAudioOut, setSelAudioOut] = useState(defaultAudioOut);
+  const [selVideoIn, setSelVideoIn] = useState("");
+  const [camOn, setCamOn] = useState(false);
+  const [micLevel, setMicLevel] = useState(0);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const animRef = useRef<number>(0);
+
+  const startPreview = useCallback(async (videoId?: string) => {
+    if (streamRef.current) { streamRef.current.getTracks().forEach((t) => t.stop()); }
+    try {
+      const constraints: MediaStreamConstraints = {
+        video: videoId ? { deviceId: { exact: videoId } } : true,
+        audio: selAudioIn ? { deviceId: { exact: selAudioIn } } : true,
+      };
+      const s = await navigator.mediaDevices.getUserMedia(constraints);
+      streamRef.current = s;
+      if (videoRef.current) { videoRef.current.srcObject = s; videoRef.current.play().catch(() => {}); }
+      setCamOn(true);
+
+      // Mic level meter
+      try {
+        const ctx = new AudioContext();
+        const src = ctx.createMediaStreamSource(s);
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 256;
+        src.connect(analyser);
+        analyserRef.current = analyser;
+        const data = new Uint8Array(analyser.frequencyBinCount);
+        const tick = () => {
+          analyser.getByteFrequencyData(data);
+          const avg = data.reduce((a, b) => a + b, 0) / data.length;
+          setMicLevel(Math.min(100, avg * 2));
+          animRef.current = requestAnimationFrame(tick);
+        };
+        animRef.current = requestAnimationFrame(tick);
+      } catch { /* mic level optional */ }
+
+      // Enumerate devices with labels now available
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      setAudioIns(devices.filter((d) => d.kind === "audioinput"));
+      setAudioOuts(devices.filter((d) => d.kind === "audiooutput"));
+      setVideoIns(devices.filter((d) => d.kind === "videoinput"));
+    } catch { setCamOn(false); }
+  }, [selAudioIn]);
+
+  useEffect(() => {
+    startPreview();
+    return () => {
+      cancelAnimationFrame(animRef.current);
+      streamRef.current?.getTracks().forEach((t) => t.stop());
+    };
+  }, []);
+
+  const handleVideoChange = async (deviceId: string) => {
+    setSelVideoIn(deviceId);
+    await startPreview(deviceId);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-background rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+        {/* Header */}
+        <div className="px-6 pt-6 pb-4 border-b border-border">
+          <h2 className="text-lg font-bold flex items-center gap-2">
+            <Radio className="h-5 w-5 text-primary" />
+            {isCreate ? "Démarrer la conférence" : "Rejoindre la conférence"}
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1 truncate">{confTitle}</p>
+        </div>
+
+        <div className="p-6 space-y-5">
+          {/* Camera preview */}
+          <div className="relative bg-slate-800 rounded-xl overflow-hidden aspect-video">
+            {camOn ? (
+              <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
+            ) : (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-slate-400">
+                <VideoOff className="h-10 w-10" />
+                <span className="text-sm">Caméra non disponible</span>
+              </div>
+            )}
+            {/* Mic level bar */}
+            <div className="absolute bottom-2 left-2 right-2 h-1.5 bg-white/20 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-green-400 rounded-full transition-all duration-75"
+                style={{ width: `${micLevel}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Device selectors */}
+          <div className="space-y-3">
+            {videoIns.length > 0 && (
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                  <Video className="h-3.5 w-3.5" /> Caméra
+                </label>
+                <select
+                  value={selVideoIn}
+                  onChange={(e) => handleVideoChange(e.target.value)}
+                  className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="">Caméra par défaut</option>
+                  {videoIns.map((d) => <option key={d.deviceId} value={d.deviceId}>{d.label || `Cam ${d.deviceId.slice(0, 8)}`}</option>)}
+                </select>
+              </div>
+            )}
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                <Mic className="h-3.5 w-3.5" /> Microphone
+              </label>
+              <select
+                value={selAudioIn}
+                onChange={(e) => setSelAudioIn(e.target.value)}
+                className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="">Microphone par défaut</option>
+                {audioIns.map((d) => <option key={d.deviceId} value={d.deviceId}>{d.label || `Micro ${d.deviceId.slice(0, 8)}`}</option>)}
+              </select>
+            </div>
+            {audioOuts.length > 0 && (
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                  <Volume2 className="h-3.5 w-3.5" /> Haut-parleurs
+                </label>
+                <select
+                  value={selAudioOut}
+                  onChange={(e) => setSelAudioOut(e.target.value)}
+                  className="w-full border border-input bg-background text-foreground rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="">Haut-parleurs par défaut</option>
+                  {audioOuts.map((d) => <option key={d.deviceId} value={d.deviceId}>{d.label || `Sortie ${d.deviceId.slice(0, 8)}`}</option>)}
+                </select>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="px-6 pb-6 flex gap-3">
+          <button
+            onClick={onCancel}
+            className="flex-1 px-4 py-2.5 rounded-xl border border-border text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
+          >
+            Annuler
+          </button>
+          <button
+            onClick={() => onConfirm(selAudioIn, selAudioOut)}
+            className="flex-1 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+          >
+            <LogIn className="h-4 w-4" />
+            {isCreate ? "Démarrer" : "Rejoindre"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Small sub-components
@@ -147,6 +326,15 @@ export default function ConferencePage() {
   // ── create form ──
   const [newTitle, setNewTitle] = useState("");
   const [creating, setCreating] = useState(false);
+
+  // ── pre-call ──
+  const [showPreCall, setShowPreCall] = useState(false);
+  const [preCallConf, setPreCallConf] = useState<DBConference | null>(null);
+  const [preCallIsCreate, setPreCallIsCreate] = useState(false);
+
+  // ── timer ──
+  const confStartRef = useRef<number | null>(null);
+  const [timerStr, setTimerStr] = useState("00:00");
 
   // ── media state ──
   const [micOn, setMicOn] = useState(false);
@@ -692,8 +880,17 @@ export default function ConferencePage() {
 
   // ─── Conference lifecycle ─────────────────────────────────────────────────
 
-  const createConference = async () => {
+  const handleCreateClick = () => {
     if (!newTitle.trim()) return;
+    setPreCallConf(null);
+    setPreCallIsCreate(true);
+    setShowPreCall(true);
+  };
+
+  const createConference = async (audioIn: string, audioOut: string) => {
+    setShowPreCall(false);
+    setSelAudioIn(audioIn);
+    setSelAudioOut(audioOut);
     setCreating(true);
     const id = crypto.randomUUID();
     const conf: DBConference = {
@@ -715,7 +912,16 @@ export default function ConferencePage() {
     toast.success("🎙️ Conférence démarrée !");
   };
 
-  const joinConference = (conf: DBConference) => {
+  const handleJoinClick = (conf: DBConference) => {
+    setPreCallConf(conf);
+    setPreCallIsCreate(false);
+    setShowPreCall(true);
+  };
+
+  const joinConference = (conf: DBConference, audioIn: string, audioOut: string) => {
+    setShowPreCall(false);
+    setSelAudioIn(audioIn);
+    setSelAudioOut(audioOut);
     const role: ParticipantRole = isBDLExec ? "moderator" : "audience";
     setActiveConf(conf);
     setMyRole(role);
@@ -771,6 +977,32 @@ export default function ConferencePage() {
 
   useEffect(() => () => doCleanup(true), []);
 
+  // ─── Timer ────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!inConference) { confStartRef.current = null; setTimerStr("00:00"); return; }
+    if (!confStartRef.current) confStartRef.current = Date.now();
+    const t = setInterval(() => {
+      const s = Math.floor((Date.now() - confStartRef.current!) / 1000);
+      const mm = String(Math.floor(s / 60)).padStart(2, "0");
+      const ss = String(s % 60).padStart(2, "0");
+      setTimerStr(`${mm}:${ss}`);
+    }, 1000);
+    return () => clearInterval(t);
+  }, [inConference]);
+
+  // ─── Keyboard shortcuts ───────────────────────────────────────────────────
+  useEffect(() => {
+    if (!inConference) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === "m" || e.key === "M") toggleMic();
+      if (e.key === "c" || e.key === "C") toggleCam();
+      if (e.key === "h" || e.key === "H") toggleHand();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [inConference, toggleMic, toggleCam, toggleHand]);
+
   // ─── Derived values ───────────────────────────────────────────────────────
 
   const isModerator = myRole === "moderator";
@@ -780,6 +1012,22 @@ export default function ConferencePage() {
   );
 
   // ─── Loading gate ─────────────────────────────────────────────────────────
+
+  if (showPreCall) {
+    return (
+      <PreCallSetup
+        confTitle={preCallIsCreate ? newTitle : (preCallConf?.title ?? "")}
+        isCreate={preCallIsCreate}
+        defaultAudioIn={selAudioIn}
+        defaultAudioOut={selAudioOut}
+        onConfirm={(audioIn, audioOut) => {
+          if (preCallIsCreate) createConference(audioIn, audioOut);
+          else if (preCallConf) joinConference(preCallConf, audioIn, audioOut);
+        }}
+        onCancel={() => setShowPreCall(false)}
+      />
+    );
+  }
 
   if (loading || checkingRole) {
     return (
@@ -884,10 +1132,10 @@ export default function ConferencePage() {
                     placeholder="Thème de la réunion…"
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && createConference()}
+                    onKeyDown={(e) => e.key === "Enter" && handleCreateClick()}
                     className="flex-1"
                   />
-                  <Button onClick={createConference} disabled={creating || !newTitle.trim()}>
+                  <Button onClick={handleCreateClick} disabled={creating || !newTitle.trim()}>
                     {creating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Radio className="h-4 w-4 mr-2" />}
                     Lancer
                   </Button>
@@ -936,7 +1184,7 @@ export default function ConferencePage() {
                             {new Date(conf.created_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
                           </p>
                         </div>
-                        <Button className="w-full" onClick={() => joinConference(conf)}>
+                        <Button className="w-full" onClick={() => handleJoinClick(conf)}>
                           <LogIn className="h-4 w-4 mr-2" />Rejoindre
                         </Button>
                       </CardContent>
@@ -986,10 +1234,20 @@ export default function ConferencePage() {
           <span className="text-foreground font-semibold truncate">{activeConf?.title}</span>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
+          <span className="text-xs font-mono text-muted-foreground tabular-nums">{timerStr}</span>
           <Badge variant="outline" className="text-xs gap-1">
             <Users className="h-3 w-3" />{participants.length}
           </Badge>
           <RoleBadge role={myRole} />
+          <button
+            onClick={async () => {
+              try { await navigator.clipboard.writeText(window.location.href); toast.success("Lien copié !"); } catch {}
+            }}
+            title="Copier le lien de la conférence"
+            className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+          >
+            <Link2 className="h-4 w-4" />
+          </button>
           {/* Minimize button */}
           <button
             onClick={() => setMinimized(true)}

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import { useSEO } from "@/hooks/useSEO";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -63,6 +64,11 @@ const BDLMemberProfile = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<MemberProfile | null>(null);
+
+  useSEO({
+    title: profile ? `${profile.full_name} – Bureau des Lycéens` : "Profil – Bureau des Lycéens",
+    url: slug ? `/bdl/${slug}` : "/bdl",
+  });
   const [yearEntries, setYearEntries] = useState<YearEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [openYear, setOpenYear] = useState<string | null>(null);
@@ -132,7 +138,6 @@ const BDLMemberProfile = () => {
       }
 
       setProfile(data);
-      document.title = `${data.full_name} – Bureau des Lycéens`;
 
       // --- Fiches années depuis bdl_member_profiles ---
       const { data: profileYears } = await supabase
@@ -310,7 +315,7 @@ const BDLMemberProfile = () => {
                 )}
               </div>
 
-              <h1 className="text-5xl font-bold">{profile.full_name}</h1>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold">{profile.full_name}</h1>
 
               <div className="flex flex-wrap justify-center gap-2">
                 {yearEntries.length > 0 && (

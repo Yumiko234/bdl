@@ -129,7 +129,7 @@ const Auth = () => {
             <div className="container mx-auto px-4">
               <div className="max-w-3xl mx-auto text-center space-y-4">
                 <Shield className="h-20 w-20 mx-auto" />
-                <h1 className="text-5xl font-bold">Authentification</h1>
+                <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold">Authentification</h1>
                 <p className="text-xl">Connectez-vous ou créez un compte pour accéder à l'intranet</p>
               </div>
             </div>
@@ -164,6 +164,7 @@ const Auth = () => {
                               id="login-email"
                               type="email"
                               required
+                              autoComplete="username"
                               value={loginCredentials.email}
                               onChange={(e) => setLoginCredentials({ ...loginCredentials, email: e.target.value })}
                               placeholder="votre.email@exemple.com"
@@ -185,6 +186,7 @@ const Auth = () => {
                               id="login-password"
                               type="password"
                               required
+                              autoComplete="current-password"
                               value={loginCredentials.password}
                               onChange={(e) => setLoginCredentials({ ...loginCredentials, password: e.target.value })}
                               placeholder="Votre mot de passe"
@@ -218,6 +220,7 @@ const Auth = () => {
                             <Input
                               id="signup-firstname"
                               required
+                              autoComplete="given-name"
                               value={signupCredentials.firstName}
                               onChange={(e) => setSignupCredentials({ ...signupCredentials, firstName: e.target.value })}
                               placeholder="Votre prénom"
@@ -229,6 +232,7 @@ const Auth = () => {
                             <Input
                               id="signup-lastname"
                               required
+                              autoComplete="family-name"
                               value={signupCredentials.lastName}
                               onChange={(e) =>
                                 setSignupCredentials({
@@ -272,6 +276,7 @@ const Auth = () => {
                               id="signup-email"
                               type="email"
                               required
+                              autoComplete="email"
                               value={signupCredentials.email}
                               onChange={(e) => setSignupCredentials({ ...signupCredentials, email: e.target.value })}
                               placeholder="votre.email@exemple.fr"
@@ -284,6 +289,7 @@ const Auth = () => {
                               id="signup-password"
                               type="password"
                               required
+                              autoComplete="new-password"
                               value={signupCredentials.password}
                               onChange={(e) => setSignupCredentials({ ...signupCredentials, password: e.target.value })}
                               placeholder="Choisissez un mot de passe"
@@ -296,6 +302,7 @@ const Auth = () => {
                               id="signup-confirm"
                               type="password"
                               required
+                              autoComplete="new-password"
                               value={signupCredentials.confirmPassword}
                               onChange={(e) => setSignupCredentials({ ...signupCredentials, confirmPassword: e.target.value })}
                               placeholder="Confirmez votre mot de passe"

@@ -251,7 +251,7 @@ const Profile = () => {
         <section className="py-16 gradient-institutional text-white">
           <div className="container mx-auto px-4 text-center space-y-4">
             <User className="h-20 w-20 mx-auto" />
-            <h1 className="text-5xl font-bold">Mon Profil</h1>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold">Mon Profil</h1>
             <p className="text-xl">Gérez vos informations personnelles</p>
           </div>
         </section>

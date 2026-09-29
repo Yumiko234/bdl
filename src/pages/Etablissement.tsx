@@ -54,7 +54,7 @@ const Etablissement = () => {
         <section className="py-16 gradient-institutional text-white">
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center space-y-4">
-              <h1 className="text-5xl font-bold">Le Lycée Saint-André</h1>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold">Le Lycée Saint-André</h1>
               <p className="text-xl">Ouvert à tous, le Lycée Épiscopal Saint André offre un regard chrétien sur l’éducation, pour permettre à chaque jeune de devenir libre et responsable.</p>
             </div>
           </div>
@@ -76,7 +76,7 @@ const Etablissement = () => {
                       </CardHeader>
                       <CardContent>
                         <div 
-                          className="prose prose-sm max-w-none dark:prose-invert text-muted-foreground"
+                          className="prose prose-sm max-w-none dark:prose-invert text-muted-foreground break-words"
                           dangerouslySetInnerHTML={safeHtml(section.content)}
                         />
                       </CardContent>

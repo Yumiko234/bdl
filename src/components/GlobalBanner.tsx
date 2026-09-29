@@ -95,7 +95,7 @@ const GlobalBanner = () => {
       style={{ backgroundColor: banner.color || "#FFF9C4" }}
     >
       <div className="container mx-auto">
-        <div className="flex items-center justify-center gap-3">
+        <div className="flex items-center justify-center gap-3 pr-8">
           {icon && (
             <span style={{ color: banner.text_color || "#000000" }}>
               {icon}

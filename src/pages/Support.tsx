@@ -54,7 +54,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
   in_progress: { label: "En cours",    color: "bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-700",        icon: <Loader2 className="h-3 w-3 animate-spin" /> },
   resolved:    { label: "Traité",      color: "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 border-green-300 dark:border-green-700",     icon: <CheckCircle2 className="h-3 w-3" /> },
   accepted:    { label: "Acceptée",    color: "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 border-green-300 dark:border-green-700",     icon: <CheckCircle2 className="h-3 w-3" /> },
-  refused:     { label: "Refusée",     color: "bg-red-100 text-red-800 border-red-300",           icon: <XCircle className="h-3 w-3" /> },
+  refused:     { label: "Refusée",     color: "bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300 border-red-300 dark:border-red-700",           icon: <XCircle className="h-3 w-3" /> },
   closed:      { label: "Clôturé",     color: "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-600",        icon: <XCircle className="h-3 w-3" /> },
 };
 
@@ -280,7 +280,7 @@ const Support = () => {
           <section className="py-16 gradient-institutional text-white">
             <div className="container mx-auto px-4">
               <div className="max-w-3xl mx-auto text-center space-y-4">
-                <h1 className="text-5xl font-bold">Support & Demandes</h1>
+                <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold">Support & Demandes</h1>
                 <p className="text-xl">Posez vos questions, demandez une audience ou signalez un problème.</p>
               </div>
             </div>

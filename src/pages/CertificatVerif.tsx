@@ -163,7 +163,7 @@ export default function CertificatVerif() {
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center space-y-4">
               <Award className="h-20 w-20 mx-auto" />
-              <h1 className="text-5xl font-bold">Vérification de Certificat</h1>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold">Vérification de Certificat</h1>
               <p className="text-xl text-white/90">
                 Vérifiez l'authenticité d'un certificat du Bureau des Lycéens
               </p>
@@ -259,15 +259,15 @@ export default function CertificatVerif() {
 
               {/* ── Résultat valide ── */}
               {state === "valid" && result && (
-                <Card className="shadow-card border-2 border-green-300 bg-green-50/50 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <Card className="shadow-card border-2 border-green-300 dark:border-green-700 bg-green-50/50 dark:bg-green-900/20 animate-in fade-in slide-in-from-bottom-2 duration-300">
                   <CardContent className="p-8 space-y-5">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                        <CheckCircle2 className="h-7 w-7 text-green-600" />
+                      <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center flex-shrink-0">
+                        <CheckCircle2 className="h-7 w-7 text-green-600 dark:text-green-400" />
                       </div>
                       <div>
-                        <p className="text-xl font-bold text-green-800">Certificat valide ✓</p>
-                        <p className="text-sm text-green-700">
+                        <p className="text-xl font-bold text-green-800 dark:text-green-300">Certificat valide ✓</p>
+                        <p className="text-sm text-green-700 dark:text-green-400">
                           Ce certificat est authentique et a été émis par le BDL du Lycée Saint-André.
                         </p>
                       </div>
@@ -329,15 +329,15 @@ export default function CertificatVerif() {
 
               {/* ── Résultat invalide ── */}
               {state === "invalid" && (
-                <Card className="shadow-card border-2 border-red-300 bg-red-50/50 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <Card className="shadow-card border-2 border-red-300 dark:border-red-700 bg-red-50/50 dark:bg-red-900/20 animate-in fade-in slide-in-from-bottom-2 duration-300">
                   <CardContent className="p-8 space-y-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-                        <XCircle className="h-7 w-7 text-red-600" />
+                      <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center flex-shrink-0">
+                        <XCircle className="h-7 w-7 text-red-600 dark:text-red-400" />
                       </div>
                       <div>
-                        <p className="text-xl font-bold text-red-800">Certificat invalide ✗</p>
-                        <p className="text-sm text-red-700">
+                        <p className="text-xl font-bold text-red-800 dark:text-red-300">Certificat invalide ✗</p>
+                        <p className="text-sm text-red-700 dark:text-red-400">
                           Aucun certificat authentique ne correspond à cette recherche.
                         </p>
                       </div>

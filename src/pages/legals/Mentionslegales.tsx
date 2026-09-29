@@ -124,6 +124,7 @@ const MentionsLegales = () => {
       </LegalSection>
 
       <LegalSection id="hebergement" title="3. Hébergement">
+        <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -145,6 +146,7 @@ const MentionsLegales = () => {
             </TableRow>
           </TableBody>
         </Table>
+        </div>
         <p>
           Site web de l'hébergeur frontend :{" "}
           <a href="https://vercel.com" target="_blank" rel="noopener noreferrer">

@@ -37,6 +37,8 @@ export function useSEO({ title, description, image, url }: SEOProps) {
       setMeta(`meta[name="twitter:description"]`, description);
     }
 
+    setMeta(`meta[property="og:type"]`, "website");
+    setMeta(`meta[name="twitter:card"]`, "summary_large_image");
     setMeta(`meta[property="og:image"]`, resolvedImage);
     setMeta(`meta[name="twitter:image"]`, resolvedImage);
 

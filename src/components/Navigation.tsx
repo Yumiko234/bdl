@@ -62,7 +62,7 @@ const Navigation = () => {
     const handler = () => checkUnreadTickets();
     window.addEventListener("tickets-read", handler);
     return () => window.removeEventListener("tickets-read", handler);
-  }, [user]);
+  }, [checkUnreadTickets]);
 
   const getInitials = (name: string) =>
     name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
@@ -95,10 +95,10 @@ const Navigation = () => {
             </Link>
 
             {/* Nav links + Auth groupés à droite */}
-            <div className="hidden lg:flex items-center gap-1">
+            <div className="hidden xl:flex items-center gap-1">
               {navItems.map((item) => (
                 <Link key={item.path} to={item.path}>
-                  <Button variant={location.pathname === item.path ? "default" : "ghost"} className="font-medium">
+                  <Button size="sm" variant={location.pathname === item.path ? "default" : "ghost"} className="font-medium">
                     {item.label}
                   </Button>
                 </Link>
@@ -109,7 +109,7 @@ const Navigation = () => {
                   <DropdownMenuTrigger asChild>
                     <button className="relative rounded-full ring-2 ring-primary/30 hover:ring-primary/60 transition-all focus:outline-none">
                       <Avatar className="h-9 w-9">
-                        <AvatarImage src={navProfile?.avatar_url ?? undefined} />
+                        <AvatarImage src={navProfile?.avatar_url ?? undefined} alt={navProfile?.full_name ?? "Photo de profil"} />
                         <AvatarFallback className="gradient-institutional text-white text-sm font-bold">
                           {navProfile ? getInitials(navProfile.full_name) : "?"}
                         </AvatarFallback>
@@ -162,7 +162,7 @@ const Navigation = () => {
             </div>
 
             {/* Bouton menu mobile */}
-            <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+            <Button variant="ghost" size="icon" className="xl:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
               {isMenuOpen ? <X /> : <Menu />}
             </Button>
           </div>
@@ -173,7 +173,7 @@ const Navigation = () => {
 
       {/* Menu mobile — overlay plein écran */}
       {isMenuOpen && (
-        <div className="lg:hidden fixed inset-0 top-20 z-40 bg-background overflow-y-auto border-t">
+        <div className="xl:hidden fixed inset-0 top-20 z-40 bg-background overflow-y-auto border-t">
           <div className="px-4 py-4 space-y-1">
             {navItems.map((item) => (
               <Link key={item.path} to={item.path} onClick={() => setIsMenuOpen(false)}>
@@ -188,7 +188,7 @@ const Navigation = () => {
                 <>
                   <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-muted/40 mb-2">
                     <Avatar className="h-9 w-9">
-                      <AvatarImage src={navProfile?.avatar_url ?? undefined} />
+                      <AvatarImage src={navProfile?.avatar_url ?? undefined} alt={navProfile?.full_name ?? "Photo de profil"} />
                       <AvatarFallback className="gradient-institutional text-white text-xs font-bold">
                         {navProfile ? getInitials(navProfile.full_name) : "?"}
                       </AvatarFallback>

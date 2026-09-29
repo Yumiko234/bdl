@@ -408,7 +408,7 @@ const Sondage = () => {
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center space-y-4">
               <BarChart3 className="h-20 w-20 mx-auto" />
-              <h1 className="text-5xl font-bold">Sondages BDL</h1>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold">Sondages BDL</h1>
               <p className="text-xl">
                 Participez aux sondages du Bureau des Lycéens
               </p>

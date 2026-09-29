@@ -113,7 +113,7 @@ function EventCard({ event, getRoleLabel, past = false }: { event: Event; getRol
       </CardHeader>
       <CardContent>
         <div
-          className="prose prose-sm max-w-none dark:prose-invert mb-4"
+          className="prose prose-sm max-w-none dark:prose-invert mb-4 break-words"
           dangerouslySetInnerHTML={safeHtml(event.description)}
         />
         <div className="flex items-center justify-between mt-4 pt-4 border-t flex-wrap gap-2">
@@ -229,7 +229,7 @@ export default function Events() {
               <span className="text-white/90 font-medium">Événements</span>
             </nav>
             <div className="max-w-3xl mx-auto text-center space-y-4">
-              <h1 className="text-5xl font-bold">Évènements & Activités</h1>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold">Évènements & Activités</h1>
               <p className="text-xl">
                 Découvrez tous les évènements organisés par le BDL
               </p>

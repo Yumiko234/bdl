@@ -486,7 +486,7 @@ const Scrutin = () => {
         <section className="py-16 gradient-institutional text-white">
           <div className="container mx-auto px-4 text-center space-y-4">
             <Vote className="h-20 w-20 mx-auto" />
-            <h1 className="text-5xl font-bold">Scrutins BDL</h1>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold">Scrutins BDL</h1>
           </div>
         </section>
         <section className="py-16">
@@ -521,7 +521,7 @@ const Scrutin = () => {
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center space-y-4">
               <Vote className="h-20 w-20 mx-auto" />
-              <h1 className="text-5xl font-bold">Scrutins BDL</h1>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold">Scrutins BDL</h1>
               <p className="text-xl">Votez sur les décisions du Bureau</p>
             </div>
           </div>
@@ -683,7 +683,7 @@ const Scrutin = () => {
                                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
                                   <EyeOff className="h-3 w-3" /> Résultats provisoires — admin uniquement
                                 </p>
-                                <div className="grid grid-cols-4 gap-3 p-3 bg-muted/20 rounded-lg border text-center">
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 bg-muted/20 rounded-lg border text-center">
                                   {[
                                     { label: "Votants", value: total, color: "" },
                                     { label: "Pour", value: pour, color: "text-green-600" },

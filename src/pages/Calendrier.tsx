@@ -336,7 +336,7 @@ export default function Calendrier() {
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center space-y-4">
               <CalendarDays className="h-16 w-16 mx-auto" />
-              <h1 className="text-5xl font-bold">Calendrier BDL</h1>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold">Calendrier BDL</h1>
               <p className="text-xl">
                 Suivez tous les événements du Bureau des Lycéens
               </p>
@@ -365,7 +365,7 @@ export default function Calendrier() {
               </div>
               <span className="text-xs text-muted-foreground">{events.length} événement{events.length !== 1 ? "s" : ""}</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Button
                 size="sm"
                 variant="outline"
@@ -618,7 +618,7 @@ export default function Calendrier() {
                           {/* description (HTML) */}
                           {evt.description && (
                             <div
-                              className="prose prose-sm max-w-none dark:prose-invert"
+                              className="prose prose-sm max-w-none dark:prose-invert break-words"
                               dangerouslySetInnerHTML={safeHtml(evt.description)}
                             />
                           )}

@@ -413,7 +413,7 @@ const ProfileBDLSuivi = () => {
 
           {/* ── Category breakdown ── */}
           {doneActions.length > 0 && (
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {(["petite", "normale", "grande"] as const).map((cat) => {
                 const count = doneActions.filter((a) => a.category === cat).length;
                 const pts = doneActions.filter((a) => a.category === cat).reduce((s, a) => s + a.points, 0);

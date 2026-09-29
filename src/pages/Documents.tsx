@@ -113,7 +113,7 @@ const Documents = () => {
         <section className="py-16 gradient-institutional text-white">
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center space-y-4">
-              <h1 className="text-5xl font-bold">Règlements & Documents</h1>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold">Règlements & Documents</h1>
               <p className="text-xl">
                 Accédez aux documents officiels de l'établissement
               </p>
@@ -126,7 +126,7 @@ const Documents = () => {
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto space-y-8">
               <div>
-                <h2 className="text-4xl font-bold mb-6">Documents Officiels</h2>
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6">Documents Officiels</h2>
 
                 {/* Filtres */}
                 {/* Recherche */}
@@ -194,7 +194,7 @@ const Documents = () => {
                                   </div>
                                 </div>
                                 {doc.file_url && (
-                                  <div className="flex gap-2 flex-shrink-0">
+                                  <div className="flex gap-2 flex-wrap">
                                     <Button
                                       variant="outline"
                                       size="sm"

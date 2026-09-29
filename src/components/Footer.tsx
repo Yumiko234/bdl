@@ -1,13 +1,10 @@
 import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
 import logoBdl from "@/assets/logo-bdl.jpeg";
-import { supabase } from "@/integrations/supabase/client";
 import { safeHtml } from "@/lib/sanitize";
 import { useDarkMode } from "@/hooks/useDarkMode";
 import { Monitor, Moon, Sun } from "lucide-react";
 
 const Footer = () => {
-  const [content, setContent] = useState<Record<string, string>>({});
   const { theme, setTheme } = useDarkMode();
 
   return (
@@ -18,11 +15,11 @@ const Footer = () => {
             <img src={logoBdl} alt="Logo BDL" className="h-16 w-16 rounded-full" />
             <p 
               className="text-sm"
-              dangerouslySetInnerHTML={safeHtml(content.about || 'Bureau des Lycéens<br />Lycée Saint-André')}
+              dangerouslySetInnerHTML={safeHtml('Bureau des Lycéens<br />Lycée Saint-André')}
             />
             <p 
               className="text-xs italic text-accent"
-              dangerouslySetInnerHTML={safeHtml(content.quote || '"Là où naît l\'ambition, s\'élève la grandeur."')}
+              dangerouslySetInnerHTML={safeHtml('"Là où naît l\'ambition, s\'élève la grandeur."')}
             />
           </div>
 
@@ -64,11 +61,11 @@ const Footer = () => {
             <div className="text-sm space-y-1">
               <span 
                 className="block"
-                dangerouslySetInnerHTML={safeHtml(content.contact_address || 'Lycée Saint-André')}
+                dangerouslySetInnerHTML={safeHtml('Lycée Saint-André')}
               />
               <span 
                 className="block text-muted-foreground"
-                dangerouslySetInnerHTML={safeHtml(content.contact_email || 'contact@bdl-saintandre.fr')}
+                dangerouslySetInnerHTML={safeHtml('contact@bdl-saintandre.fr')}
               />
               <a 
                 href="https://www.instagram.com/bdllgsaintandre"
@@ -92,7 +89,7 @@ const Footer = () => {
 
         <div className="border-t border-border mt-8 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
           <p className="text-center sm:text-left">
-            &copy; {new Date().getFullYear()} {content.copyright || 'Bureau des Lycéens - Lycée Saint-André. Tous droits réservés.'}
+            &copy; {new Date().getFullYear()} {'Bureau des Lycéens - Lycée Saint-André. Tous droits réservés.'}
             <span className="mx-2">—</span>
             Site développé par{" "}
             <Link

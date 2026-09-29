@@ -38,12 +38,12 @@ export const roleLabel = (r: string): string =>
   r === "administrator"          ? "Administrateur"        :
   r === "president"              ? "Président"             :
   r === "presidente"             ? "Présidente"            :
-  r === "vice_president"         ? "Vice-président"        :
-  r === "vice_presidente"        ? "Vice-présidente"       :
+  r === "vice_president"         ? "Vice-Président"        :
+  r === "vice_presidente"        ? "Vice-Présidente"       :
   r === "secretary_general"      ? "Secrétaire Général"    :
   r === "secretary_general2"     ? "Secrétaire Générale"   :
-  r === "communication_manager"  ? "Dir. ComCom"           :
-  r === "communication_manager2" ? "Dir. ComCom"           :
+  r === "communication_manager"  ? "Directeur ComCom"      :
+  r === "communication_manager2" ? "Directrice ComCom"     :
   r === "vie_scolaire"           ? "Vie Scolaire"          :
   r === "bdl_member"             ? "Membre BDL"            : "Étudiant";
 

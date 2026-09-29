@@ -8,6 +8,7 @@ import {
   Terminal, GitCommitHorizontal, Sparkles, Code2,
 } from "lucide-react";
 import { developers, getDeveloperBySlug } from "@/data/developers";
+import { useSEO } from "@/hooks/useSEO";
 
 const socialIcons: Record<string, React.ElementType> = {
   github: Github,
@@ -23,9 +24,13 @@ const DeveloperProfile = () => {
   const [typed, setTyped] = useState("");
   const [skillsVisible, setSkillsVisible] = useState(false);
 
+  useSEO({
+    title: dev ? `${dev.fullName} – Développeur BDL` : "Développeur – Bureau des Lycéens",
+    url: slug ? `/developers/${slug}` : "/developers",
+  });
+
   useEffect(() => {
     if (!dev) return;
-    document.title = `${dev.fullName} – Développeur BDL`;
     setTyped("");
     let i = 0;
     const interval = setInterval(() => {

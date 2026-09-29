@@ -77,7 +77,7 @@ const Confidentialite = () => {
       </LegalSection>
 
       <LegalSection id="collecte" title="2. Quelles données collectons-nous ?">
-        <Table>
+        <div className="overflow-x-auto"><Table>
           <TableHeader>
             <TableRow>
               <TableHead>Catégorie</TableHead>
@@ -117,7 +117,7 @@ const Confidentialite = () => {
               <TableCell>Utilisation de cette fonctionnalité</TableCell>
             </TableRow>
           </TableBody>
-        </Table>
+        </Table></div>
         <p>
           Nous ne collectons <strong>aucune donnée sensible</strong> au sens
           de l'article 9 du RGPD (santé, opinions religieuses, origine,
@@ -128,7 +128,7 @@ const Confidentialite = () => {
       </LegalSection>
 
       <LegalSection id="finalites" title="3. Pourquoi collectons-nous ces données ?">
-        <Table>
+        <div className="overflow-x-auto"><Table>
           <TableHeader>
             <TableRow>
               <TableHead>Finalité</TableHead>
@@ -161,7 +161,7 @@ const Confidentialite = () => {
               <TableCell>Obligation légale (art. 6.1.c)</TableCell>
             </TableRow>
           </TableBody>
-        </Table>
+        </Table></div>
       </LegalSection>
 
       <LegalSection id="mineurs" title="4. Utilisateurs mineurs">
@@ -213,7 +213,7 @@ const Confidentialite = () => {
       </LegalSection>
 
       <LegalSection id="hebergement" title="6. Sous-traitants et hébergement des données">
-        <Table>
+        <div className="overflow-x-auto"><Table>
           <TableHeader>
             <TableRow>
               <TableHead>Prestataire</TableHead>
@@ -238,7 +238,7 @@ const Confidentialite = () => {
               <TableCell>États-Unis (aucun choix de région disponible)</TableCell>
             </TableRow>
           </TableBody>
-        </Table>
+        </Table></div>
 
 
         <p>
@@ -263,7 +263,7 @@ const Confidentialite = () => {
       </LegalSection>
 
       <LegalSection id="conservation" title="7. Durées de conservation">
-        <Table>
+        <div className="overflow-x-auto"><Table>
           <TableHeader>
             <TableRow>
               <TableHead>Type de données</TableHead>
@@ -292,7 +292,7 @@ const Confidentialite = () => {
               <TableCell>Douze (12) mois</TableCell>
             </TableRow>
           </TableBody>
-        </Table>
+        </Table></div>
       </LegalSection>
 
       <LegalSection id="cookies" title="8. Cookies et traceurs">

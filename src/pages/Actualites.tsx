@@ -293,7 +293,7 @@ const Actualites = () => {
               <span className="text-white/90 font-medium">Actualités</span>
             </nav>
             <div className="max-w-3xl mx-auto text-center space-y-4">
-              <h1 className="text-5xl font-bold">Actualités & Communications</h1>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold">Actualités & Communications</h1>
               <p className="text-xl">Restez informé de la vie du lycée et du BDL</p>
             </div>
           </div>
@@ -379,7 +379,7 @@ const Actualites = () => {
 
                         <h3 className="text-2xl font-bold">{item.title}</h3>
                         <div
-                          className="prose prose-sm max-w-none dark:prose-invert"
+                          className="prose prose-sm max-w-none dark:prose-invert break-words"
                           dangerouslySetInnerHTML={safeHtml(item.content)}
                         />
 

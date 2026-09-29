@@ -835,7 +835,7 @@ export default function ConferencePage() {
               <Radio className="h-4 w-4" />
               Système de Visioconférence BDL
             </div>
-            <h1 className="text-5xl font-bold">Salle de Conférence</h1>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold">Salle de Conférence</h1>
             <p className="text-xl text-white/80 max-w-xl mx-auto">
               Réunions en direct pour le Bureau des Lycéens et les membres de l'établissement.
             </p>

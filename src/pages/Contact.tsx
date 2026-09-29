@@ -117,7 +117,7 @@ const Contact = () => {
         <section className="py-16 gradient-institutional text-white">
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center space-y-4">
-              <h1 className="text-5xl font-bold">Contact & Remarques</h1>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold">Contact & Remarques</h1>
               <p className="text-xl">Nous sommes à votre écoute</p>
             </div>
           </div>

@@ -400,8 +400,8 @@ export const ScrutinManagement = () => {
                               </div>
                             </div>
 
-                            <div className="flex items-center justify-between bg-background p-3 rounded-md border">
-                              <div className="flex gap-4 text-sm">
+                            <div className="flex flex-wrap items-center justify-between gap-y-2 bg-background p-3 rounded-md border">
+                              <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
                                 <span className="text-green-600 font-semibold">Pour: {counts.pour}</span>
                                 <span className="text-red-600 font-semibold">Contre: {counts.contre}</span>
                                 <span className="text-gray-500 italic">Abstention: {counts.abstention}</span>

@@ -41,7 +41,7 @@ const faq = [
   },
   {
     question: "Comment et par qui sont gérées mes données ?",
-    answer: "Vous pouvez consulter notre Politique de Confidentialité directement depuis le centre juridique. Pour tout complément d'information, vous avez la possibilité de contacter le Délégué à la Proctection des données."
+    answer: "Vous pouvez consulter notre Politique de Confidentialité directement depuis le centre juridique. Pour tout complément d'information, vous avez la possibilité de contacter le Délégué à la Protection des données."
   },
 ];
 
@@ -64,7 +64,7 @@ const FAQ = () => {
         <section className="py-16 gradient-institutional text-white">
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center space-y-4">
-              <h1 className="text-5xl font-bold flex items-center justify-center gap-3">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold flex items-center justify-center gap-3">
                 <HelpCircle className="h-10 w-10" />
                 Foire Aux Questions
               </h1>

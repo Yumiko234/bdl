@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ChevronLeft } from "lucide-react";
 import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
+import { roleLabel } from "@/lib/roles";
 
 interface Member {
   id: string;
@@ -120,21 +121,6 @@ const BDLYearDetail = () => {
     }
   };
 
-  const getRoleLabel = (role: string): string => {
-    const labels: Record<string, string> = {
-      president: "Président",
-      presidente: "Présidente",
-      vice_president: "Vice-Président",
-      vice_presidente: "Vice-Présidente",
-      secretary_general: "Secrétaire Général",
-      secretary_general2: "Secrétaire Générale",
-      communication_manager: "Directeur ComCom",
-      communication_manager2: "Directrice ComCom",
-      bdl_member: "Membre BDL",
-    };
-    return labels[role] || role;
-  };
-
   const getInitials = (name: string): string => {
     return name
       .split(" ")
@@ -150,7 +136,6 @@ const BDLYearDetail = () => {
     return "gradient-institutional";
   };
 
-  // Fonction utilitaire ajoutée (Étape 3.D)
   const generateMemberSlug = (fullName: string): string => {
     return fullName
       .toLowerCase()
@@ -192,7 +177,7 @@ const BDLYearDetail = () => {
               <div className="text-center space-y-2">
                 <h3 className="text-xl font-bold">{member.full_name}</h3>
                 <Badge variant="secondary" className="text-xs font-medium">
-                  {getRoleLabel(member.role)}
+                  {roleLabel(member.role)}
                 </Badge>
                 {member.is_honorary && (
                   <Badge className="text-xs font-medium bg-accent text-secondary mt-2">
@@ -256,7 +241,7 @@ const BDLYearDetail = () => {
               </Button>
             </Link>
             <div className="max-w-3xl mx-auto text-center space-y-4">
-              <h1 className="text-5xl font-bold">BDL {yearData.year_label}</h1>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold">BDL {yearData.year_label}</h1>
               {yearData.is_current && (
                 <Badge className="text-lg py-2 px-4">Année en cours</Badge>
               )}
@@ -269,7 +254,7 @@ const BDLYearDetail = () => {
             <div className="container mx-auto px-4">
               <div className="max-w-6xl mx-auto space-y-12">
                 <div>
-                  <h2 className="text-4xl font-bold text-center mb-8">Équipe Exécutive</h2>
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-8">Équipe Exécutive</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                     {executiveMembers.map(renderMemberCard)}
                   </div>
@@ -284,7 +269,7 @@ const BDLYearDetail = () => {
             <div className="container mx-auto px-4">
               <div className="max-w-6xl mx-auto space-y-12">
                 <div>
-                  <h2 className="text-4xl font-bold text-center mb-8">Membres</h2>
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-8">Membres</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                     {regularMembers.map(renderMemberCard)}
                   </div>

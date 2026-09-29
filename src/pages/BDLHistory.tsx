@@ -170,7 +170,7 @@ const BDLHistory = () => {
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center space-y-4">
               <History className="h-20 w-20 mx-auto" />
-              <h1 className="text-5xl font-bold">Historique des BDL</h1>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold">Historique des BDL</h1>
               <p className="text-xl">
                 Découvrez les membres qui ont fait partie du Bureau des Lycéens au cours des années passées
               </p>

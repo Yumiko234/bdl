@@ -583,7 +583,7 @@ const JobdlArticle = () => {
 
             {/* ── Corps du document ── */}
             <div className="border border-[#FFD700] rounded-2xl bg-white/95 shadow-card p-10">
-              <h1 className="text-4xl font-bold mb-4 text-[#07419e] text-center">{entry.title}</h1>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 text-[#07419e] text-center">{entry.title}</h1>
               <p className="text-sm text-center text-muted-foreground italic mb-6">
                 NOR : {entry.nor_number} — publié le{" "}
                 {new Date(entry.publication_date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}

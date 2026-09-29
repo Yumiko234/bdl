@@ -4,13 +4,14 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Terminal, ArrowRight, Code2 } from "lucide-react";
 import { developers } from "@/data/developers";
+import { useSEO } from "@/hooks/useSEO";
 
 const DevelopersHub = () => {
+  useSEO({ title: "Développeurs – Bureau des Lycéens", url: "/developers" });
   const [typed, setTyped] = useState("");
   const fullText = "// Équipe Technique du site";
 
   useEffect(() => {
-    document.title = "Développeurs – Bureau des Lycéens";
     let i = 0;
     const interval = setInterval(() => {
       i++;

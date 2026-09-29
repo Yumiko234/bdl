@@ -18,24 +18,7 @@ import logo from "@/assets/logo-bdl.jpeg";
 import { supabase } from "@/integrations/supabase/client";
 import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 import { safeHtml } from "@/lib/sanitize";
-
-// Fonction pour traduire les rôles
-const translateRole = (role: string): string => {
-  const roleTranslations: { [key: string]: string } = {
-  administrator: "Administrateur",
-  president: "Président",
-  presidente: "Présidente",
-  vice_president: "Vice-Président",
-  vice_presidente: "Vice-Présidente",
-  secretary_general: "Secrétaire Général",
-  secretary_general2: "Secrétaire Générale",
-  communication_manager: "Directeur de la Communication et de la Communauté",
-  communication_manager2: "Directrice de la Communication et de la Communauté",
-  bdl_member: "Membre du BDL",
-  };
-
-  return roleTranslations[role] || "Membre du BDL";
-};
+import { roleLabel } from "@/lib/roles";
 
 // ─── Instagram embed ──────────────────────────────────────────────────────────
 
@@ -46,7 +29,7 @@ interface InstagramPost {
 
 const INSTAGRAM_POSTS: InstagramPost[] = [
   {
-    url: "https://www.instagram.com/p/DdrkyRTo99P/",
+    url: "https://www.instagram.com/p/Dd14cWyoPOD/",
     isPinned: false,
   },
   {
@@ -148,7 +131,7 @@ const InstagramEmbed = ({ post }: { post: InstagramPost }) => {
             boxShadow: "0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15)",
             margin: "0 auto",
             maxWidth: "100%",
-            minWidth: "326px",
+            minWidth: "0",
             padding: "0",
             width: "100%",
           }}
@@ -193,7 +176,7 @@ const Index = () => {
     url: "/",
   });
   const [presidentMessage, setPresidentMessage] = useState("");
-  const [presidentProfile, setPresidentProfile] = useState<{ name: string; avatar: string | null } | null>(null);
+  const [presidentProfile, setPresidentProfile] = useState<{ name: string; avatar: string | null; role: string } | null>(null);
   const [latestNews, setLatestNews] = useState<any[]>([]);
   const [latestEvents, setLatestEvents] = useState<any[]>([]);
   
@@ -223,13 +206,13 @@ const Index = () => {
     try {
       const { data } = await supabase
         .from("user_roles")
-        .select("user_id, profiles(full_name, avatar_url)")
+        .select("user_id, role, profiles(full_name, avatar_url)")
         .in("role", ["president", "presidente"])
         .limit(1)
         .maybeSingle();
       if (data?.profiles) {
         const p = data.profiles as any;
-        setPresidentProfile({ name: p.full_name, avatar: p.avatar_url });
+        setPresidentProfile({ name: p.full_name, avatar: p.avatar_url, role: data.role });
       }
     } catch (err) {
       console.error("loadPresidentProfile", err);
@@ -290,7 +273,7 @@ const Index = () => {
                 alt="Logo BDL"
                 className="h-32 w-32 mx-auto rounded-full shadow-elegant ring-4 ring-white/30"
               />
-              <h1 className="text-5xl md:text-6xl font-bold">
+              <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold">
                 Bureau des Lycéens
               </h1>
               <p className="text-2xl font-light">
@@ -353,12 +336,12 @@ const Index = () => {
                   <div className="flex-1 space-y-4">
                     <div>
                       <h2 className="text-3xl font-bold mb-2">
-                        Message de la Présidente
+                        Message {presidentProfile?.role === 'presidente' ? 'de la Présidente' : 'du Président'}
                       </h2>
                       <p className="text-muted-foreground font-medium">
                         {presidentProfile?.name
-                          ? `${presidentProfile.name}, Présidente du BDL`
-                          : "Présidente du BDL"}
+                          ? `${presidentProfile.name}, ${presidentProfile.role === 'presidente' ? 'Présidente' : 'Président'} du BDL`
+                          : presidentProfile?.role === 'presidente' ? "Présidente du BDL" : "Président du BDL"}
                       </p>
                     </div>
                     <div
@@ -377,7 +360,7 @@ const Index = () => {
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto space-y-8">
               <div className="text-center">
-                <h2 className="text-4xl font-bold mb-4">
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">
                   Actualités & Événements
                 </h2>
                 <p className="text-muted-foreground">
@@ -581,7 +564,7 @@ const Index = () => {
         {/* Quick Access */}
         <section className="py-16 bg-muted/30">
           <div className="container mx-auto px-4">
-            <h2 className="text-4xl font-bold text-center mb-12">Accès Rapide</h2>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-12">Accès Rapide</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
               {[
                 {
@@ -673,7 +656,7 @@ const Index = () => {
 
               <div className="space-y-4 pt-4">
                 <div
-                  className="prose prose-sm max-w-none dark:prose-invert"
+                  className="prose prose-sm max-w-none dark:prose-invert break-words"
                   dangerouslySetInnerHTML={safeHtml(selectedItem.type === 'news' 
                       ? selectedItem.content 
                       : selectedItem.description)}
@@ -692,7 +675,7 @@ const Index = () => {
                         {selectedItem.author_name}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {translateRole(selectedItem.author_role)}
+                        {roleLabel(selectedItem.author_role)}
                       </p>
                     </div>
                   </div>

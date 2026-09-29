@@ -66,7 +66,7 @@ const JOBDL = () => {
         <section className="py-16 gradient-institutional text-white">
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center space-y-4">
-              <h1 className="text-5xl font-bold">Journal Officiel du Bureau des Lycéens</h1>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold">Journal Officiel du Bureau des Lycéens</h1>
               <p className="text-xl">Communications et décisions du Bureau</p>
             </div>
           </div>

@@ -193,7 +193,7 @@ const BDL = () => {
           <section className="py-16 gradient-institutional text-white">
             <div className="container mx-auto px-4">
               <div className="max-w-3xl mx-auto text-center space-y-6">
-                <h1 className="text-5xl font-bold">Le Bureau des Lycéens</h1>
+                <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold">Le Bureau des Lycéens</h1>
                 <p className="text-xl">{content.hero_subtitle || 'Votre voix au sein de l\'établissement'}</p>
                 
                 {/* Bouton Historique BDL Ajouté */}
@@ -229,7 +229,7 @@ const BDL = () => {
             <div className="container mx-auto px-4">
               <div className="space-y-12">
                 <div>
-                  <h2 className="text-4xl font-bold text-center mb-8">Équipe Exécutive</h2>
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-8">Équipe Exécutive</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
                     {executiveMembers.map(renderMemberCard)}
                   </div>
@@ -237,7 +237,7 @@ const BDL = () => {
 
                 {regularMembers.length > 0 && (
                   <div>
-                    <h2 className="text-4xl font-bold text-center mb-8">Membres</h2>
+                    <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-8">Membres</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
                       {regularMembers.map(renderMemberCard)}
                     </div>
@@ -250,7 +250,7 @@ const BDL = () => {
           <section className="py-16">
             <div className="container mx-auto px-4">
               <div className="max-w-4xl mx-auto">
-                <h2 className="text-4xl font-bold text-center mb-12">{content.responsibilities_title || 'Nos Responsabilités'}</h2>
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-12">{content.responsibilities_title || 'Nos Responsabilités'}</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {[
                     {

@@ -83,6 +83,8 @@ interface ChatMessage {
   message: string;
   created_at: string;
   role: ParticipantRole;
+  type?: "system" | "poll";
+  poll?: Poll;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -376,19 +378,21 @@ export default function ConferencePage() {
   // ── speaking / volume ──
   const peerAnalysers = useRef<Record<string, { analyser: AnalyserNode; data: Uint8Array; ctx: AudioContext }>>({});
   const localAnalyserRef = useRef<{ analyser: AnalyserNode; data: Uint8Array } | null>(null);
-  const [peerVolumes, setPeerVolumes] = useState<Record<string, number>>({});
-  const [localVolume, setLocalVolume] = useState(0);
+  // Volumes stored in refs only — no state to avoid 8 re-renders/sec
+  const peerVolumesRef = useRef<Record<string, number>>({});
+  const localVolumeRef = useRef(0);
+  const [activeSpeakerId, setActiveSpeakerId] = useState<string | null>(null);
+  const [speakingSet, setSpeakingSet] = useState<Set<string>>(new Set());
 
   // ── reactions ──
   const [floatingReactions, setFloatingReactions] = useState<FloatingReaction[]>([]);
 
-  // ── polls ──
+  // ── polls (displayed in chat) ──
   const [activePoll, setActivePoll] = useState<Poll | null>(null);
   const [showPollCreator, setShowPollCreator] = useState(false);
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptions, setPollOptions] = useState(["", ""]);
   const [myVote, setMyVote] = useState<number | null>(null);
-  const [showPoll, setShowPoll] = useState(false);
 
   // ── co-moderator ──
   const [coModId, setCoModId] = useState<string | null>(null);
@@ -442,6 +446,7 @@ export default function ConferencePage() {
   const chatBottomRef = useRef<HTMLDivElement>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const peersRef = useRef(peers); // stable ref pointing to module-level peers object
+  const participantsRef = useRef<Participant[]>([]); // always-current for use inside intervals
 
   // ── network stats hook ──
   const { peerStats, overallQuality, start: startStats, stop: stopStats } = useConferenceStats(peersRef);
@@ -537,6 +542,9 @@ export default function ConferencePage() {
     const t = setInterval(fetchConfs, 5000);
     return () => clearInterval(t);
   }, [fetchConfs]);
+
+  // Keep participantsRef current for use inside setInterval callbacks (avoids stale closures)
+  useEffect(() => { participantsRef.current = participants; }, [participants]);
 
   // ─── chat scroll ──────────────────────────────────────────────────────────
   useEffect(() => { chatBottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
@@ -755,36 +763,62 @@ export default function ConferencePage() {
         setMicOn(false);
         broadcastMuteChange(true);
         toast.warning("Le modérateur a coupé tous les micros.");
+        setMessages((prev) => [...prev, {
+          id: crypto.randomUUID(), user_id: "system", user_name: "Système",
+          message: "🔇 Le modérateur a coupé tous les micros.",
+          created_at: new Date().toISOString(), role: "audience" as ParticipantRole, type: "system" as const,
+        }]);
       });
 
       // ── Co-moderator grant/revoke ──
       ch.on("broadcast", { event: "co_mod_grant" }, ({ payload }) => {
         setCoModId(payload.user_id);
+        const msg = `🛡️ ${payload.user_name} est maintenant co-modérateur.`;
         if (payload.user_id === user!.id) toast.success("🛡️ Vous êtes maintenant co-modérateur !");
-        else toast.info(`${payload.user_name} est maintenant co-modérateur.`);
+        else toast.info(msg);
+        setMessages((prev) => [...prev, {
+          id: crypto.randomUUID(), user_id: "system", user_name: "Système",
+          message: msg, created_at: new Date().toISOString(),
+          role: "audience" as ParticipantRole, type: "system" as const,
+        }]);
       });
       ch.on("broadcast", { event: "co_mod_revoke" }, ({ payload }) => {
         setCoModId(null);
         if (payload.user_id === user!.id) toast.info("Vos droits de co-modérateur ont été retirés.");
+        setMessages((prev) => [...prev, {
+          id: crypto.randomUUID(), user_id: "system", user_name: "Système",
+          message: "🛡️ Le co-modérateur a été révoqué.",
+          created_at: new Date().toISOString(), role: "audience" as ParticipantRole, type: "system" as const,
+        }]);
       });
 
       // ── Pass the floor ──
       ch.on("broadcast", { event: "pass_floor" }, ({ payload }) => {
-        if (payload.user_id === user!.id) {
-          toast.success("🎙️ La parole vous a été passée !");
-        }
-        // Update role: target becomes speaker
+        if (payload.user_id === user!.id) toast.success("🎙️ La parole vous a été passée !");
         setParticipants((prev) =>
           prev.map((p) => p.user_id === payload.user_id ? { ...p, role: "speaker" as ParticipantRole, hand_raised: false } : p)
         );
         if (payload.user_id === user!.id) setMyRole("speaker");
+        const name = participantsRef.current.find(p => p.user_id === payload.user_id)?.user_name ?? "Quelqu'un";
+        setMessages((prev) => [...prev, {
+          id: crypto.randomUUID(), user_id: "system", user_name: "Système",
+          message: `🎙️ La parole a été passée à ${name}.`,
+          created_at: new Date().toISOString(), role: "audience" as ParticipantRole, type: "system" as const,
+        }]);
       });
 
-      // ── Poll events ──
+      // ── Poll events (displayed in chat) ──
       ch.on("broadcast", { event: "poll_create" }, ({ payload }) => {
-        setActivePoll(payload as Poll);
+        const poll = payload as Poll;
+        setActivePoll(poll);
         setMyVote(null);
-        setShowPoll(true);
+        // Inject poll as a special chat message
+        setMessages((prev) => [...prev, {
+          id: poll.id, user_id: "system", user_name: "Sondage",
+          message: poll.question, created_at: new Date().toISOString(),
+          role: "audience" as ParticipantRole, type: "poll" as const, poll,
+        }]);
+        setShowChat(true);
         toast.info("📊 Un sondage a été lancé !");
       });
       ch.on("broadcast", { event: "poll_vote" }, ({ payload }) => {
@@ -793,11 +827,23 @@ export default function ConferencePage() {
           const newVotes = { ...prev.votes };
           const key = String(payload.option);
           newVotes[key] = (newVotes[key] ?? 0) + 1;
-          return { ...prev, votes: newVotes, voterIds: [...prev.voterIds, payload.voter_id] };
+          const updated = { ...prev, votes: newVotes, voterIds: [...prev.voterIds, payload.voter_id] };
+          // Update poll inside the chat message
+          setMessages((msgs) => msgs.map((m) =>
+            m.type === "poll" && m.poll?.id === payload.poll_id ? { ...m, poll: updated } : m
+          ));
+          return updated;
         });
       });
       ch.on("broadcast", { event: "poll_close" }, ({ payload }) => {
-        setActivePoll((prev) => prev?.id === payload.poll_id ? { ...prev, closed: true } : prev);
+        setActivePoll((prev) => {
+          if (!prev || prev.id !== payload.poll_id) return prev;
+          const updated = { ...prev, closed: true };
+          setMessages((msgs) => msgs.map((m) =>
+            m.type === "poll" && m.poll?.id === payload.poll_id ? { ...m, poll: updated } : m
+          ));
+          return updated;
+        });
         toast.info("📊 Le sondage est terminé.");
       });
 
@@ -1010,6 +1056,15 @@ export default function ConferencePage() {
     setScreenOn(false);
   };
 
+  // ─── System message helper (local only, not broadcast) ──────────────────
+  const addSystemMsg = useCallback((message: string) => {
+    setMessages((prev) => [...prev, {
+      id: crypto.randomUUID(), user_id: "system", user_name: "Système",
+      message, created_at: new Date().toISOString(),
+      role: "audience" as ParticipantRole, type: "system" as const,
+    }]);
+  }, []);
+
   // ─── Broadcast helpers ────────────────────────────────────────────────────
 
   const broadcastMuteChange = (muted: boolean) => {
@@ -1133,10 +1188,17 @@ export default function ConferencePage() {
     channelRef.current?.send({ type: "broadcast", event: "poll_create", payload: poll });
     setActivePoll(poll);
     setMyVote(null);
-    setShowPoll(true);
+    // Inject poll into own chat (others get it via broadcast handler)
+    setMessages((prev) => [...prev, {
+      id: poll.id, user_id: "system", user_name: "Sondage",
+      message: poll.question, created_at: new Date().toISOString(),
+      role: "audience" as ParticipantRole, type: "poll" as const, poll,
+    }]);
     setShowPollCreator(false);
+    setShowChat(true);
     setPollQuestion("");
     setPollOptions(["", ""]);
+    toast.success("📊 Sondage lancé !");
   };
 
   const votePoll = (optionIndex: number) => {
@@ -1147,13 +1209,16 @@ export default function ConferencePage() {
       type: "broadcast", event: "poll_vote",
       payload: { poll_id: activePoll.id, option: optionIndex, voter_id: userId },
     });
-    // Apply locally
     setActivePoll((prev) => {
       if (!prev) return prev;
       const newVotes = { ...prev.votes };
       const key = String(optionIndex);
       newVotes[key] = (newVotes[key] ?? 0) + 1;
-      return { ...prev, votes: newVotes, voterIds: [...prev.voterIds, userId] };
+      const updated = { ...prev, votes: newVotes, voterIds: [...prev.voterIds, userId] };
+      setMessages((msgs) => msgs.map((m) =>
+        m.type === "poll" && m.poll?.id === prev.id ? { ...m, poll: updated } : m
+      ));
+      return updated;
     });
     setMyVote(optionIndex);
   };
@@ -1164,7 +1229,14 @@ export default function ConferencePage() {
       type: "broadcast", event: "poll_close",
       payload: { poll_id: activePoll.id },
     });
-    setActivePoll((prev) => prev ? { ...prev, closed: true } : prev);
+    setActivePoll((prev) => {
+      if (!prev) return prev;
+      const updated = { ...prev, closed: true };
+      setMessages((msgs) => msgs.map((m) =>
+        m.type === "poll" && m.poll?.id === prev.id ? { ...m, poll: updated } : m
+      ));
+      return updated;
+    });
   };
 
   // ── Fullscreen ──
@@ -1460,22 +1532,48 @@ export default function ConferencePage() {
   }, [searchParams]);
 
   // ─── Volume polling (speaking detection) ─────────────────────────────────
+  // Volumes go to refs only — state is only updated when the speaking set actually changes
+  // This eliminates the 8 re-renders/sec that caused the conference to freeze.
   useEffect(() => {
     if (!inConference) return;
+    const THRESHOLD = 8;
     const interval = setInterval(() => {
-      // Remote peers
       const vols: Record<string, number> = {};
       for (const [id, { analyser, data }] of Object.entries(peerAnalysers.current)) {
         analyser.getByteFrequencyData(data);
         vols[id] = data.reduce((a, b) => a + b, 0) / data.length;
       }
-      setPeerVolumes(vols);
-      // Local mic
+      peerVolumesRef.current = vols;
+
       if (localAnalyserRef.current) {
         const { analyser, data } = localAnalyserRef.current;
         analyser.getByteFrequencyData(data);
-        setLocalVolume(data.reduce((a, b) => a + b, 0) / data.length);
+        localVolumeRef.current = data.reduce((a, b) => a + b, 0) / data.length;
       }
+
+      // Compute new speaking set
+      const curParts = participantsRef.current;
+      const newSpeaking = new Set<string>();
+      if (localVolumeRef.current > THRESHOLD) newSpeaking.add("__local__");
+      for (const [id, vol] of Object.entries(vols)) {
+        const p = curParts.find((pp) => pp.user_id === id);
+        if (vol > THRESHOLD && (!p || !p.is_muted)) newSpeaking.add(id);
+      }
+
+      // Only setState if set actually changed (avoids re-renders when nobody is speaking)
+      setSpeakingSet((prev) => {
+        if (prev.size === newSpeaking.size && [...newSpeaking].every((id) => prev.has(id))) return prev;
+        return newSpeaking;
+      });
+
+      // Active speaker: highest-volume non-muted remote peer
+      let maxVol = THRESHOLD;
+      let bestId: string | null = null;
+      for (const [id, vol] of Object.entries(vols)) {
+        const p = curParts.find((pp) => pp.user_id === id);
+        if (vol > maxVol && (!p || !p.is_muted)) { maxVol = vol; bestId = id; }
+      }
+      setActiveSpeakerId((prev) => (prev !== bestId ? bestId : prev));
     }, 250);
     return () => clearInterval(interval);
   }, [inConference]);
@@ -1536,21 +1634,11 @@ export default function ConferencePage() {
 
   // ─── Loading gate ─────────────────────────────────────────────────────────
 
-  // ─── Derived: active speaker id ──────────────────────────────────────────
-  const activeSpeakerId = (() => {
-    const THRESHOLD = 8;
-    let maxVol = THRESHOLD;
-    let bestId: string | null = null;
-    for (const [id, vol] of Object.entries(peerVolumes)) {
-      const p = participants.find((p) => p.user_id === id);
-      if (p && !p.is_muted && vol > maxVol) { maxVol = vol; bestId = id; }
-    }
-    return bestId;
-  })();
+  // activeSpeakerId is now a useState, computed inside the volume polling interval (above)
 
   const isSpeaking = (userId: string) => {
-    if (userId === user?.id) return micOn && localVolume > 8;
-    return (peerVolumes[userId] ?? 0) > 8;
+    if (userId === user?.id || userId === "") return speakingSet.has("__local__");
+    return speakingSet.has(userId);
   };
 
   if (showGuestDialog && guestConf) {
@@ -2128,19 +2216,12 @@ export default function ConferencePage() {
                     label="Mute tous"
                     color="neutral"
                   />
-                  <CtrlBtn on={showPollCreator} onClick={() => { setShowPollCreator((v) => !v); setShowPoll(false); }}
+                  <CtrlBtn on={showPollCreator} onClick={() => { setShowPollCreator((v) => !v); setShowChat(true); setShowPeers(false); }}
                     icon={<BarChart2 className="h-5 w-5" />}
                     label="Sondage"
                     color="neutral"
                   />
                 </>
-              )}
-              {activePoll && !showPollCreator && (
-                <CtrlBtn on={showPoll} onClick={() => setShowPoll((v) => !v)}
-                  icon={<BarChart2 className="h-5 w-5" />}
-                  label="Voir sondage"
-                  color="neutral"
-                />
               )}
 
               {/* Low bandwidth */}
@@ -2236,6 +2317,61 @@ export default function ConferencePage() {
                     </p>
                   ) : (
                     messages.map((m) => {
+                      // ── System announcement ──
+                      if (m.type === "system") {
+                        return (
+                          <div key={m.id} className="flex items-center justify-center">
+                            <span className="text-xs text-muted-foreground bg-muted/60 rounded-full px-3 py-1 text-center">{m.message}</span>
+                          </div>
+                        );
+                      }
+
+                      // ── Poll card ──
+                      if (m.type === "poll" && m.poll) {
+                        const poll = m.poll;
+                        const total = Object.values(poll.votes).reduce((a, b) => a + b, 0);
+                        const userId = user?.id ?? "guest";
+                        const hasVoted = myVote !== null || poll.voterIds.includes(userId);
+                        return (
+                          <div key={m.id} className="rounded-2xl border border-border bg-muted/40 p-3 space-y-2">
+                            <div className="flex items-center gap-1.5">
+                              <BarChart2 className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+                              <span className="text-xs font-semibold text-primary">{poll.closed ? "Sondage terminé" : "Sondage en cours"}</span>
+                            </div>
+                            <p className="text-sm font-medium">{poll.question}</p>
+                            <div className="space-y-1.5">
+                              {poll.options.map((opt, i) => {
+                                const count = poll.votes[String(i)] ?? 0;
+                                const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                                const voted = myVote === i;
+                                return (
+                                  <button key={i} onClick={() => votePoll(i)}
+                                    disabled={hasVoted || poll.closed}
+                                    className={`w-full text-left text-xs rounded-xl px-3 py-1.5 border transition-all ${voted ? "border-primary bg-primary/10 font-medium" : "border-border hover:border-primary/40 hover:bg-muted"} disabled:cursor-default`}>
+                                    <div className="flex justify-between mb-1">
+                                      <span>{opt}</span>
+                                      <span className="text-muted-foreground tabular-nums">{hasVoted ? `${count} (${pct}%)` : ""}</span>
+                                    </div>
+                                    {hasVoted && (
+                                      <div className="h-1 bg-muted rounded-full overflow-hidden">
+                                        <div className={`h-full rounded-full transition-all duration-500 ${voted ? "bg-primary" : "bg-muted-foreground/30"}`} style={{ width: `${pct}%` }} />
+                                      </div>
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                            <div className="flex items-center justify-between pt-0.5">
+                              <span className="text-xs text-muted-foreground">{total} vote(s)</span>
+                              {isModerator && !poll.closed && (
+                                <button onClick={closePoll} className="text-xs text-destructive hover:underline">Fermer</button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      // ── Regular chat message ──
                       const isMe = m.user_id === user?.id;
                       return (
                         <div key={m.id} className={`flex gap-2 ${isMe ? "flex-row-reverse" : ""}`}>
@@ -2261,6 +2397,33 @@ export default function ConferencePage() {
                   )}
                   <div ref={chatBottomRef} />
                 </div>
+                {/* Inline poll creator for moderators */}
+                {showPollCreator && (isModerator || coModId === user?.id) && (
+                  <div className="p-3 border-t border-border space-y-2 bg-muted/20 flex-shrink-0">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold flex items-center gap-1"><BarChart2 className="h-3.5 w-3.5" />Nouveau sondage</span>
+                      <button onClick={() => setShowPollCreator(false)} className="text-muted-foreground hover:text-foreground"><X className="h-3.5 w-3.5" /></button>
+                    </div>
+                    <Input placeholder="Question..." value={pollQuestion} onChange={(e) => setPollQuestion(e.target.value)} maxLength={200} className="text-xs h-8" />
+                    {pollOptions.map((opt, i) => (
+                      <div key={i} className="flex gap-1.5">
+                        <Input placeholder={`Option ${i + 1}`} value={opt} onChange={(e) => setPollOptions((prev) => prev.map((o, j) => j === i ? e.target.value : o))} maxLength={100} className="text-xs h-7" />
+                        {pollOptions.length > 2 && (
+                          <button onClick={() => setPollOptions((prev) => prev.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-destructive flex-shrink-0"><X className="h-3.5 w-3.5" /></button>
+                        )}
+                      </div>
+                    ))}
+                    <div className="flex gap-2">
+                      {pollOptions.length < 5 && (
+                        <button onClick={() => setPollOptions((prev) => [...prev, ""])} className="text-xs text-primary hover:underline">+ Option</button>
+                      )}
+                      <Button size="sm" className="ml-auto h-7 text-xs" onClick={launchPoll}
+                        disabled={!pollQuestion.trim() || pollOptions.filter((o) => o.trim()).length < 2}>
+                        Lancer
+                      </Button>
+                    </div>
+                  </div>
+                )}
                 <div className="p-3 border-t border-border flex gap-2 flex-shrink-0">
                   <Input
                     value={chatInput}
@@ -2461,111 +2624,7 @@ export default function ConferencePage() {
         </div>
       )}
 
-      {/* ── Poll creator modal ───────────────────────────────────────────────── */}
-      {showPollCreator && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-          onClick={(e) => e.target === e.currentTarget && setShowPollCreator(false)}>
-          <Card className="w-full max-w-sm shadow-2xl">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg flex items-center gap-2"><BarChart2 className="h-5 w-5" />Nouveau sondage</CardTitle>
-                <button onClick={() => setShowPollCreator(false)} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Input
-                placeholder="Question..."
-                value={pollQuestion}
-                onChange={(e) => setPollQuestion(e.target.value)}
-                maxLength={200}
-              />
-              <div className="space-y-2">
-                <p className="text-xs font-medium text-muted-foreground">Options (min. 2)</p>
-                {pollOptions.map((opt, i) => (
-                  <div key={i} className="flex gap-2">
-                    <Input
-                      placeholder={`Option ${i + 1}`}
-                      value={opt}
-                      onChange={(e) => setPollOptions((prev) => prev.map((o, j) => j === i ? e.target.value : o))}
-                      maxLength={100}
-                    />
-                    {pollOptions.length > 2 && (
-                      <button onClick={() => setPollOptions((prev) => prev.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-destructive">
-                        <X className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
-                ))}
-                {pollOptions.length < 5 && (
-                  <button onClick={() => setPollOptions((prev) => [...prev, ""])} className="text-xs text-primary hover:underline">
-                    + Ajouter une option
-                  </button>
-                )}
-              </div>
-              <Button className="w-full" onClick={launchPoll}
-                disabled={!pollQuestion.trim() || pollOptions.filter((o) => o.trim()).length < 2}>
-                Lancer le sondage
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* ── Poll display ─────────────────────────────────────────────────────── */}
-      {showPoll && activePoll && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-          onClick={(e) => e.target === e.currentTarget && setShowPoll(false)}>
-          <Card className="w-full max-w-sm shadow-2xl">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <BarChart2 className="h-5 w-5" />
-                  {activePoll.closed ? "Résultats" : "Sondage en cours"}
-                </CardTitle>
-                <button onClick={() => setShowPoll(false)} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
-              </div>
-              <p className="text-sm font-medium mt-1">{activePoll.question}</p>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {(() => {
-                const total = Object.values(activePoll.votes).reduce((a, b) => a + b, 0);
-                return activePoll.options.map((opt, i) => {
-                  const count = activePoll.votes[String(i)] ?? 0;
-                  const pct = total > 0 ? Math.round((count / total) * 100) : 0;
-                  const voted = myVote === i;
-                  const userId = user?.id ?? "guest";
-                  const hasVoted = myVote !== null || activePoll.voterIds.includes(userId);
-                  return (
-                    <div key={i}>
-                      <button
-                        onClick={() => votePoll(i)}
-                        disabled={hasVoted || activePoll.closed}
-                        className={`w-full text-left px-3 py-2 rounded-xl border text-sm transition-all ${voted ? "border-primary bg-primary/10 font-medium" : "border-border hover:border-primary/50 hover:bg-muted/50"} disabled:cursor-default`}
-                      >
-                        <div className="flex justify-between">
-                          <span>{opt}</span>
-                          <span className="text-muted-foreground tabular-nums">{count} — {pct}%</span>
-                        </div>
-                        {hasVoted && (
-                          <div className="mt-1.5 h-1.5 bg-muted rounded-full overflow-hidden">
-                            <div className={`h-full rounded-full transition-all duration-500 ${voted ? "bg-primary" : "bg-muted-foreground/40"}`} style={{ width: `${pct}%` }} />
-                          </div>
-                        )}
-                      </button>
-                    </div>
-                  );
-                });
-              })()}
-              <p className="text-xs text-muted-foreground text-center">
-                {Object.values(activePoll.votes).reduce((a, b) => a + b, 0)} vote(s) · {activePoll.closed ? "Terminé" : "En cours"}
-              </p>
-              {isModerator && !activePoll.closed && (
-                <Button variant="outline" size="sm" className="w-full" onClick={closePoll}>Fermer le sondage</Button>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      {/* Poll creator and poll display are now inline in the chat panel */}
 
       {/* ── Session summary ──────────────────────────────────────────────────── */}
       {showSummary && sessionSummary && (

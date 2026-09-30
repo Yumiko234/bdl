@@ -16,7 +16,7 @@ import {
   Hand, PhoneOff, MessageSquare, Users, Settings,
   Send, Crown, Shield, Loader2, X, Check, Volume2,
   Radio, LogIn, Clock, AlertCircle, Minimize2, Maximize2,
-  ArrowLeft, Link2,
+  ArrowLeft, Link2, Smile, LayoutGrid, Presentation,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -33,6 +33,14 @@ interface DBConference {
   host_name: string;
   created_at: string;
   ended_at: string | null;
+  guest_allowed?: boolean;
+}
+
+interface FloatingReaction {
+  id: string;
+  emoji: string;
+  userName: string;
+  x: number; // percent 10-90
 }
 
 interface Participant {
@@ -63,6 +71,10 @@ const ICE: RTCConfiguration = {
   iceServers: [
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
+    { urls: "stun:openrelay.metered.ca:80" },
+    { urls: "turn:openrelay.metered.ca:80",   username: "openrelayproject", credential: "openrelayproject" },
+    { urls: "turn:openrelay.metered.ca:443",  username: "openrelayproject", credential: "openrelayproject" },
+    { urls: "turns:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" },
   ],
 };
 
@@ -326,6 +338,24 @@ export default function ConferencePage() {
   // ── create form ──
   const [newTitle, setNewTitle] = useState("");
   const [creating, setCreating] = useState(false);
+  const [guestAllowedForm, setGuestAllowedForm] = useState(false);
+
+  // ── guest ──
+  const [showGuestDialog, setShowGuestDialog] = useState(false);
+  const [guestName, setGuestName] = useState("");
+  const [guestConf, setGuestConf] = useState<DBConference | null>(null);
+
+  // ── view mode ──
+  const [viewMode, setViewMode] = useState<"gallery" | "speaker">("gallery");
+
+  // ── speaking / volume ──
+  const peerAnalysers = useRef<Record<string, { analyser: AnalyserNode; data: Uint8Array; ctx: AudioContext }>>({});
+  const localAnalyserRef = useRef<{ analyser: AnalyserNode; data: Uint8Array } | null>(null);
+  const [peerVolumes, setPeerVolumes] = useState<Record<string, number>>({});
+  const [localVolume, setLocalVolume] = useState(0);
+
+  // ── reactions ──
+  const [floatingReactions, setFloatingReactions] = useState<FloatingReaction[]>([]);
 
   // ── pre-call ──
   const [showPreCall, setShowPreCall] = useState(false);
@@ -403,9 +433,12 @@ export default function ConferencePage() {
     vid.play().catch(() => {});
   }, []);
 
-  // ─── auth guard ───────────────────────────────────────────────────────────
+  // ─── auth guard — redirect only if no guest-allowed conference is live ────
   useEffect(() => {
-    if (!loading && !user) navigate("/auth");
+    if (loading || user) return;
+    // Check if any live conference allows guests before redirecting
+    supabase.from("conferences").select("id").eq("status", "live").eq("guest_allowed", true).limit(1)
+      .then(({ data }) => { if (!data?.length) navigate("/auth"); });
   }, [user, loading, navigate]);
 
   // ─── profile + role ───────────────────────────────────────────────────────
@@ -497,6 +530,19 @@ export default function ConferencePage() {
           }
         };
         attach();
+        // Web Audio analyser for speaking detection
+        try {
+          const audioTracks = streams[0].getAudioTracks();
+          if (audioTracks.length) {
+            const ctx = new AudioContext();
+            const src = ctx.createMediaStreamSource(streams[0]);
+            const analyser = ctx.createAnalyser();
+            analyser.fftSize = 256;
+            src.connect(analyser);
+            const data = new Uint8Array(analyser.frequencyBinCount);
+            peerAnalysers.current[peerId] = { analyser, data, ctx };
+          }
+        } catch { /* optional */ }
       };
 
       // ⚠️ Add tracks ONLY if the stream already has them.
@@ -577,6 +623,14 @@ export default function ConferencePage() {
       ch.on("broadcast", { event: "chat" }, ({ payload }) => {
         setMessages((prev) => [...prev, payload as ChatMessage]);
         setUnread((u) => u + 1);
+      });
+      ch.on("broadcast", { event: "reaction" }, ({ payload }) => {
+        const r: FloatingReaction = {
+          id: payload.id, emoji: payload.emoji,
+          userName: payload.userName, x: 10 + Math.random() * 80,
+        };
+        setFloatingReactions((prev) => [...prev, r]);
+        setTimeout(() => setFloatingReactions((prev) => prev.filter((f) => f.id !== r.id)), 3000);
       });
       ch.on("broadcast", { event: "hand" }, ({ payload }) => {
         setParticipants((prev) =>
@@ -677,7 +731,7 @@ export default function ConferencePage() {
       ch.on("presence", { event: "leave" }, ({ leftPresences }) => {
         const gone = new Set((leftPresences as any[]).map((p) => p.user_id));
         setParticipants((prev) => prev.filter((p) => !gone.has(p.user_id)));
-        gone.forEach((id) => { peers[id]?.close(); delete peers[id]; });
+        gone.forEach((id) => { peers[id]?.close(); delete peers[id]; cleanupPeerAnalyser(id); });
       });
 
       ch.subscribe(async (status) => {
@@ -845,6 +899,15 @@ export default function ConferencePage() {
     setChatInput("");
   };
 
+  const sendReaction = (emoji: string) => {
+    const r = { id: crypto.randomUUID(), emoji, userName };
+    channelRef.current?.send({ type: "broadcast", event: "reaction", payload: r });
+    // Also show locally
+    const local: FloatingReaction = { ...r, x: 10 + Math.random() * 80 };
+    setFloatingReactions((prev) => [...prev, local]);
+    setTimeout(() => setFloatingReactions((prev) => prev.filter((f) => f.id !== local.id)), 3000);
+  };
+
   const toggleHand = () => {
     const raised = !handRaised;
     setHandRaised(raised);
@@ -897,9 +960,11 @@ export default function ConferencePage() {
       id, title: newTitle.trim(), status: "live",
       host_id: user!.id, host_name: userName,
       created_at: new Date().toISOString(), ended_at: null,
+      guest_allowed: guestAllowedForm,
     };
     await supabase.from("conferences").insert({
       id, title: conf.title, status: "live", host_id: user!.id, host_name: userName,
+      guest_allowed: guestAllowedForm,
     }).then(({ error }) => { if (error) console.warn("conferences table:", error.message); });
 
     setActiveConf(conf);
@@ -913,6 +978,12 @@ export default function ConferencePage() {
   };
 
   const handleJoinClick = (conf: DBConference) => {
+    if (!user) {
+      // Non-authenticated → guest dialog (only reachable if conf.guest_allowed)
+      setGuestConf(conf);
+      setShowGuestDialog(true);
+      return;
+    }
     setPreCallConf(conf);
     setPreCallIsCreate(false);
     setShowPreCall(true);
@@ -929,6 +1000,73 @@ export default function ConferencePage() {
     setMinimized(false);
     setupChannel(conf.id, role);
     toast.success("Conférence rejointe !");
+  };
+
+  const joinAsGuest = (conf: DBConference, name: string) => {
+    setShowGuestDialog(false);
+    setGuestConf(null);
+    // Use a random guest ID for presence (no Supabase auth)
+    const guestId = "guest-" + crypto.randomUUID().slice(0, 8);
+    const role: ParticipantRole = "audience";
+    setActiveConf(conf);
+    setMyRole(role);
+    setInConference(true);
+    setMinimized(false);
+    // Override userName for this session
+    setUserName(name || "Invité");
+    // Build a minimal "user" substitute via presence only
+    const ch = supabase.channel(`conf:${conf.id}`, {
+      config: { broadcast: { self: false }, presence: { key: guestId } },
+    });
+    ch.on("broadcast", { event: "chat" }, ({ payload }) => {
+      setMessages((prev) => [...prev, payload as ChatMessage]);
+      setUnread((u) => u + 1);
+    });
+    ch.on("broadcast", { event: "reaction" }, ({ payload }) => {
+      const r: FloatingReaction = { id: payload.id, emoji: payload.emoji, userName: payload.userName, x: 10 + Math.random() * 80 };
+      setFloatingReactions((prev) => [...prev, r]);
+      setTimeout(() => setFloatingReactions((prev) => prev.filter((f) => f.id !== r.id)), 3000);
+    });
+    ch.on("broadcast", { event: "conf_end" }, () => {
+      toast.info("La conférence est terminée.");
+      doCleanup(false);
+      setInConference(false);
+      setMinimized(false);
+      setActiveConf(null);
+      fetchConfs();
+    });
+    ch.on("presence", { event: "sync" }, () => {
+      const state = ch.presenceState();
+      const list: Participant[] = Object.values(state).flat().map((p: any) => ({
+        user_id: p.user_id, user_name: p.user_name,
+        role: p.role ?? "audience", hand_raised: p.hand_raised ?? false,
+        is_muted: p.is_muted ?? true, is_video_off: p.is_video_off ?? true,
+        joined_at: p.joined_at ?? "",
+      }));
+      setParticipants(list);
+    });
+    ch.on("presence", { event: "join" }, ({ newPresences }) => {
+      const incoming = newPresences as any[];
+      setParticipants((prev) => {
+        const ids = new Set(prev.map((p) => p.user_id));
+        return [...prev, ...incoming.filter((p) => !ids.has(p.user_id)).map((p) => ({
+          user_id: p.user_id, user_name: p.user_name, role: p.role ?? "audience",
+          hand_raised: false, is_muted: true, is_video_off: true, joined_at: "",
+        }))];
+      });
+    });
+    ch.on("presence", { event: "leave" }, ({ leftPresences }) => {
+      const gone = new Set((leftPresences as any[]).map((p) => p.user_id));
+      setParticipants((prev) => prev.filter((p) => !gone.has(p.user_id)));
+      gone.forEach((id) => { peers[id]?.close(); delete peers[id]; cleanupPeerAnalyser(id); });
+    });
+    ch.subscribe(async (status) => {
+      if (status === "SUBSCRIBED") {
+        await ch.track({ user_id: guestId, user_name: name || "Invité", role, hand_raised: false, is_muted: true, joined_at: new Date().toISOString() });
+      }
+    });
+    channelRef.current = ch;
+    toast.success("Conférence rejointe en tant qu'invité !");
   };
 
   const endConference = async () => {
@@ -977,6 +1115,47 @@ export default function ConferencePage() {
 
   useEffect(() => () => doCleanup(true), []);
 
+  // ─── Volume polling (speaking detection) ─────────────────────────────────
+  useEffect(() => {
+    if (!inConference) return;
+    const interval = setInterval(() => {
+      // Remote peers
+      const vols: Record<string, number> = {};
+      for (const [id, { analyser, data }] of Object.entries(peerAnalysers.current)) {
+        analyser.getByteFrequencyData(data);
+        vols[id] = data.reduce((a, b) => a + b, 0) / data.length;
+      }
+      setPeerVolumes(vols);
+      // Local mic
+      if (localAnalyserRef.current) {
+        const { analyser, data } = localAnalyserRef.current;
+        analyser.getByteFrequencyData(data);
+        setLocalVolume(data.reduce((a, b) => a + b, 0) / data.length);
+      }
+    }, 250);
+    return () => clearInterval(interval);
+  }, [inConference]);
+
+  // Attach local analyser when mic turns on
+  useEffect(() => {
+    if (!micOn) { localAnalyserRef.current = null; setLocalVolume(0); return; }
+    try {
+      const ctx = new AudioContext();
+      const src = ctx.createMediaStreamSource(localStream.current);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 256;
+      src.connect(analyser);
+      const data = new Uint8Array(analyser.frequencyBinCount);
+      localAnalyserRef.current = { analyser, data };
+    } catch { /* optional */ }
+  }, [micOn]);
+
+  // Cleanup peer analysers when peer leaves
+  const cleanupPeerAnalyser = (peerId: string) => {
+    const a = peerAnalysers.current[peerId];
+    if (a) { try { a.ctx.close(); } catch {} delete peerAnalysers.current[peerId]; }
+  };
+
   // ─── Timer ────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!inConference) { confStartRef.current = null; setTimerStr("00:00"); return; }
@@ -1012,6 +1191,66 @@ export default function ConferencePage() {
   );
 
   // ─── Loading gate ─────────────────────────────────────────────────────────
+
+  // ─── Derived: active speaker id ──────────────────────────────────────────
+  const activeSpeakerId = (() => {
+    const THRESHOLD = 8;
+    let maxVol = THRESHOLD;
+    let bestId: string | null = null;
+    for (const [id, vol] of Object.entries(peerVolumes)) {
+      const p = participants.find((p) => p.user_id === id);
+      if (p && !p.is_muted && vol > maxVol) { maxVol = vol; bestId = id; }
+    }
+    return bestId;
+  })();
+
+  const isSpeaking = (userId: string) => {
+    if (userId === user?.id) return micOn && localVolume > 8;
+    return (peerVolumes[userId] ?? 0) > 8;
+  };
+
+  if (showGuestDialog && guestConf) {
+    return (
+      <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="bg-background rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+          <div className="px-6 pt-6 pb-4 border-b border-border">
+            <h2 className="text-lg font-bold flex items-center gap-2">
+              <LogIn className="h-5 w-5 text-primary" />Rejoindre en tant qu'invité
+            </h2>
+            <p className="text-sm text-muted-foreground mt-1 truncate">{guestConf.title}</p>
+          </div>
+          <div className="p-6 space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Votre prénom</label>
+              <Input
+                placeholder="Ex: Marie"
+                value={guestName}
+                onChange={(e) => setGuestName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && guestName.trim() && joinAsGuest(guestConf, guestName.trim())}
+                autoFocus
+                maxLength={40}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Vous rejoignez en tant qu'auditeur. Pas besoin de compte BDL.
+            </p>
+          </div>
+          <div className="px-6 pb-6 flex gap-3">
+            <button onClick={() => { setShowGuestDialog(false); setGuestConf(null); }}
+              className="flex-1 px-4 py-2.5 rounded-xl border border-border text-sm font-medium text-muted-foreground hover:bg-muted transition-colors">
+              Annuler
+            </button>
+            <button
+              onClick={() => guestName.trim() && joinAsGuest(guestConf, guestName.trim())}
+              disabled={!guestName.trim()}
+              className="flex-1 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+              <LogIn className="h-4 w-4" />Rejoindre
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (showPreCall) {
     return (
@@ -1127,18 +1366,31 @@ export default function ConferencePage() {
                     En tant que membre de l'exécutif, vous pouvez lancer et modérer une conférence.
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="flex gap-3">
-                  <Input
-                    placeholder="Thème de la réunion…"
-                    value={newTitle}
-                    onChange={(e) => setNewTitle(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleCreateClick()}
-                    className="flex-1"
-                  />
-                  <Button onClick={handleCreateClick} disabled={creating || !newTitle.trim()}>
-                    {creating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Radio className="h-4 w-4 mr-2" />}
-                    Lancer
-                  </Button>
+                <CardContent className="space-y-3">
+                  <div className="flex gap-3">
+                    <Input
+                      placeholder="Thème de la réunion…"
+                      value={newTitle}
+                      onChange={(e) => setNewTitle(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleCreateClick()}
+                      className="flex-1"
+                    />
+                    <Button onClick={handleCreateClick} disabled={creating || !newTitle.trim()}>
+                      {creating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Radio className="h-4 w-4 mr-2" />}
+                      Lancer
+                    </Button>
+                  </div>
+                  <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={guestAllowedForm}
+                      onChange={(e) => setGuestAllowedForm(e.target.checked)}
+                      className="h-4 w-4 rounded accent-primary"
+                    />
+                    <span className="text-sm text-muted-foreground">
+                      Autoriser les invités sans compte BDL
+                    </span>
+                  </label>
                 </CardContent>
               </Card>
             )}
@@ -1184,9 +1436,19 @@ export default function ConferencePage() {
                             {new Date(conf.created_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
                           </p>
                         </div>
-                        <Button className="w-full" onClick={() => handleJoinClick(conf)}>
-                          <LogIn className="h-4 w-4 mr-2" />Rejoindre
-                        </Button>
+                        {user ? (
+                          <Button className="w-full" onClick={() => handleJoinClick(conf)}>
+                            <LogIn className="h-4 w-4 mr-2" />Rejoindre
+                          </Button>
+                        ) : conf.guest_allowed ? (
+                          <Button variant="outline" className="w-full" onClick={() => handleJoinClick(conf)}>
+                            <LogIn className="h-4 w-4 mr-2" />Rejoindre en invité
+                          </Button>
+                        ) : (
+                          <Button variant="outline" className="w-full opacity-50" disabled>
+                            Connexion requise
+                          </Button>
+                        )}
                       </CardContent>
                     </Card>
                   ))}
@@ -1240,6 +1502,13 @@ export default function ConferencePage() {
           </Badge>
           <RoleBadge role={myRole} />
           <button
+            onClick={() => setViewMode((v) => v === "gallery" ? "speaker" : "gallery")}
+            title={viewMode === "gallery" ? "Vue speaker" : "Vue grille"}
+            className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+          >
+            {viewMode === "gallery" ? <Presentation className="h-4 w-4" /> : <LayoutGrid className="h-4 w-4" />}
+          </button>
+          <button
             onClick={async () => {
               try { await navigator.clipboard.writeText(window.location.href); toast.success("Lien copié !"); } catch {}
             }}
@@ -1262,18 +1531,34 @@ export default function ConferencePage() {
       {/* ── Main layout ──────────────────────────────────────────────────────── */}
       <div className="flex flex-1 min-h-0">
 
+        {/* ── Floating reactions overlay ───────────────────────────────────── */}
+        {floatingReactions.length > 0 && (
+          <div className="absolute inset-0 pointer-events-none z-40 overflow-hidden">
+            {floatingReactions.map((r) => (
+              <div
+                key={r.id}
+                className="absolute bottom-24 animate-bounce"
+                style={{ left: `${r.x}%`, animation: "floatUp 3s ease-out forwards" }}
+              >
+                <div className="flex flex-col items-center gap-0.5">
+                  <span className="text-3xl drop-shadow-lg select-none">{r.emoji}</span>
+                  <span className="text-white text-xs font-medium bg-black/40 rounded-full px-2 py-0.5 backdrop-blur-sm">{r.userName.split(" ")[0]}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* ── Video grid ────────────────────────────────────────────────────── */}
-        <div className="flex-1 flex flex-col min-w-0 bg-slate-100 dark:bg-slate-900/50">
+        <div className="flex-1 flex flex-col min-w-0 bg-slate-100 dark:bg-slate-900/50 relative">
+
+          {/* Gallery view */}
+          {viewMode === "gallery" && (
           <div className="flex-1 p-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 content-start overflow-auto">
 
             {/* Local tile */}
-            <div className="relative bg-slate-800 rounded-2xl overflow-hidden aspect-video group border border-slate-700 shadow-md">
-              <video
-                ref={localVideoRef}
-                autoPlay muted playsInline
-                className="w-full h-full object-cover"
-              />
-              {/* Avatar shown when no video */}
+            <div className={`relative bg-slate-800 rounded-2xl overflow-hidden aspect-video group shadow-md transition-all duration-300 ${isSpeaking(user?.id ?? "") ? "ring-2 ring-green-400 ring-offset-1 ring-offset-slate-900" : "border border-slate-700"} ${activeSpeakerId === null && isSpeaking(user?.id ?? "") ? "scale-[1.01]" : ""}`}>
+              <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
               {!camOn && !screenOn && (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="w-20 h-20 rounded-full gradient-institutional flex items-center justify-center text-white text-2xl font-bold shadow-lg">
@@ -1287,79 +1572,96 @@ export default function ConferencePage() {
                 </div>
               )}
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-3 py-2 flex items-center gap-1.5">
-                {micOn
-                  ? <Mic className="h-3 w-3 text-green-400 flex-shrink-0" />
-                  : <MicOff className="h-3 w-3 text-red-400 flex-shrink-0" />}
+                {micOn ? <Mic className="h-3 w-3 text-green-400 flex-shrink-0" /> : <MicOff className="h-3 w-3 text-red-400 flex-shrink-0" />}
                 <span className="text-white text-xs font-medium truncate">{userName} <span className="opacity-60">(Vous)</span></span>
                 {myRole === "moderator" && <Crown className="h-3 w-3 text-amber-400" />}
-                {myRole === "speaker" && <Mic className="h-3 w-3 text-green-400" />}
               </div>
             </div>
 
-            {/* Remote speakers/moderators */}
-            {participants
-              .filter((p) => p.user_id !== user?.id && (p.role === "speaker" || p.role === "moderator"))
-              .map((p) => (
-                <div key={p.user_id} className="relative bg-slate-800 rounded-2xl overflow-hidden aspect-video border border-slate-700 shadow-md group">
-                  <div className="absolute inset-0 flex items-center justify-center bg-slate-800 z-0">
-                    <div className="w-20 h-20 rounded-full bg-slate-600 flex items-center justify-center text-white text-2xl font-bold">
-                      {initials(p.user_name)}
-                    </div>
-                  </div>
-                  <video
-                    ref={(el) => { remoteVideoRefs.current[p.user_id] = el; }}
-                    autoPlay playsInline
-                    className="w-full h-full object-cover absolute inset-0 z-10"
-                  />
-                  {isModerator && p.user_id !== user?.id && (
-                    <div className="absolute top-2 right-2 hidden group-hover:flex gap-1 z-20">
-                      {!p.is_muted && (
-                        <button onClick={() => forceMute(p.user_id)} className="bg-background/90 hover:bg-red-100 dark:hover:bg-red-900/40 text-red-600 rounded-full p-1.5 shadow" title="Couper micro">
-                          <MicOff className="h-3.5 w-3.5" />
-                        </button>
-                      )}
-                      <button onClick={() => demoteToAudience(p.user_id)} className="bg-background/90 hover:bg-orange-100 dark:hover:bg-orange-900/40 text-orange-600 rounded-full p-1.5 shadow" title="Rétrograder">
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  )}
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-3 py-2 flex items-center gap-1.5 z-10">
-                    {p.is_muted
-                      ? <MicOff className="h-3 w-3 text-red-400 flex-shrink-0" />
-                      : <Mic className="h-3 w-3 text-green-400 flex-shrink-0" />}
-                    <span className="text-white text-xs font-medium truncate">{p.user_name}</span>
-                    {p.role === "moderator" && <Crown className="h-3 w-3 text-amber-400" />}
-                  </div>
+            {/* Remote tiles (speakers + moderators) */}
+            {participants.filter((p) => p.user_id !== user?.id && (p.role === "speaker" || p.role === "moderator")).map((p) => (
+              <div key={p.user_id} className={`relative bg-slate-800 rounded-2xl overflow-hidden aspect-video shadow-md group transition-all duration-300 ${isSpeaking(p.user_id) ? "ring-2 ring-green-400 ring-offset-1 ring-offset-slate-900" : "border border-slate-700"} ${activeSpeakerId === p.user_id ? "scale-[1.01]" : ""}`}>
+                <div className="absolute inset-0 flex items-center justify-center bg-slate-800 z-0">
+                  <div className="w-20 h-20 rounded-full bg-slate-600 flex items-center justify-center text-white text-2xl font-bold">{initials(p.user_name)}</div>
                 </div>
-              ))}
+                <video ref={(el) => { remoteVideoRefs.current[p.user_id] = el; }} autoPlay playsInline className="w-full h-full object-cover absolute inset-0 z-10" />
+                {isModerator && p.user_id !== user?.id && (
+                  <div className="absolute top-2 right-2 hidden group-hover:flex gap-1 z-20">
+                    {!p.is_muted && <button onClick={() => forceMute(p.user_id)} className="bg-background/90 hover:bg-red-100 dark:hover:bg-red-900/40 text-red-600 rounded-full p-1.5 shadow"><MicOff className="h-3.5 w-3.5" /></button>}
+                    <button onClick={() => demoteToAudience(p.user_id)} className="bg-background/90 hover:bg-orange-100 dark:hover:bg-orange-900/40 text-orange-600 rounded-full p-1.5 shadow"><X className="h-3.5 w-3.5" /></button>
+                  </div>
+                )}
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-3 py-2 flex items-center gap-1.5 z-10">
+                  {p.is_muted ? <MicOff className="h-3 w-3 text-red-400 flex-shrink-0" /> : <Mic className="h-3 w-3 text-green-400 flex-shrink-0" />}
+                  <span className="text-white text-xs font-medium truncate">{p.user_name}</span>
+                  {p.role === "moderator" && <Crown className="h-3 w-3 text-amber-400" />}
+                  {isSpeaking(p.user_id) && <span className="ml-auto text-xs text-green-300 font-medium flex items-center gap-0.5">● parle</span>}
+                </div>
+              </div>
+            ))}
 
             {/* Audience tiles */}
-            {participants
-              .filter((p) => p.user_id !== user?.id && p.role === "audience")
-              .map((p) => (
-                <div key={p.user_id} className="relative bg-slate-50 rounded-2xl overflow-hidden aspect-video border border-slate-200 shadow-sm flex items-center justify-center">
-                  <div className="text-center space-y-2">
-                    <div className="w-14 h-14 rounded-full bg-slate-200 mx-auto flex items-center justify-center text-slate-600 font-bold text-lg">
-                      {initials(p.user_name)}
-                    </div>
-                    <p className="text-slate-500 text-xs px-2 truncate">{p.user_name}</p>
-                    {p.hand_raised && (
-                      <div className="flex items-center justify-center gap-1 text-amber-600 text-xs font-medium animate-bounce">
-                        <Hand className="h-3.5 w-3.5" />Lève la main
-                      </div>
-                    )}
-                  </div>
-                  {isModerator && p.hand_raised && (
-                    <button
-                      onClick={() => promoteToSpeaker(p.user_id)}
-                      className="absolute bottom-2 right-2 bg-green-600 hover:bg-green-500 text-white rounded-lg px-2 py-1 text-xs flex items-center gap-1 shadow transition-colors"
-                    >
-                      <Check className="h-3 w-3" />Accepter
-                    </button>
-                  )}
+            {participants.filter((p) => p.user_id !== user?.id && p.role === "audience").map((p) => (
+              <div key={p.user_id} className="relative bg-slate-50 dark:bg-slate-800/60 rounded-2xl overflow-hidden aspect-video border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-center">
+                <div className="text-center space-y-2">
+                  <div className="w-14 h-14 rounded-full bg-slate-200 dark:bg-slate-600 mx-auto flex items-center justify-center text-slate-600 dark:text-slate-200 font-bold text-lg">{initials(p.user_name)}</div>
+                  <p className="text-slate-500 dark:text-slate-400 text-xs px-2 truncate">{p.user_name}</p>
+                  {p.hand_raised && <div className="flex items-center justify-center gap-1 text-amber-600 text-xs font-medium animate-bounce"><Hand className="h-3.5 w-3.5" />Lève la main</div>}
                 </div>
-              ))}
+                {isModerator && p.hand_raised && (
+                  <button onClick={() => promoteToSpeaker(p.user_id)} className="absolute bottom-2 right-2 bg-green-600 hover:bg-green-500 text-white rounded-lg px-2 py-1 text-xs flex items-center gap-1 shadow transition-colors">
+                    <Check className="h-3 w-3" />Accepter
+                  </button>
+                )}
+              </div>
+            ))}
           </div>
+          )}
+
+          {/* Speaker view */}
+          {viewMode === "speaker" && (() => {
+            const speakerId = activeSpeakerId ?? (participants.find((p) => p.role === "moderator" || p.role === "speaker")?.user_id ?? "local");
+            const isLocal = speakerId === "local" || speakerId === user?.id;
+            const others = participants.filter((p) => p.user_id !== (isLocal ? user?.id ?? "local" : speakerId));
+            return (
+              <div className="flex-1 flex flex-col gap-2 p-2 overflow-hidden">
+                {/* Main large tile */}
+                <div className={`relative bg-slate-800 rounded-2xl overflow-hidden flex-1 min-h-0 shadow-xl ${isSpeaking(isLocal ? user?.id ?? "" : speakerId) ? "ring-2 ring-green-400" : ""}`}>
+                  {isLocal ? (
+                    <>
+                      <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
+                      {!camOn && !screenOn && <div className="absolute inset-0 flex items-center justify-center"><div className="w-28 h-28 rounded-full gradient-institutional flex items-center justify-center text-white text-4xl font-bold shadow-lg">{initials(userName)}</div></div>}
+                    </>
+                  ) : (
+                    <>
+                      <div className="absolute inset-0 flex items-center justify-center bg-slate-800"><div className="w-28 h-28 rounded-full bg-slate-600 flex items-center justify-center text-white text-4xl font-bold">{initials(participants.find((p) => p.user_id === speakerId)?.user_name ?? "?")}</div></div>
+                      <video ref={(el) => { remoteVideoRefs.current[speakerId] = el; }} autoPlay playsInline className="w-full h-full object-cover absolute inset-0" />
+                    </>
+                  )}
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-4 py-3">
+                    <span className="text-white font-semibold">{isLocal ? `${userName} (Vous)` : (participants.find((p) => p.user_id === speakerId)?.user_name ?? "")}</span>
+                    {isSpeaking(isLocal ? user?.id ?? "" : speakerId) && <span className="ml-2 text-green-300 text-sm">● parle</span>}
+                  </div>
+                </div>
+                {/* Thumbnail strip */}
+                {others.length > 0 && (
+                  <div className="flex gap-2 h-24 overflow-x-auto flex-shrink-0">
+                    {others.map((p) => (
+                      <div key={p.user_id} onClick={() => {/* clicking a thumb doesn't switch speaker — active speaker auto-switches */}}
+                        className={`relative bg-slate-800 rounded-xl overflow-hidden flex-shrink-0 aspect-video h-full cursor-pointer group ${isSpeaking(p.user_id) ? "ring-2 ring-green-400" : "border border-slate-700"}`}>
+                        <div className="absolute inset-0 flex items-center justify-center"><div className="w-10 h-10 rounded-full bg-slate-600 flex items-center justify-center text-white text-sm font-bold">{initials(p.user_name)}</div></div>
+                        <video ref={(el) => { remoteVideoRefs.current[p.user_id] = el; }} autoPlay playsInline className="w-full h-full object-cover absolute inset-0" />
+                        <div className="absolute bottom-0 left-0 right-0 bg-black/50 px-1.5 py-0.5">
+                          <span className="text-white text-[10px] truncate block">{p.user_name.split(" ")[0]}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+        </div>
 
           {/* ── Controls bar ─────────────────────────────────────────────────── */}
           <div className="flex-shrink-0 bg-background border-t border-border px-4 py-3 space-y-2 shadow-sm">
@@ -1396,13 +1698,25 @@ export default function ConferencePage() {
                 label="Caméra"
               />
 
-              {isSpeaker && (
-                <CtrlBtn on={screenOn} onClick={toggleScreen}
-                  icon={screenOn ? <MonitorOff className="h-5 w-5" /> : <Monitor className="h-5 w-5" />}
-                  label={screenOn ? "Arrêter" : "Écran"}
-                  color={screenOn ? "green" : "neutral"}
-                />
-              )}
+              <CtrlBtn on={screenOn} onClick={toggleScreen}
+                icon={screenOn ? <MonitorOff className="h-5 w-5" /> : <Monitor className="h-5 w-5" />}
+                label={screenOn ? "Arrêter" : "Écran"}
+                color={screenOn ? "green" : "neutral"}
+              />
+
+              {/* Quick reactions */}
+              <div className="flex items-center gap-1 bg-muted/60 rounded-xl px-2 py-1.5 border border-border/40">
+                {(["👍", "❤️", "🎉", "🙌"] as const).map((emoji) => (
+                  <button
+                    key={emoji}
+                    onClick={() => sendReaction(emoji)}
+                    className="text-xl hover:scale-125 transition-transform active:scale-110 leading-none p-0.5 rounded"
+                    title={`Réaction ${emoji}`}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
 
               {myRole === "audience" && (
                 <CtrlBtn on={handRaised} onClick={toggleHand}

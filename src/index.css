@@ -133,6 +133,13 @@ All colors MUST be HSL.
   }
 }
 
+/* Conference floating reaction animation */
+@keyframes floatUp {
+  0%   { opacity: 1; transform: translateY(0) scale(1); }
+  80%  { opacity: 0.8; transform: translateY(-120px) scale(1.2); }
+  100% { opacity: 0; transform: translateY(-160px) scale(0.9); }
+}
+
 /* Page fade-in transition on route change */
 @keyframes page-fade-in {
   from { opacity: 0; transform: translateY(5px); }

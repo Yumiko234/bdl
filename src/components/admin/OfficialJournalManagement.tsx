@@ -34,6 +34,137 @@ interface JournalEntry {
   created_at: string; modifications?: Modification[]; signatures?: Signatory[];
 }
 
+// ─── NOR helpers & picker ─────────────────────────────────────────────────────
+
+const EMETTEURS = [
+  { value: "BDL",   label: "BDL — Bureau des Lycéens" },
+  { value: "PBDL",  label: "PBDL — Présidence" },
+  { value: "RCBDL", label: "RCBDL — Dir. Communauté & Com." },
+];
+
+const DOC_TYPES = [
+  { value: "CR", label: "CR — Compte-Rendu" },
+  { value: "PV", label: "PV — Procès-Verbal" },
+  { value: "DC", label: "DC — Décret" },
+  { value: "AR", label: "AR — Arrêté" },
+  { value: "DE", label: "DE — Décision" },
+  { value: "CM", label: "CM — Communiqué" },
+];
+
+
+function parseNor(nor: string) {
+  const m = nor.match(/^(RCBDL|PBDL|BDL)(\d{2})(CR|PV|DC|AR|DE|CM)(\d{4})([A-Z])$/);
+  if (!m) return null;
+  return { emetteur: m[1], year: m[2], type: m[3], seq: parseInt(m[4]), version: m[5] };
+}
+
+function computeNextSeq(entries: JournalEntry[], emetteur: string, year: string, type: string): number {
+  let max = 0;
+  for (const e of entries) {
+    const p = parseNor(e.nor_number);
+    if (p && p.emetteur === emetteur && p.year === year && p.type === type) {
+      if (p.seq > max) max = p.seq;
+    }
+  }
+  return max + 1;
+}
+
+function computeNextVersion(entries: JournalEntry[], emetteur: string, year: string, type: string, seq: number): string {
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  let maxIdx = -1;
+  for (const e of entries) {
+    const p = parseNor(e.nor_number);
+    if (p && p.emetteur === emetteur && p.year === year && p.type === type && p.seq === seq) {
+      const idx = letters.indexOf(p.version);
+      if (idx > maxIdx) maxIdx = idx;
+    }
+  }
+  return letters[maxIdx + 1] ?? "A";
+}
+
+interface NorPickerProps {
+  value: string;
+  onChange: (nor: string) => void;
+  entries: JournalEntry[];
+  isEditing: boolean;
+}
+
+const NorPicker = ({ value, onChange, entries, isEditing }: NorPickerProps) => {
+  const currentYear = String(new Date().getFullYear()).slice(2);
+  const [manual, setManual] = useState(false);
+  const [emetteur, setEmetteur] = useState("BDL");
+  const [type, setType] = useState("CR");
+
+  const nextSeq = computeNextSeq(entries, emetteur, currentYear, type);
+  const seqStr = String(nextSeq).padStart(4, "0");
+  const version = computeNextVersion(entries, emetteur, currentYear, type, nextSeq);
+  const generated = `${emetteur}${currentYear}${type}${seqStr}${version}`;
+
+  useEffect(() => {
+    if (!manual && !isEditing) onChange(generated);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [generated, manual, isEditing]);
+
+  if (isEditing) {
+    return (
+      <div className="space-y-1.5">
+        <Label htmlFor="nor">Numéro NOR</Label>
+        <Input id="nor" value={value} readOnly
+          className="font-mono bg-muted/40 cursor-not-allowed text-muted-foreground" />
+        <p className="text-xs text-muted-foreground">Verrouillé après publication.</p>
+      </div>
+    );
+  }
+
+  if (manual) {
+    return (
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between">
+          <Label htmlFor="nor">Numéro NOR</Label>
+          <button type="button" onClick={() => { setManual(false); onChange(generated); }}
+            className="text-xs text-[#07419e] hover:underline">← Générateur auto</button>
+        </div>
+        <Input id="nor" value={value} onChange={(e) => onChange(e.target.value)}
+          placeholder="Ex : BDL26CR0001A" className="font-mono" />
+      </div>
+    );
+  }
+
+  const typeLabel = DOC_TYPES.find(t => t.value === type)?.label.split("—")[1]?.trim() ?? type;
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <Label>Numéro NOR</Label>
+        <button type="button" onClick={() => setManual(true)}
+          className="text-xs text-muted-foreground hover:underline">
+          Saisie manuelle
+        </button>
+      </div>
+
+      {/* Deux selects */}
+      <div className="flex gap-2">
+        <select value={emetteur} onChange={(e) => setEmetteur(e.target.value)}
+          className="flex-1 h-10 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring">
+          {EMETTEURS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+        <select value={type} onChange={(e) => setType(e.target.value)}
+          className="flex-[2] h-10 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring">
+          {DOC_TYPES.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+        </select>
+      </div>
+
+      {/* NOR résultant */}
+      <div className="flex items-center justify-between rounded-lg border border-[#07419e]/30 bg-[#07419e]/5 px-4 py-2.5">
+        <span className="font-mono text-lg font-black text-[#07419e] tracking-widest">{generated}</span>
+        <span className="text-xs text-muted-foreground">
+          {nextSeq === 1 ? `1er ${typeLabel}` : `${typeLabel} n°${nextSeq}`} • ver. {version} • auto
+        </span>
+      </div>
+    </div>
+  );
+};
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const makeUid = () => Math.random().toString(36).slice(2, 9);
@@ -124,7 +255,7 @@ const SignatureZone = ({ signatories, onChange }: SignatureZoneProps) => {
       </div>
 
       {/* Aperçu live avec journal.css */}
-      <div className="rounded-xl border border-dashed border-[#07419e]/40 bg-white/80 px-6 py-5 min-h-[90px]">
+      <div className="rounded-xl border border-dashed border-[#07419e]/40 bg-background px-6 py-5 min-h-[90px]">
         {signatories.length === 0 ? (
           <p className="text-xs text-muted-foreground italic text-center py-3">
             Aucun signataire — cliquez sur « Ajouter un signataire » ci-dessous.
@@ -180,7 +311,7 @@ const SignatureZone = ({ signatories, onChange }: SignatureZoneProps) => {
 
       {/* Formulaire d'ajout / édition */}
       {adding ? (
-        <div className="mt-4 rounded-xl border border-[#07419e]/25 bg-blue-50/50 p-4 space-y-3">
+        <div className="mt-4 rounded-xl border border-[#07419e]/25 bg-muted/40 p-4 space-y-3">
           <p className="text-xs font-bold uppercase tracking-widest text-[#07419e]">
             {editingUid ? "Modifier le signataire" : "Nouveau signataire"}
           </p>
@@ -305,13 +436,13 @@ const ArticleRenderer = ({ entry }: { entry: JournalEntry }) => {
   };
 
   return (
-    <div className="border border-[#FFD700] rounded-2xl bg-white/95 shadow-lg p-6 md:p-10">
+    <div className="border border-[#FFD700] rounded-2xl bg-background shadow-lg p-6 md:p-10">
       <h1 className="text-3xl md:text-4xl font-bold mb-4 text-[#07419e] text-center font-serif">{entry.title}</h1>
-      <p className="text-sm text-center text-gray-600 italic mb-8">
+      <p className="text-sm text-center text-muted-foreground italic mb-8">
         NOR : {entry.nor_number} — publié le{" "}
         {new Date(entry.publication_date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
       </p>
-      <article className="text-black">{renderCollapsible(entry.content)}</article>
+      <article className="text-foreground">{renderCollapsible(entry.content)}</article>
 
       {/* Bloc signatures */}
       {entry.signatures && entry.signatures.length > 0 && (
@@ -331,7 +462,7 @@ const ArticleRenderer = ({ entry }: { entry: JournalEntry }) => {
       )}
 
       {entry.author_name && (
-        <div className="mt-8 pt-4 border-t text-right text-sm text-gray-600 italic">
+        <div className="mt-8 pt-4 border-t text-right text-sm text-muted-foreground italic">
           {ROLE_LABELS[entry.author_role || ""] || "Bureau des Lycéens"} : {entry.author_name}
         </div>
       )}
@@ -437,7 +568,7 @@ export const OfficialJournalManagement = () => {
         <CardContent className="p-8 space-y-8">
 
           {/* ── Formulaire ── */}
-          <section className="border rounded-xl p-6 bg-white/60 shadow-inner">
+          <section className="border rounded-xl p-6 bg-card shadow-inner">
             <h3 className="font-semibold text-lg mb-4 text-center font-serif">
               {editingEntry ? "Modification d'une publication" : "Nouvelle publication officielle"}
             </h3>
@@ -446,10 +577,13 @@ export const OfficialJournalManagement = () => {
                 <Label htmlFor="title">Titre</Label>
                 <Input id="title" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} placeholder="Titre de la publication" />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="nor">Numéro NOR</Label>
-                <Input id="nor" value={formData.nor_number} onChange={(e) => setFormData({ ...formData, nor_number: e.target.value })} placeholder="Ex : BDL2025-001" />
-              </div>
+              <NorPicker
+                key={editingEntry ?? "new"}
+                value={formData.nor_number}
+                onChange={(nor) => setFormData((f) => ({ ...f, nor_number: nor }))}
+                entries={entries}
+                isEditing={!!editingEntry}
+              />
               <div className="space-y-2">
                 <Label htmlFor="date">Date de publication</Label>
                 <Input id="date" type="date" value={formData.publication_date} onChange={(e) => setFormData({ ...formData, publication_date: e.target.value })} />
@@ -480,7 +614,7 @@ export const OfficialJournalManagement = () => {
 
           {/* ── Prévisualisation ── */}
           {previewEntry && (
-            <section className="border-2 border-blue-300 rounded-xl p-6 bg-blue-50">
+            <section className="border-2 border-[#07419e]/40 rounded-xl p-6 bg-card">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-semibold text-lg font-serif">Prévisualisation</h3>
                 <Button variant="ghost" size="sm" onClick={() => setPreviewEntry(null)}>Fermer</Button>

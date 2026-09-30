@@ -31,6 +31,7 @@ import { SupportManagement }        from "@/components/admin/SupportManagement";
 import { SuiviActionsManagement } from "@/components/admin/AdminSuiviActions";
 import { CertificateManagement } from "@/components/admin/CertificatManagement";
 import { AdminConference }     from "@/components/admin/AdminConference";
+import { EventThemesManagement } from "@/components/admin/EventThemesManagement";
 import { RichTextEditor }           from "@/components/RichTextEditor";
 
 // ─── UI ───────────────────────────────────────────────────────────────────────
@@ -43,7 +44,7 @@ import {
   History, Phone, Building2, CalendarDays, Vote,
   BarChart3, BookMarked, BookUser,  Megaphone,
   Wrench, Shield, Headphones, UserCircle,
-  ChevronRight, LayoutDashboard, MessageSquare
+  ChevronRight, LayoutDashboard, MessageSquare, Palette
 } from "lucide-react";
 
 // ─── Audience request type ────────────────────────────────────────────────────
@@ -95,6 +96,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "banner",        label: "Bandeau global",      icon: <Megaphone    className="h-4 w-4" />, group: "Gestion", minRank: 1 },
   { id: "maintenance",   label: "Maintenance",         icon: <Wrench       className="h-4 w-4" />, group: "Gestion", minRank: 1 },
   { id: "admin-user",    label: "Gestion User",        icon: <Wrench       className="h-4 w-4" />, group: "Gestion", minRank: 1},
+  { id: "event-themes",  label: "Thèmes événementiels",icon: <Palette      className="h-4 w-4" />, group: "Gestion", minRank: 1 },
 
 ];
 
@@ -348,6 +350,7 @@ const Admin = () => {
       case "maintenance":   return <MaintenanceManagement />;
       case "users":         return <UserManagement />;
       case "admin-user":    return <AdminManagement />;
+      case "event-themes":  return <EventThemesManagement />;
       default:              return null;
     }
   };

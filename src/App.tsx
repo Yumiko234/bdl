@@ -11,6 +11,8 @@ import ScrollToTop from "./components/ScrollToTop";
 import NavigationProgress from "./components/NavigationProgress";
 import ScrollToTopButton from "./components/ScrollToTopButton";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { EventThemeProvider } from "./themes/EventThemeProvider";
+import { EventThemeOverlay } from "./themes/EventThemeOverlay";
 
 // Chargement paresseux de chaque page — le bundle initial ne charge que ce qui est nécessaire
 const Index            = lazy(() => import("./pages/Index"));
@@ -62,6 +64,8 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
+        <EventThemeProvider>
+        <EventThemeOverlay />
         <Toaster />
         <Sonner />
         <NavigationProgress />
@@ -128,6 +132,7 @@ const App = () => {
         </ErrorBoundary>
 
         <Analytics />
+        </EventThemeProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

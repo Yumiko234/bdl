@@ -213,3 +213,246 @@ All colors MUST be HSL.
   color: hsl(var(--popover-foreground)) !important;
   background-color: hsl(var(--popover)) !important;
 }
+
+/* ============================================================
+   THÈMES ÉVÉNEMENTIELS
+   Deux dimensions indépendantes et compatibles :
+     1. Mode clair/sombre  → classe .dark sur <html>
+     2. Thème événementiel → attribut data-event-theme sur <html>
+   Les variables --event-* ne remplacent jamais --background,
+   --foreground, etc. ; elles s'ajoutent comme couche décorative.
+   ============================================================ */
+
+/* ── Valeurs par défaut (aucun thème actif) ───────────────── */
+:root {
+  --event-primary: 0 0% 50%;
+  --event-secondary: 0 0% 60%;
+  --event-accent: 0 0% 40%;
+  --event-decoration: 0 0% 55%;
+  --event-particle: 0 0% 65%;
+  --event-glow: 0 0% 0% / 0;
+}
+
+/* ============================================================
+   OCTOBRE ROSE
+   ============================================================ */
+
+/* ── Octobre Rose ─────────────────────────────────────────── */
+
+/* Light */
+html[data-event-theme="pink-october"] {
+  /* Hero gradient → rose */
+  --gradient-institutional: linear-gradient(135deg, hsl(335 68% 36%) 0%, hsl(335 62% 28%) 50%, hsl(335 55% 20%) 100%);
+  /* Palette décorative */
+  --event-primary: 335 72% 52%;
+  --event-secondary: 335 55% 68%;
+  --event-accent: 335 80% 44%;
+  --event-decoration: 335 62% 62%;
+  --event-particle: 335 60% 68%;
+  --event-glow: 335 75% 58% / 0.32;
+  /* ── Site entier en rose ── */
+  --background: 335 40% 98%;
+  --foreground: 335 25% 12%;
+  --card: 335 30% 96%;
+  --card-foreground: 335 25% 12%;
+  --popover: 335 35% 98%;
+  --popover-foreground: 335 25% 12%;
+  --primary: 335 70% 48%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 335 30% 90%;
+  --secondary-foreground: 335 40% 20%;
+  --muted: 335 30% 93%;
+  --muted-foreground: 335 25% 42%;
+  --accent: 335 72% 52%;
+  --accent-foreground: 0 0% 100%;
+  --border: 335 30% 85%;
+  --input: 335 30% 85%;
+  --ring: 335 70% 48%;
+}
+
+/* Dark */
+html.dark[data-event-theme="pink-october"] {
+  --gradient-institutional: linear-gradient(135deg, hsl(335 60% 28%) 0%, hsl(335 54% 20%) 50%, hsl(335 48% 14%) 100%);
+  --event-primary: 335 80% 66%;
+  --event-secondary: 335 60% 54%;
+  --event-accent: 335 90% 72%;
+  --event-decoration: 335 74% 70%;
+  --event-particle: 335 70% 74%;
+  --event-glow: 335 80% 66% / 0.38;
+  /* ── Site entier en rose sombre ── */
+  --background: 335 18% 8%;
+  --foreground: 335 20% 94%;
+  --card: 335 15% 12%;
+  --card-foreground: 335 20% 94%;
+  --popover: 335 15% 14%;
+  --popover-foreground: 335 20% 94%;
+  --primary: 335 80% 65%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 335 20% 18%;
+  --secondary-foreground: 335 20% 90%;
+  --muted: 335 18% 18%;
+  --muted-foreground: 335 15% 62%;
+  --accent: 335 80% 66%;
+  --accent-foreground: 0 0% 100%;
+  --border: 335 20% 24%;
+  --input: 335 20% 24%;
+  --ring: 335 80% 65%;
+}
+
+/* ── Halloween ────────────────────────────────────────────── */
+
+/* Light */
+html[data-event-theme="halloween"] {
+  /* Hero gradient → orange/violet sombre Halloween */
+  --gradient-institutional: linear-gradient(135deg, hsl(28 75% 30%) 0%, hsl(20 65% 22%) 50%, hsl(270 45% 18%) 100%);
+  --event-primary: 28 92% 50%;
+  --event-secondary: 28 75% 62%;
+  --event-accent: 28 96% 44%;
+  --event-decoration: 270 48% 42%;
+  --event-particle: 35 95% 58%;
+  --event-glow: 28 92% 52% / 0.20;
+  /* ── Site entier en orange Halloween ── */
+  --background: 28 35% 97%;
+  --foreground: 28 45% 10%;
+  --card: 28 25% 95%;
+  --card-foreground: 28 45% 10%;
+  --popover: 28 30% 97%;
+  --popover-foreground: 28 45% 10%;
+  --primary: 28 88% 44%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 28 30% 88%;
+  --secondary-foreground: 28 45% 18%;
+  --muted: 28 25% 92%;
+  --muted-foreground: 28 30% 42%;
+  --accent: 28 92% 50%;
+  --accent-foreground: 0 0% 8%;
+  --border: 28 25% 84%;
+  --input: 28 25% 84%;
+  --ring: 28 88% 44%;
+}
+
+/* Dark */
+html.dark[data-event-theme="halloween"] {
+  --gradient-institutional: linear-gradient(135deg, hsl(28 65% 22%) 0%, hsl(20 55% 16%) 50%, hsl(270 40% 12%) 100%);
+  --event-primary: 28 92% 58%;
+  --event-secondary: 28 72% 48%;
+  --event-accent: 28 100% 62%;
+  --event-decoration: 270 62% 62%;
+  --event-particle: 35 100% 60%;
+  --event-glow: 28 92% 55% / 0.35;
+  /* ── Site entier en orange sombre ── */
+  --background: 28 15% 8%;
+  --foreground: 28 20% 94%;
+  --card: 28 12% 12%;
+  --card-foreground: 28 20% 94%;
+  --popover: 28 12% 14%;
+  --popover-foreground: 28 20% 94%;
+  --primary: 28 88% 55%;
+  --primary-foreground: 0 0% 8%;
+  --secondary: 28 15% 18%;
+  --secondary-foreground: 28 20% 90%;
+  --muted: 28 15% 18%;
+  --muted-foreground: 28 15% 62%;
+  --accent: 28 92% 58%;
+  --accent-foreground: 0 0% 8%;
+  --border: 28 18% 24%;
+  --input: 28 18% 24%;
+  --ring: 28 88% 55%;
+}
+
+/* ============================================================
+   ANIMATIONS — désactivées si prefers-reduced-motion
+   ============================================================ */
+
+/* Octobre Rose */
+@keyframes pinkRibbonPulse {
+  0%, 100% { transform: scale(1) rotate(-1deg); }
+  50%       { transform: scale(1.08) rotate(2deg); }
+}
+
+@keyframes pinkParticleFloat {
+  0%   { transform: translateY(0) translateX(0) scale(1); opacity: 0; }
+  10%  { opacity: 1; }
+  50%  { transform: translateY(-45vh) translateX(12px) scale(1.1); }
+  90%  { opacity: 0.8; }
+  100% { transform: translateY(-95vh) translateX(-8px) scale(0.8); opacity: 0; }
+}
+
+/* Halloween */
+@keyframes halloweenGlowPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.65; transform: scale(1.12); }
+}
+
+@keyframes hwParticleFloat {
+  0%   { transform: translateY(0) translateX(0); opacity: 0; }
+  8%   { opacity: 1; }
+  50%  { transform: translateY(-50vh) translateX(10px); }
+  92%  { opacity: 0.7; }
+  100% { transform: translateY(-100vh) translateX(-6px); opacity: 0; }
+}
+
+@keyframes hwBatFly1 {
+  0%   { transform: translateX(-70px) translateY(0); }
+  25%  { transform: translateX(25vw) translateY(-40px); }
+  55%  { transform: translateX(58vw) translateY(20px); }
+  80%  { transform: translateX(82vw) translateY(-15px); }
+  100% { transform: translateX(calc(100vw + 90px)) translateY(5px); }
+}
+
+@keyframes hwBatFly2 {
+  0%   { transform: translateX(-60px) translateY(0); }
+  35%  { transform: translateX(35vw) translateY(30px); }
+  65%  { transform: translateX(68vw) translateY(-20px); }
+  100% { transform: translateX(calc(100vw + 80px)) translateY(10px); }
+}
+
+@keyframes hwBatFlap {
+  from { transform: scaleY(1); }
+  to   { transform: scaleY(0.45); }
+}
+
+@keyframes hwPumpkinSway {
+  0%, 100% { transform: rotate(-6deg) translateY(0); }
+  50%       { transform: rotate(4deg) translateY(-4px); }
+}
+
+/* ── Effet boum (clic sur icône) ─────────────────────────── */
+@keyframes boumFloat {
+  0%   { transform: translateX(-50%) translateY(0) scale(0.6); opacity: 0; }
+  12%  { transform: translateX(-50%) translateY(-12px) scale(1.25); opacity: 1; }
+  35%  { transform: translateX(-50%) translateY(-36px) scale(1.05); opacity: 1; }
+  80%  { transform: translateX(-50%) translateY(-90px) scale(0.95); opacity: 0.85; }
+  100% { transform: translateX(-50%) translateY(-130px) scale(0.85); opacity: 0; }
+}
+
+@keyframes boumScale {
+  0%   { transform: scale(1); }
+  25%  { transform: scale(1.45); }
+  65%  { transform: scale(0.88); }
+  100% { transform: scale(1); }
+}
+
+/* Masquer les particules supplémentaires sur mobile */
+@media (max-width: 640px) {
+  .pink-particle--desktop,
+  .hw-particle--desktop,
+  .hw-bat--desktop,
+  .hw-pumpkin--desktop { display: none !important; }
+}
+
+/* Supprimer les mouvements si l'utilisateur le préfère */
+@media (prefers-reduced-motion: reduce) {
+  [data-event-theme] * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* Transition douce lors du changement de thème événementiel */
+html {
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+}

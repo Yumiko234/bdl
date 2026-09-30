@@ -13,7 +13,7 @@
         { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.instagram.com; connect-src 'self' https://ppmlhjcwdyaarbqpngla.supabase.co wss://ppmlhjcwdyaarbqpngla.supabase.co https://vitals.vercel-insights.com https://va.vercel-scripts.com; img-src 'self' data: blob: https://*.supabase.co https://*.cdninstagram.com https://www.instagram.com https://storage.googleapis.com; frame-src https://www.instagram.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; media-src 'self' https://*.supabase.co; object-src 'none'; base-uri 'self';"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.instagram.com; connect-src 'self' https://ppmlhjcwdyaarbqpngla.supabase.co wss://ppmlhjcwdyaarbqpngla.supabase.co https://vitals.vercel-insights.com https://va.vercel-scripts.com; img-src 'self' data: blob: https://*.supabase.co https://*.cdninstagram.com https://www.instagram.com https://storage.googleapis.com; frame-src https://www.instagram.com https://drive.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; media-src 'self' https://*.supabase.co; object-src 'none'; base-uri 'self';"
         }
       ]
     }

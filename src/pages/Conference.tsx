@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { useSEO } from "@/hooks/useSEO";
+import { useConferenceStats } from "@/hooks/useConferenceStats";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -17,6 +18,8 @@ import {
   Send, Crown, Shield, Loader2, X, Check, Volume2,
   Radio, LogIn, Clock, AlertCircle, Minimize2, Maximize2,
   ArrowLeft, Link2, Smile, LayoutGrid, Presentation,
+  Wifi, WifiOff, BarChart2, Maximize, Minimize, PictureInPicture2,
+  VolumeX, UserCheck, ChevronDown, SlidersHorizontal, Focus,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -24,6 +27,25 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 
 type ParticipantRole = "moderator" | "speaker" | "audience";
+
+interface Poll {
+  id: string;
+  question: string;
+  options: string[];
+  votes: Record<string, number>; // optionIndex (string) -> count
+  voterIds: string[];
+  closed: boolean;
+  created_by: string;
+}
+
+interface SessionSummary {
+  duration: string;
+  participantCount: number;
+  maxParticipants: number;
+  messageCount: number;
+  startTime: Date;
+  endTime: Date;
+}
 
 interface DBConference {
   id: string;
@@ -34,6 +56,7 @@ interface DBConference {
   created_at: string;
   ended_at: string | null;
   guest_allowed?: boolean;
+  co_moderator_id?: string | null;
 }
 
 interface FloatingReaction {
@@ -66,6 +89,7 @@ interface ChatMessage {
 // WebRTC globals (survive re-renders)
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Module-level object so refs can point to it without closure issues
 const peers: Record<string, RTCPeerConnection> = {};
 const ICE: RTCConfiguration = {
   iceServers: [
@@ -321,6 +345,7 @@ export default function ConferencePage() {
   useSEO({ title: "Conférence – Bureau des Lycéens", url: "/conference" });
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   // ── identity ──
   const [isBDLExec, setIsBDLExec] = useState(false);
@@ -357,6 +382,31 @@ export default function ConferencePage() {
   // ── reactions ──
   const [floatingReactions, setFloatingReactions] = useState<FloatingReaction[]>([]);
 
+  // ── polls ──
+  const [activePoll, setActivePoll] = useState<Poll | null>(null);
+  const [showPollCreator, setShowPollCreator] = useState(false);
+  const [pollQuestion, setPollQuestion] = useState("");
+  const [pollOptions, setPollOptions] = useState(["", ""]);
+  const [myVote, setMyVote] = useState<number | null>(null);
+  const [showPoll, setShowPoll] = useState(false);
+
+  // ── co-moderator ──
+  const [coModId, setCoModId] = useState<string | null>(null);
+
+  // ── session summary ──
+  const [sessionSummary, setSessionSummary] = useState<SessionSummary | null>(null);
+  const [showSummary, setShowSummary] = useState(false);
+  const maxParticipantsRef = useRef(0);
+  const messageCountRef = useRef(0);
+
+  // ── view extensions ──
+  const [focusMode, setFocusMode] = useState(false);
+  const [lowBandwidth, setLowBandwidth] = useState(false);
+  const [noiseSuppressionOn, setNoiseSuppressionOn] = useState(true);
+  const [isPiP, setIsPiP] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const fullscreenContainerRef = useRef<HTMLDivElement>(null);
+
   // ── pre-call ──
   const [showPreCall, setShowPreCall] = useState(false);
   const [preCallConf, setPreCallConf] = useState<DBConference | null>(null);
@@ -391,6 +441,10 @@ export default function ConferencePage() {
   const remoteVideoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
   const chatBottomRef = useRef<HTMLDivElement>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const peersRef = useRef(peers); // stable ref pointing to module-level peers object
+
+  // ── network stats hook ──
+  const { peerStats, overallQuality, start: startStats, stop: stopStats } = useConferenceStats(peersRef);
 
   // The single source of truth for local media.
   // Pre-populated with silent/black tracks so WebRTC SDP always contains m=audio + m=video.
@@ -514,6 +568,26 @@ export default function ConferencePage() {
             type: "broadcast", event: "ice",
             payload: { from: user.id, to: peerId, candidate: candidate.toJSON() },
           });
+        }
+      };
+
+      // Auto-reconnect: ICE restart on "failed" state
+      let reconnectAttempts = 0;
+      pc.onconnectionstatechange = () => {
+        if (pc.connectionState === "failed" && reconnectAttempts < 3) {
+          reconnectAttempts++;
+          console.warn(`[WebRTC] ${peerId} failed — ICE restart attempt ${reconnectAttempts}`);
+          pc.restartIce();
+          pc.createOffer({ iceRestart: true }).then(async (offer) => {
+            await pc.setLocalDescription(offer);
+            ch.send({
+              type: "broadcast", event: "offer",
+              payload: { from: user!.id, to: peerId, sdp: offer },
+            });
+          }).catch(() => {});
+        }
+        if (pc.connectionState === "connected") {
+          reconnectAttempts = 0;
         }
       };
 
@@ -674,6 +748,59 @@ export default function ConferencePage() {
         fetchConfs();
       });
 
+      // ── Force mute all ──
+      ch.on("broadcast", { event: "force_mute_all" }, ({ payload }) => {
+        if (payload.user_id === user!.id) return; // moderator not muted
+        localStream.current.getAudioTracks().forEach((t) => { t.enabled = false; });
+        setMicOn(false);
+        broadcastMuteChange(true);
+        toast.warning("Le modérateur a coupé tous les micros.");
+      });
+
+      // ── Co-moderator grant/revoke ──
+      ch.on("broadcast", { event: "co_mod_grant" }, ({ payload }) => {
+        setCoModId(payload.user_id);
+        if (payload.user_id === user!.id) toast.success("🛡️ Vous êtes maintenant co-modérateur !");
+        else toast.info(`${payload.user_name} est maintenant co-modérateur.`);
+      });
+      ch.on("broadcast", { event: "co_mod_revoke" }, ({ payload }) => {
+        setCoModId(null);
+        if (payload.user_id === user!.id) toast.info("Vos droits de co-modérateur ont été retirés.");
+      });
+
+      // ── Pass the floor ──
+      ch.on("broadcast", { event: "pass_floor" }, ({ payload }) => {
+        if (payload.user_id === user!.id) {
+          toast.success("🎙️ La parole vous a été passée !");
+        }
+        // Update role: target becomes speaker
+        setParticipants((prev) =>
+          prev.map((p) => p.user_id === payload.user_id ? { ...p, role: "speaker" as ParticipantRole, hand_raised: false } : p)
+        );
+        if (payload.user_id === user!.id) setMyRole("speaker");
+      });
+
+      // ── Poll events ──
+      ch.on("broadcast", { event: "poll_create" }, ({ payload }) => {
+        setActivePoll(payload as Poll);
+        setMyVote(null);
+        setShowPoll(true);
+        toast.info("📊 Un sondage a été lancé !");
+      });
+      ch.on("broadcast", { event: "poll_vote" }, ({ payload }) => {
+        setActivePoll((prev) => {
+          if (!prev || prev.id !== payload.poll_id) return prev;
+          const newVotes = { ...prev.votes };
+          const key = String(payload.option);
+          newVotes[key] = (newVotes[key] ?? 0) + 1;
+          return { ...prev, votes: newVotes, voterIds: [...prev.voterIds, payload.voter_id] };
+        });
+      });
+      ch.on("broadcast", { event: "poll_close" }, ({ payload }) => {
+        setActivePoll((prev) => prev?.id === payload.poll_id ? { ...prev, closed: true } : prev);
+        toast.info("📊 Le sondage est terminé.");
+      });
+
       // ── WebRTC signaling ──
       ch.on("broadcast", { event: "offer" }, async ({ payload }) => {
         if (payload.to !== user!.id) return;
@@ -711,27 +838,35 @@ export default function ConferencePage() {
         const incoming = newPresences as any[];
         setParticipants((prev) => {
           const ids = new Set(prev.map((p) => p.user_id));
-          return [
-            ...prev,
-            ...incoming.filter((p) => !ids.has(p.user_id)).map((p) => ({
-              user_id: p.user_id, user_name: p.user_name,
-              role: p.role ?? "audience", hand_raised: false,
-              is_muted: true, is_video_off: true, joined_at: "",
-            })),
-          ];
+          const added = incoming.filter((p) => !ids.has(p.user_id)).map((p) => ({
+            user_id: p.user_id, user_name: p.user_name,
+            role: p.role ?? "audience", hand_raised: false,
+            is_muted: true, is_video_off: true, joined_at: p.joined_at ?? "",
+          }));
+          const next = [...prev, ...added];
+          maxParticipantsRef.current = Math.max(maxParticipantsRef.current, next.length);
+          return next;
         });
-        // Initiate a WebRTC offer toward every new peer (except ourselves)
+        // Announce join (not self)
         incoming.forEach((p) => {
           if (p.user_id !== user!.id) {
-            // Small delay so both sides have time to subscribe
+            toast(`👋 ${p.user_name} a rejoint la conférence`, { duration: 3000 });
             setTimeout(() => initiateOffer(p.user_id, ch), 300);
           }
         });
       });
       ch.on("presence", { event: "leave" }, ({ leftPresences }) => {
         const gone = new Set((leftPresences as any[]).map((p) => p.user_id));
+        const goneList = leftPresences as any[];
         setParticipants((prev) => prev.filter((p) => !gone.has(p.user_id)));
-        gone.forEach((id) => { peers[id]?.close(); delete peers[id]; cleanupPeerAnalyser(id); });
+        gone.forEach((id) => {
+          peers[id]?.close(); delete peers[id]; cleanupPeerAnalyser(id);
+        });
+        goneList.forEach((p) => {
+          if (p.user_id !== user!.id) {
+            toast(`${p.user_name} a quitté la conférence`, { duration: 2500 });
+          }
+        });
       });
 
       ch.subscribe(async (status) => {
@@ -760,10 +895,13 @@ export default function ConferencePage() {
     }
 
     try {
-      // ⚠️ Do NOT pass video:false — some browsers reject it. Pass only audio constraints.
-      const audioConstraints: MediaStreamConstraints = selAudioIn
-        ? { audio: { deviceId: { exact: selAudioIn } } }
-        : { audio: true };
+      const audioBase: MediaTrackConstraints = {
+        noiseSuppression: noiseSuppressionOn,
+        echoCancellation: true,
+        autoGainControl: true,
+        ...(selAudioIn ? { deviceId: { exact: selAudioIn } } : {}),
+      };
+      const audioConstraints: MediaStreamConstraints = { audio: audioBase };
 
       const got = await navigator.mediaDevices.getUserMedia(audioConstraints);
       await refreshDevices(); // labels now available after permission granted
@@ -941,6 +1079,148 @@ export default function ConferencePage() {
     setParticipants((prev) => prev.map((p) => p.user_id === targetId ? { ...p, is_muted: true } : p));
   };
 
+  const globalMuteAll = () => {
+    channelRef.current?.send({
+      type: "broadcast", event: "force_mute_all",
+      payload: { user_id: user!.id }, // moderator's own id → excluded from mute
+    });
+    // Mute all other speakers/moderators locally
+    setParticipants((prev) =>
+      prev.map((p) => p.user_id !== user!.id ? { ...p, is_muted: true } : p)
+    );
+    toast.success("Tous les micros ont été coupés.");
+  };
+
+  const grantCoMod = (targetId: string, targetName: string) => {
+    channelRef.current?.send({
+      type: "broadcast", event: "co_mod_grant",
+      payload: { user_id: targetId, user_name: targetName },
+    });
+    setCoModId(targetId);
+  };
+
+  const revokeCoMod = () => {
+    channelRef.current?.send({
+      type: "broadcast", event: "co_mod_revoke",
+      payload: { user_id: coModId },
+    });
+    setCoModId(null);
+  };
+
+  const passFloor = (targetId: string) => {
+    channelRef.current?.send({
+      type: "broadcast", event: "pass_floor",
+      payload: { user_id: targetId },
+    });
+    setParticipants((prev) =>
+      prev.map((p) => p.user_id === targetId ? { ...p, role: "speaker" as ParticipantRole, hand_raised: false } : p)
+    );
+    toast.success("Parole passée !");
+  };
+
+  // ── Polls ──
+  const launchPoll = () => {
+    if (!pollQuestion.trim() || pollOptions.filter((o) => o.trim()).length < 2) return;
+    const poll: Poll = {
+      id: crypto.randomUUID(),
+      question: pollQuestion.trim(),
+      options: pollOptions.filter((o) => o.trim()),
+      votes: {},
+      voterIds: [],
+      closed: false,
+      created_by: user!.id,
+    };
+    channelRef.current?.send({ type: "broadcast", event: "poll_create", payload: poll });
+    setActivePoll(poll);
+    setMyVote(null);
+    setShowPoll(true);
+    setShowPollCreator(false);
+    setPollQuestion("");
+    setPollOptions(["", ""]);
+  };
+
+  const votePoll = (optionIndex: number) => {
+    if (!activePoll || activePoll.closed || myVote !== null) return;
+    const userId = user?.id ?? "guest";
+    if (activePoll.voterIds.includes(userId)) return;
+    channelRef.current?.send({
+      type: "broadcast", event: "poll_vote",
+      payload: { poll_id: activePoll.id, option: optionIndex, voter_id: userId },
+    });
+    // Apply locally
+    setActivePoll((prev) => {
+      if (!prev) return prev;
+      const newVotes = { ...prev.votes };
+      const key = String(optionIndex);
+      newVotes[key] = (newVotes[key] ?? 0) + 1;
+      return { ...prev, votes: newVotes, voterIds: [...prev.voterIds, userId] };
+    });
+    setMyVote(optionIndex);
+  };
+
+  const closePoll = () => {
+    if (!activePoll) return;
+    channelRef.current?.send({
+      type: "broadcast", event: "poll_close",
+      payload: { poll_id: activePoll.id },
+    });
+    setActivePoll((prev) => prev ? { ...prev, closed: true } : prev);
+  };
+
+  // ── Fullscreen ──
+  const toggleFullscreen = async () => {
+    if (!fullscreenContainerRef.current) return;
+    try {
+      if (!document.fullscreenElement) {
+        await fullscreenContainerRef.current.requestFullscreen();
+        setIsFullscreen(true);
+      } else {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    } catch { toast.error("Plein écran non supporté."); }
+  };
+
+  // ── Picture-in-Picture ──
+  const togglePiP = async () => {
+    try {
+      if (document.pictureInPictureElement) {
+        await document.exitPictureInPicture();
+        setIsPiP(false);
+        return;
+      }
+      // Find best video element: active speaker or local
+      const activeVideoEl = activeSpeakerId
+        ? remoteVideoRefs.current[activeSpeakerId]
+        : localVideoRef.current;
+      const el = activeVideoEl ?? localVideoRef.current;
+      if (!el) return;
+      if (!("requestPictureInPicture" in el)) {
+        toast.error("Picture-in-Picture non supporté par ce navigateur.");
+        return;
+      }
+      await (el as HTMLVideoElement).requestPictureInPicture();
+      setIsPiP(true);
+      el.addEventListener("leavepictureinpicture", () => setIsPiP(false), { once: true });
+    } catch (err: any) {
+      if (err?.name !== "NotAllowedError") toast.error("PiP non disponible.");
+    }
+  };
+
+  // ── Low bandwidth: pause remote video tracks ──
+  const toggleLowBandwidth = () => {
+    const next = !lowBandwidth;
+    setLowBandwidth(next);
+    // Disable/enable video on all remote <video> elements (doesn't stop the track, just pauses rendering)
+    Object.values(remoteVideoRefs.current).forEach((vid) => {
+      if (vid) {
+        if (next) vid.pause();
+        else vid.play().catch(() => {});
+      }
+    });
+    toast.info(next ? "Mode bande passante réduite activé" : "Vidéo réactivée");
+  };
+
   // ─── Conference lifecycle ─────────────────────────────────────────────────
 
   const handleCreateClick = () => {
@@ -1069,7 +1349,24 @@ export default function ConferencePage() {
     toast.success("Conférence rejointe en tant qu'invité !");
   };
 
+  const buildSummary = (): SessionSummary => {
+    const now = new Date();
+    const startMs = confStartRef.current ?? now.getTime();
+    const totalSec = Math.floor((now.getTime() - startMs) / 1000);
+    const mm = String(Math.floor(totalSec / 60)).padStart(2, "0");
+    const ss = String(totalSec % 60).padStart(2, "0");
+    return {
+      duration: `${mm}:${ss}`,
+      participantCount: participants.length,
+      maxParticipants: maxParticipantsRef.current,
+      messageCount: messageCountRef.current,
+      startTime: new Date(startMs),
+      endTime: now,
+    };
+  };
+
   const endConference = async () => {
+    const summary = buildSummary();
     channelRef.current?.send({ type: "broadcast", event: "conf_end", payload: {} });
     if (activeConf) {
       await supabase.from("conferences")
@@ -1080,15 +1377,19 @@ export default function ConferencePage() {
     setInConference(false);
     setMinimized(false);
     setActiveConf(null);
+    setSessionSummary(summary);
+    setShowSummary(true);
     fetchConfs();
-    toast.info("Conférence terminée.");
   };
 
   const leaveConference = () => {
+    const summary = buildSummary();
     doCleanup(true);
     setInConference(false);
     setMinimized(false);
     setActiveConf(null);
+    setSessionSummary(summary);
+    setShowSummary(true);
     toast.info("Vous avez quitté la conférence.");
   };
 
@@ -1114,6 +1415,49 @@ export default function ConferencePage() {
   };
 
   useEffect(() => () => doCleanup(true), []);
+
+  // ── Start/stop stats with conference ──────────────────────────────────────
+  useEffect(() => {
+    if (inConference) startStats();
+    else stopStats();
+  }, [inConference, startStats, stopStats]);
+
+  // ── Max participants tracker ──────────────────────────────────────────────
+  useEffect(() => {
+    maxParticipantsRef.current = Math.max(maxParticipantsRef.current, participants.length);
+  }, [participants.length]);
+
+  // ── Message count tracker ─────────────────────────────────────────────────
+  useEffect(() => {
+    messageCountRef.current = messages.length;
+  }, [messages.length]);
+
+  // ── Fullscreen change listener ────────────────────────────────────────────
+  useEffect(() => {
+    const handler = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", handler);
+    return () => document.removeEventListener("fullscreenchange", handler);
+  }, []);
+
+  // ── URL ?join=confId — auto-open pre-call for shared links ────────────────
+  useEffect(() => {
+    const joinId = searchParams.get("join");
+    if (!joinId || inConference) return;
+    (async () => {
+      const { data } = await supabase
+        .from("conferences")
+        .select("*")
+        .eq("id", joinId)
+        .eq("status", "live")
+        .maybeSingle();
+      if (!data) { toast.error("Cette conférence n'existe pas ou est terminée."); return; }
+      const conf = data as DBConference;
+      if (!user && !conf.guest_allowed) { navigate("/auth"); return; }
+      if (!user && conf.guest_allowed) { setGuestConf(conf); setShowGuestDialog(true); return; }
+      setPreCallConf(conf); setPreCallIsCreate(false); setShowPreCall(true);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   // ─── Volume polling (speaking detection) ─────────────────────────────────
   useEffect(() => {
@@ -1483,7 +1827,7 @@ export default function ConferencePage() {
   // ═══════════════════════════════════════════════════════════════════════════
 
   return (
-    <div className="h-screen bg-background flex flex-col overflow-hidden">
+    <div ref={fullscreenContainerRef} className="h-screen bg-background flex flex-col overflow-hidden">
 
       {/* ── Top bar ─────────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between px-4 py-2 bg-background border-b border-border shadow-sm flex-shrink-0">
@@ -1500,7 +1844,24 @@ export default function ConferencePage() {
           <Badge variant="outline" className="text-xs gap-1">
             <Users className="h-3 w-3" />{participants.length}
           </Badge>
+
+          {/* Network quality indicator */}
+          <div
+            title={`Qualité réseau: ${overallQuality === "good" ? "Bonne" : overallQuality === "medium" ? "Moyenne" : overallQuality === "bad" ? "Mauvaise" : "Inconnue"}`}
+            className="flex items-center gap-0.5 cursor-default"
+          >
+            {overallQuality === "good" && <Wifi className="h-4 w-4 text-green-500" />}
+            {overallQuality === "medium" && <Wifi className="h-4 w-4 text-amber-500" />}
+            {overallQuality === "bad" && <WifiOff className="h-4 w-4 text-red-500" />}
+            {overallQuality === "unknown" && <Wifi className="h-4 w-4 text-muted-foreground/40" />}
+          </div>
+
           <RoleBadge role={myRole} />
+          {coModId === user?.id && (
+            <Badge className="text-xs bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border-purple-200">Co-mod</Badge>
+          )}
+
+          {/* View toggle */}
           <button
             onClick={() => setViewMode((v) => v === "gallery" ? "speaker" : "gallery")}
             title={viewMode === "gallery" ? "Vue speaker" : "Vue grille"}
@@ -1508,11 +1869,39 @@ export default function ConferencePage() {
           >
             {viewMode === "gallery" ? <Presentation className="h-4 w-4" /> : <LayoutGrid className="h-4 w-4" />}
           </button>
+
+          {/* Focus mode */}
+          <button
+            onClick={() => setFocusMode((v) => !v)}
+            title={focusMode ? "Quitter le mode focus" : "Mode focus (un seul speaker)"}
+            className={`p-1.5 rounded-lg transition-colors ${focusMode ? "bg-primary text-primary-foreground" : "hover:bg-muted text-muted-foreground hover:text-foreground"}`}
+          >
+            <Focus className="h-4 w-4" />
+          </button>
+
+          {/* PiP */}
+          <button
+            onClick={togglePiP}
+            title={isPiP ? "Quitter PiP" : "Picture-in-Picture"}
+            className={`p-1.5 rounded-lg transition-colors ${isPiP ? "bg-primary text-primary-foreground" : "hover:bg-muted text-muted-foreground hover:text-foreground"}`}
+          >
+            <PictureInPicture2 className="h-4 w-4" />
+          </button>
+
+          {/* Fullscreen */}
+          <button
+            onClick={toggleFullscreen}
+            title={isFullscreen ? "Quitter le plein écran" : "Plein écran"}
+            className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+          >
+            {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+          </button>
           <button
             onClick={async () => {
-              try { await navigator.clipboard.writeText(window.location.href); toast.success("Lien copié !"); } catch {}
+              const url = `${window.location.origin}/conference?join=${activeConf?.id}`;
+              try { await navigator.clipboard.writeText(url); toast.success("Lien d'invitation copié !"); } catch {}
             }}
-            title="Copier le lien de la conférence"
+            title="Copier le lien d'invitation"
             className="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
           >
             <Link2 className="h-4 w-4" />
@@ -1550,10 +1939,38 @@ export default function ConferencePage() {
         )}
 
         {/* ── Video grid ────────────────────────────────────────────────────── */}
-        <div className="flex-1 flex flex-col min-w-0 bg-slate-100 dark:bg-slate-900/50 relative">
+        <div className={`flex-1 flex flex-col min-w-0 relative ${focusMode ? "bg-black" : "bg-slate-100 dark:bg-slate-900/50"}`}>
+
+          {/* Focus mode — single large tile */}
+          {focusMode && (() => {
+            const fId = activeSpeakerId ?? user?.id ?? "local";
+            const isLocal = fId === user?.id;
+            const focusPart = isLocal ? null : participants.find((p) => p.user_id === fId);
+            return (
+              <div className="flex-1 relative bg-black flex items-center justify-center">
+                {isLocal ? (
+                  <video ref={localVideoRef} autoPlay muted playsInline className="w-full h-full object-contain" />
+                ) : (
+                  <>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-32 h-32 rounded-full bg-slate-700 flex items-center justify-center text-white text-5xl font-bold">{initials(focusPart?.user_name ?? "?")}</div>
+                    </div>
+                    <video ref={(el) => { if (fId) remoteVideoRefs.current[fId] = el; }} autoPlay playsInline className="w-full h-full object-contain absolute inset-0" />
+                  </>
+                )}
+                <div className="absolute bottom-4 left-4 text-white">
+                  <span className="text-lg font-semibold">{isLocal ? `${userName} (Vous)` : (focusPart?.user_name ?? "")}</span>
+                  {isSpeaking(fId) && <span className="ml-2 text-green-400 text-sm">● parle</span>}
+                </div>
+                <button onClick={() => setFocusMode(false)} className="absolute top-3 right-3 bg-black/50 hover:bg-black/80 text-white rounded-full p-2 transition-colors">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            );
+          })()}
 
           {/* Gallery view */}
-          {viewMode === "gallery" && (
+          {!focusMode && viewMode === "gallery" && (
           <div className="flex-1 p-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 content-start overflow-auto">
 
             {/* Local tile */}
@@ -1619,7 +2036,7 @@ export default function ConferencePage() {
           )}
 
           {/* Speaker view */}
-          {viewMode === "speaker" && (() => {
+          {!focusMode && viewMode === "speaker" && (() => {
             const speakerId = activeSpeakerId ?? (participants.find((p) => p.role === "moderator" || p.role === "speaker")?.user_id ?? "local");
             const isLocal = speakerId === "local" || speakerId === user?.id;
             const others = participants.filter((p) => p.user_id !== (isLocal ? user?.id ?? "local" : speakerId));
@@ -1661,7 +2078,6 @@ export default function ConferencePage() {
               </div>
             );
           })()}
-        </div>
 
           {/* ── Controls bar ─────────────────────────────────────────────────── */}
           <div className="flex-shrink-0 bg-background border-t border-border px-4 py-3 space-y-2 shadow-sm">
@@ -1702,6 +2118,36 @@ export default function ConferencePage() {
                 icon={screenOn ? <MonitorOff className="h-5 w-5" /> : <Monitor className="h-5 w-5" />}
                 label={screenOn ? "Arrêter" : "Écran"}
                 color={screenOn ? "green" : "neutral"}
+              />
+
+              {/* Moderator tools */}
+              {(isModerator || coModId === user?.id) && (
+                <>
+                  <CtrlBtn on={false} onClick={globalMuteAll}
+                    icon={<VolumeX className="h-5 w-5" />}
+                    label="Mute tous"
+                    color="neutral"
+                  />
+                  <CtrlBtn on={showPollCreator} onClick={() => { setShowPollCreator((v) => !v); setShowPoll(false); }}
+                    icon={<BarChart2 className="h-5 w-5" />}
+                    label="Sondage"
+                    color="neutral"
+                  />
+                </>
+              )}
+              {activePoll && !showPollCreator && (
+                <CtrlBtn on={showPoll} onClick={() => setShowPoll((v) => !v)}
+                  icon={<BarChart2 className="h-5 w-5" />}
+                  label="Voir sondage"
+                  color="neutral"
+                />
+              )}
+
+              {/* Low bandwidth */}
+              <CtrlBtn on={lowBandwidth} onClick={toggleLowBandwidth}
+                icon={lowBandwidth ? <WifiOff className="h-5 w-5" /> : <Wifi className="h-5 w-5" />}
+                label={lowBandwidth ? "Éco bande" : "Bande passante"}
+                color={lowBandwidth ? "amber" : "neutral"}
               />
 
               {/* Quick reactions */}
@@ -1862,6 +2308,12 @@ export default function ConferencePage() {
                             <div className="flex items-center gap-1 flex-shrink-0">
                               {p.is_muted ? <MicOff className="h-3.5 w-3.5 text-muted-foreground" /> : <Mic className="h-3.5 w-3.5 text-green-500" />}
                               {p.hand_raised && <Hand className="h-3 w-3 text-amber-500 animate-bounce" />}
+                              {/* Network latency badge */}
+                              {peerStats[p.user_id]?.rtt != null && (
+                                <span className={`text-[10px] font-mono ${(peerStats[p.user_id].rtt ?? 999) <= 150 ? "text-green-500" : (peerStats[p.user_id].rtt ?? 999) <= 400 ? "text-amber-500" : "text-red-500"}`}>
+                                  {peerStats[p.user_id].rtt}ms
+                                </span>
+                              )}
                               {isModerator && p.user_id !== user?.id && (
                                 <div className="hidden group-hover/item:flex gap-0.5">
                                   {p.role === "audience" && (
@@ -1876,10 +2328,23 @@ export default function ConferencePage() {
                                           <MicOff className="h-3.5 w-3.5" />
                                         </button>
                                       )}
+                                      <button onClick={() => passFloor(p.user_id)} className="text-blue-500 hover:text-blue-600 p-0.5 rounded" title="Passer la parole">
+                                        <UserCheck className="h-3.5 w-3.5" />
+                                      </button>
                                       <button onClick={() => demoteToAudience(p.user_id)} className="text-destructive hover:text-destructive/80 p-0.5 rounded" title="Rétrograder">
                                         <X className="h-3.5 w-3.5" />
                                       </button>
                                     </>
+                                  )}
+                                  {/* Co-moderator management */}
+                                  {coModId !== p.user_id ? (
+                                    <button onClick={() => grantCoMod(p.user_id, p.user_name)} className="text-purple-500 hover:text-purple-600 p-0.5 rounded" title="Nommer co-modérateur">
+                                      <Shield className="h-3.5 w-3.5" />
+                                    </button>
+                                  ) : (
+                                    <button onClick={revokeCoMod} className="text-purple-700 hover:text-purple-800 p-0.5 rounded" title="Retirer co-modérateur">
+                                      <Shield className="h-3.5 w-3.5" />
+                                    </button>
                                   )}
                                 </div>
                               )}
@@ -1963,12 +2428,170 @@ export default function ConferencePage() {
                 </p>
               </div>
 
+              {/* Noise suppression toggle */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />Traitement audio
+                </label>
+                <label className="flex items-center justify-between gap-3 cursor-pointer select-none">
+                  <span className="text-sm text-muted-foreground">Suppression de bruit <span className="text-xs">(navigateur)</span></span>
+                  <button
+                    role="switch"
+                    aria-checked={noiseSuppressionOn}
+                    onClick={() => {
+                      setNoiseSuppressionOn((v) => !v);
+                      if (micOn) toast.info("Réactivez le micro pour appliquer.");
+                    }}
+                    className={`relative w-10 h-5 rounded-full transition-colors ${noiseSuppressionOn ? "bg-primary" : "bg-muted-foreground/40"}`}
+                  >
+                    <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${noiseSuppressionOn ? "translate-x-5" : "translate-x-0"}`} />
+                  </button>
+                </label>
+                <p className="text-xs text-muted-foreground">Active noiseSuppression + echoCancellation natifs du navigateur.</p>
+              </div>
+
               <div className="pt-2 border-t text-xs text-muted-foreground">
                 La sélection du micro prend effet à la prochaine activation.
                 La sortie audio est appliquée immédiatement.
               </div>
 
               <Button onClick={() => setShowSettings(false)} className="w-full">Fermer</Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* ── Poll creator modal ───────────────────────────────────────────────── */}
+      {showPollCreator && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={(e) => e.target === e.currentTarget && setShowPollCreator(false)}>
+          <Card className="w-full max-w-sm shadow-2xl">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg flex items-center gap-2"><BarChart2 className="h-5 w-5" />Nouveau sondage</CardTitle>
+                <button onClick={() => setShowPollCreator(false)} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Input
+                placeholder="Question..."
+                value={pollQuestion}
+                onChange={(e) => setPollQuestion(e.target.value)}
+                maxLength={200}
+              />
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground">Options (min. 2)</p>
+                {pollOptions.map((opt, i) => (
+                  <div key={i} className="flex gap-2">
+                    <Input
+                      placeholder={`Option ${i + 1}`}
+                      value={opt}
+                      onChange={(e) => setPollOptions((prev) => prev.map((o, j) => j === i ? e.target.value : o))}
+                      maxLength={100}
+                    />
+                    {pollOptions.length > 2 && (
+                      <button onClick={() => setPollOptions((prev) => prev.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-destructive">
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {pollOptions.length < 5 && (
+                  <button onClick={() => setPollOptions((prev) => [...prev, ""])} className="text-xs text-primary hover:underline">
+                    + Ajouter une option
+                  </button>
+                )}
+              </div>
+              <Button className="w-full" onClick={launchPoll}
+                disabled={!pollQuestion.trim() || pollOptions.filter((o) => o.trim()).length < 2}>
+                Lancer le sondage
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* ── Poll display ─────────────────────────────────────────────────────── */}
+      {showPoll && activePoll && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={(e) => e.target === e.currentTarget && setShowPoll(false)}>
+          <Card className="w-full max-w-sm shadow-2xl">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <BarChart2 className="h-5 w-5" />
+                  {activePoll.closed ? "Résultats" : "Sondage en cours"}
+                </CardTitle>
+                <button onClick={() => setShowPoll(false)} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
+              </div>
+              <p className="text-sm font-medium mt-1">{activePoll.question}</p>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {(() => {
+                const total = Object.values(activePoll.votes).reduce((a, b) => a + b, 0);
+                return activePoll.options.map((opt, i) => {
+                  const count = activePoll.votes[String(i)] ?? 0;
+                  const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                  const voted = myVote === i;
+                  const userId = user?.id ?? "guest";
+                  const hasVoted = myVote !== null || activePoll.voterIds.includes(userId);
+                  return (
+                    <div key={i}>
+                      <button
+                        onClick={() => votePoll(i)}
+                        disabled={hasVoted || activePoll.closed}
+                        className={`w-full text-left px-3 py-2 rounded-xl border text-sm transition-all ${voted ? "border-primary bg-primary/10 font-medium" : "border-border hover:border-primary/50 hover:bg-muted/50"} disabled:cursor-default`}
+                      >
+                        <div className="flex justify-between">
+                          <span>{opt}</span>
+                          <span className="text-muted-foreground tabular-nums">{count} — {pct}%</span>
+                        </div>
+                        {hasVoted && (
+                          <div className="mt-1.5 h-1.5 bg-muted rounded-full overflow-hidden">
+                            <div className={`h-full rounded-full transition-all duration-500 ${voted ? "bg-primary" : "bg-muted-foreground/40"}`} style={{ width: `${pct}%` }} />
+                          </div>
+                        )}
+                      </button>
+                    </div>
+                  );
+                });
+              })()}
+              <p className="text-xs text-muted-foreground text-center">
+                {Object.values(activePoll.votes).reduce((a, b) => a + b, 0)} vote(s) · {activePoll.closed ? "Terminé" : "En cours"}
+              </p>
+              {isModerator && !activePoll.closed && (
+                <Button variant="outline" size="sm" className="w-full" onClick={closePoll}>Fermer le sondage</Button>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* ── Session summary ──────────────────────────────────────────────────── */}
+      {showSummary && sessionSummary && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+          <Card className="w-full max-w-sm shadow-2xl">
+            <CardHeader>
+              <CardTitle className="text-xl flex items-center gap-2">
+                📊 Récapitulatif
+              </CardTitle>
+              <CardDescription>Résumé de la conférence</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { label: "Durée", value: sessionSummary.duration },
+                  { label: "Participants max", value: String(sessionSummary.maxParticipants) },
+                  { label: "Messages", value: String(sessionSummary.messageCount) },
+                  { label: "Début", value: sessionSummary.startTime.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) },
+                ].map(({ label, value }) => (
+                  <div key={label} className="bg-muted/50 rounded-xl p-3 text-center">
+                    <p className="text-2xl font-bold">{value}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
+                  </div>
+                ))}
+              </div>
+              <Button className="w-full" onClick={() => setShowSummary(false)}>Fermer</Button>
             </CardContent>
           </Card>
         </div>

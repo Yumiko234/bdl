@@ -27,7 +27,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
-import { roleLabel } from "@/lib/roles";
+import { roleLabel, rolePrecedence, type RoleKey } from "@/lib/roles";
 
 interface Scrutin {
   id: string;
@@ -60,6 +60,61 @@ interface GroupedScrutins {
 
 const PAGE_SIZE = 10;
 
+type VoteSort = "vote" | "nom";
+
+const VOTE_ORDER: Record<string, number> = { pour: 0, contre: 1, abstention: 2 };
+
+// Exécutif : vice_president → communication_manager2 (d'après lib/roles : rangs 3 à 5)
+const EXECUTIVE_ROLES = [
+  "vice_president",
+  "vice_presidente",
+  "secretary_general",
+  "secretary_general2",
+  "communication_manager",
+  "communication_manager2",
+];
+
+// Renvoie le rang dans l'Exécutif (plus petit = plus haut), ou null si non-Exécutif
+const getExecutiveRank = (profile: VoteData["profiles"]): number | null => {
+  const ranks = (profile?.user_roles ?? [])
+    .filter((r) => EXECUTIVE_ROLES.includes(r.role))
+    .map((r) => rolePrecedence[r.role as RoleKey]);
+  return ranks.length > 0 ? Math.min(...ranks) : null;
+};
+
+// Nom de famille : les mots en MAJUSCULES s'il y en a (« Marie DUPONT »), sinon le dernier mot
+const getLastName = (fullName: string): string => {
+  const parts = (fullName ?? "").trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "";
+  const upper = parts.filter((w) => w.length > 1 && w === w.toUpperCase() && w !== w.toLowerCase());
+  return upper.length > 0 ? upper.join(" ") : parts[parts.length - 1];
+};
+
+const compareNames = (a: VoteData, b: VoteData) => {
+  const byLast = getLastName(a.profiles.full_name).localeCompare(
+    getLastName(b.profiles.full_name), "fr", { sensitivity: "base" }
+  );
+  if (byLast !== 0) return byLast;
+  return (a.profiles.full_name ?? "").localeCompare(b.profiles.full_name ?? "", "fr", { sensitivity: "base" });
+};
+
+const sortVoters = (list: VoteData[], sort: VoteSort): VoteData[] =>
+  [...list].sort((a, b) => {
+    // 1. L'Exécutif toujours en haut, dans l'ordre vice_president → communication_manager2
+    const ra = getExecutiveRank(a.profiles);
+    const rb = getExecutiveRank(b.profiles);
+    if (ra !== null && rb === null) return -1;
+    if (ra === null && rb !== null) return 1;
+    if (ra !== null && rb !== null && ra !== rb) return ra - rb;
+
+    // 2. Au sein d'un même groupe : tri choisi
+    if (sort === "vote") {
+      const byVote = (VOTE_ORDER[a.vote] ?? 9) - (VOTE_ORDER[b.vote] ?? 9);
+      if (byVote !== 0) return byVote;
+    }
+    return compareNames(a, b);
+  });
+
 const Scrutin = () => {
   useSEO({
     title: "Scrutin – Bureau des Lycéens",
@@ -80,6 +135,7 @@ const Scrutin = () => {
   const [isPresident, setIsPresident] = useState(false);
 
   const [openDetails, setOpenDetails] = useState<Record<string, boolean>>({});
+  const [voteSort, setVoteSort] = useState<Record<string, VoteSort>>({});
 
   // Deux états séparés : ce que l'utilisateur tape, et ce qui est effectivement recherché
   const [inputValue, setInputValue] = useState("");
@@ -750,7 +806,24 @@ const Scrutin = () => {
                                       </Button>
                                     </CollapsibleTrigger>
                                     <CollapsibleContent className="space-y-2 mt-3">
-                                      {currentVotes.map((voteData) => (
+                                      <div className="flex items-center gap-2 pb-1">
+                                        <span className="text-xs text-muted-foreground">Trier par :</span>
+                                        {([
+                                          { key: "vote", label: "Type de vote" },
+                                          { key: "nom", label: "Nom de famille" },
+                                        ] as const).map(({ key, label }) => (
+                                          <Button
+                                            key={key}
+                                            size="sm"
+                                            variant={(voteSort[scrutin.id] ?? "vote") === key ? "default" : "outline"}
+                                            className="h-7 text-xs"
+                                            onClick={() => setVoteSort((prev) => ({ ...prev, [scrutin.id]: key }))}
+                                          >
+                                            {label}
+                                          </Button>
+                                        ))}
+                                      </div>
+                                      {sortVoters(currentVotes, voteSort[scrutin.id] ?? "vote").map((voteData) => (
                                         <div
                                           key={voteData.user_id}
                                           className="flex items-center gap-3 p-3 bg-background border rounded-md"

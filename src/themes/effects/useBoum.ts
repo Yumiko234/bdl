@@ -8,7 +8,9 @@ export function useBoum() {
   const fire = useCallback((e: React.MouseEvent) => {
     const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const id = Date.now() + Math.random();
-    setBoums(p => [...p, { id, x: r.left + r.width / 2, y: r.top + r.height / 2 }]);
+    const rawX = r.left + r.width / 2;
+    const x = Math.min(Math.max(rawX, 140), window.innerWidth - 140);
+    setBoums(p => [...p, { id, x, y: r.top + r.height / 2 }]);
     setTimeout(() => setBoums(p => p.filter(b => b.id !== id)), 2400);
   }, []);
 

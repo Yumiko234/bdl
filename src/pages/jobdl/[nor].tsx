@@ -3,7 +3,8 @@ import { useParams } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronDown, ChevronRight, Download, Loader2 } from "lucide-react";
+import { ChevronDown, ChevronRight, Download, Loader2, QrCode, X } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import "@/styles/journal.css";
 import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 import { safeHtml } from "@/lib/sanitize";
@@ -501,6 +502,7 @@ const JobdlArticle = () => {
   const [entry, setEntry] = useState<JournalEntry | null>(null);
   const [loading, setLoading] = useState(true);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [showQR, setShowQR] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -570,15 +572,46 @@ const JobdlArticle = () => {
                 </p>
                 <p className="text-xs text-muted-foreground font-mono">NOR : {entry.nor_number}</p>
               </div>
-              <button
-                onClick={handleDownload}
-                disabled={pdfLoading}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-[#07419e] text-[#07419e] bg-white hover:bg-[#07419e] hover:text-white transition-all text-sm font-semibold shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
-                title="Télécharger en PDF"
-              >
-                {pdfLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                {pdfLoading ? "Génération du PDF…" : "Télécharger PDF"}
-              </button>
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* QR Code */}
+                <div className="relative">
+                  <button
+                    onClick={() => setShowQR((v) => !v)}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-[#07419e]/40 text-[#07419e] bg-white hover:bg-[#07419e]/10 transition-all text-sm font-semibold shadow-sm"
+                    title="Afficher le QR code"
+                  >
+                    <QrCode className="h-4 w-4" />
+                    QR Code
+                  </button>
+                  {showQR && (
+                    <div className="absolute right-0 top-full mt-2 z-50 bg-white border border-gray-200 rounded-xl shadow-lg p-4 flex flex-col items-center gap-2 min-w-[180px]">
+                      <button onClick={() => setShowQR(false)} className="absolute top-2 right-2 text-gray-400 hover:text-gray-600">
+                        <X className="h-4 w-4" />
+                      </button>
+                      <QRCodeSVG
+                        value={`${window.location.origin}/jo/${entry.nor_number}`}
+                        size={140}
+                        bgColor="#ffffff"
+                        fgColor="#07419e"
+                        level="M"
+                      />
+                      <p className="text-[10px] text-gray-500 font-mono text-center break-all">
+                        {entry.nor_number}
+                      </p>
+                    </div>
+                  )}
+                </div>
+                {/* PDF */}
+                <button
+                  onClick={handleDownload}
+                  disabled={pdfLoading}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-[#07419e] text-[#07419e] bg-white hover:bg-[#07419e] hover:text-white transition-all text-sm font-semibold shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                  title="Télécharger en PDF"
+                >
+                  {pdfLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                  {pdfLoading ? "Génération du PDF…" : "Télécharger PDF"}
+                </button>
+              </div>
             </div>
 
             {/* ── Corps du document ── */}

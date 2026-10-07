@@ -12,7 +12,9 @@ import { safeHtml } from "@/lib/sanitize";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface DiffPart { value: string; added?: boolean; removed?: boolean; }
-interface Modification { date: string; diff: DiffPart[]; }
+type Modification =
+  | { date: string; diff: DiffPart[] }
+  | { date: string; oldText: string; newText: string; position: number };
 type SigAlign = "jo-sig-left" | "jo-sig-center" | "jo-sig-right";
 interface Signatory { uid: string; role: string; name: string; date: string; align: SigAlign; }
 
@@ -409,6 +411,85 @@ const exportToPDF = async (entry: JournalEntry, bodyHTML: string): Promise<void>
   pdf.save(`NOR_${entry.nor_number.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`);
 };
 
+// ─── Historique des modifications ────────────────────────────────────────────
+
+const extractDiffHunks = (diff: DiffPart[], ctxChars = 60) => {
+  let pos = 0;
+  const positioned = diff.map(p => { const start = pos; pos += p.value.length; return { p, start, end: pos }; });
+  const changed = positioned.filter(({ p }) => p.added || p.removed);
+  if (changed.length === 0) return [];
+  const hunks: { cs: number; ce: number }[] = [];
+  let cur = { cs: changed[0].start - ctxChars, ce: changed[0].end + ctxChars };
+  for (let i = 1; i < changed.length; i++) {
+    const ext = { cs: changed[i].start - ctxChars, ce: changed[i].end + ctxChars };
+    if (ext.cs <= cur.ce) { cur.ce = Math.max(cur.ce, ext.ce); }
+    else { hunks.push(cur); cur = ext; }
+  }
+  hunks.push(cur);
+  const docLen = pos;
+  return hunks.map(h => ({
+    before: h.cs > 0, after: h.ce < docLen,
+    parts: positioned
+      .filter(({ start, end }) => end > h.cs && start < h.ce)
+      .map(({ p, start, end }) => ({ ...p, value: p.value.slice(Math.max(0, h.cs - start), p.value.length - Math.max(0, end - h.ce)) }))
+      .filter(p => p.value.length > 0),
+  }));
+};
+
+const ModificationsHistory = ({ modifications }: { modifications: Modification[] }) => {
+  const [open, setOpen] = useState(false);
+  if (!modifications || modifications.length === 0) return null;
+
+  return (
+    <div className="mt-6 pt-4 border-t border-dashed border-gray-300">
+      <button onClick={() => setOpen(v => !v)} className="flex items-center gap-2 text-sm font-semibold text-[#07419e] hover:underline">
+        {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+        Historique des modifications ({modifications.length} révision{modifications.length > 1 ? "s" : ""})
+      </button>
+      {open && (
+        <div className="mt-4 space-y-5">
+          {modifications.map((mod, i) => {
+            const fromVer = String.fromCharCode(65 + i);
+            const toVer = String.fromCharCode(65 + i + 1);
+            const date = new Date(mod.date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+            return (
+              <div key={i} className="border-l-4 border-[#07419e]/30 pl-4">
+                <p className="text-xs font-bold text-[#07419e] mb-2 uppercase tracking-wide">
+                  Révision {fromVer} → {toVer} — {date}
+                </p>
+                {"diff" in mod && Array.isArray(mod.diff) ? (() => {
+                  const hunks = extractDiffHunks(mod.diff);
+                  if (hunks.length === 0) return <p className="text-xs text-muted-foreground italic">Aucune différence détectée.</p>;
+                  return (
+                    <div className="space-y-2">
+                      {hunks.map((hunk, hi) => (
+                        <div key={hi} className="text-xs bg-muted/30 rounded p-2 border font-mono leading-relaxed whitespace-pre-wrap break-words">
+                          {hunk.before && <span className="text-gray-400">… </span>}
+                          {hunk.parts.map((part, pi) =>
+                            part.removed ? <span key={pi} className="bg-red-100 text-red-700 line-through">{part.value}</span>
+                            : part.added ? <span key={pi} className="bg-green-100 text-green-700">{part.value}</span>
+                            : <span key={pi} className="text-gray-600">{part.value}</span>
+                          )}
+                          {hunk.after && <span className="text-gray-400"> …</span>}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })() : "oldText" in mod ? (
+                  <div className="text-xs bg-muted/30 rounded p-2 border font-mono space-y-1">
+                    <div><span className="text-gray-400 mr-1">Avant :</span><span className="bg-red-100 text-red-700 line-through">{(mod as { oldText: string }).oldText}</span></div>
+                    <div><span className="text-gray-400 mr-1">Après :</span><span className="bg-green-100 text-green-700">{(mod as { newText: string }).newText}</span></div>
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ─── Composant ArticleContent ─────────────────────────────────────────────────
 
 const ArticleContent = ({ entry }: { entry: JournalEntry }) => {
@@ -623,6 +704,8 @@ const JobdlArticle = () => {
               </p>
 
               <ArticleContent entry={entry} />
+
+              <ModificationsHistory modifications={entry.modifications || []} />
 
               {/* ── Bloc signatures (Accord du pluriel appliqué ici) ── */}
               {entry.signatures && entry.signatures.length > 0 && (

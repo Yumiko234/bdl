@@ -13,8 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { QRCodeSVG } from "qrcode.react";
-import logoBdl from "@/assets/logo-bdl.jpeg";
+import { BdlQRCode } from "@/components/BdlQRCode";
 import {
   Award, Plus, Trash2, RefreshCw, Search,
   Copy, CheckCircle2, Loader2, Shield, Calendar,
@@ -112,25 +111,12 @@ const QrModal = ({ cert, onClose }: QrModalProps) => {
 
   const handleDownload = () => {
     try {
-      const svg = document.getElementById(`qr-cert-${cert.certificate_id}`);
-      if (!svg) return;
-      const canvas = document.createElement("canvas");
-      canvas.width = QR_SIZE;
-      canvas.height = QR_SIZE;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-      const img = new Image();
-      const svgBlob = new Blob([new XMLSerializer().serializeToString(svg)], { type: "image/svg+xml" });
-      const svgUrl = URL.createObjectURL(svgBlob);
-      img.onload = () => {
-        ctx.drawImage(img, 0, 0, QR_SIZE, QR_SIZE);
-        URL.revokeObjectURL(svgUrl);
-        const a = document.createElement("a");
-        a.href = canvas.toDataURL("image/png");
-        a.download = `qr-${cert.certificate_id}.png`;
-        a.click();
-      };
-      img.src = svgUrl;
+      const canvas = document.getElementById(`qr-cert-${cert.certificate_id}`) as HTMLCanvasElement | null;
+      if (!canvas) return;
+      const a = document.createElement("a");
+      a.href = canvas.toDataURL("image/png");
+      a.download = `qr-${cert.certificate_id}.png`;
+      a.click();
     } catch {
       toast.error("Impossible de télécharger le QR code.");
     }
@@ -161,14 +147,10 @@ const QrModal = ({ cert, onClose }: QrModalProps) => {
           {/* QR image */}
           <div className="flex justify-center">
             <div className="p-3 border-2 border-primary/20 rounded-xl bg-white shadow-sm">
-              <QRCodeSVG
+              <BdlQRCode
                 id={`qr-cert-${cert.certificate_id}`}
                 value={url}
                 size={QR_SIZE}
-                bgColor="#ffffff"
-                fgColor="#07419e"
-                level="M"
-                imageSettings={{ src: logoBdl, height: 48, width: 48, excavate: true }}
               />
             </div>
           </div>

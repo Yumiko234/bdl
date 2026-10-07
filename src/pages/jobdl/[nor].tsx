@@ -4,8 +4,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { ChevronDown, ChevronRight, Download, Loader2, QrCode, X } from "lucide-react";
-import { QRCodeSVG } from "qrcode.react";
-import logoBdl from "@/assets/logo-bdl.jpeg";
+import { BdlQRCode } from "@/components/BdlQRCode";
 import "@/styles/journal.css";
 import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 import { safeHtml } from "@/lib/sanitize";
@@ -670,13 +669,9 @@ const JobdlArticle = () => {
                       <button onClick={() => setShowQR(false)} className="absolute top-2 right-2 text-gray-400 hover:text-gray-600">
                         <X className="h-4 w-4" />
                       </button>
-                      <QRCodeSVG
+                      <BdlQRCode
                         value={`${window.location.origin}/jo/${entry.nor_number}`}
-                        size={140}
-                        bgColor="#ffffff"
-                        fgColor="#07419e"
-                        level="M"
-                        imageSettings={{ src: logoBdl, height: 28, width: 28, excavate: true }}
+                        size={180}
                       />
                       <p className="text-[10px] text-gray-500 font-mono text-center break-all">
                         {entry.nor_number}

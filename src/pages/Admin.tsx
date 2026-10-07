@@ -91,7 +91,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "establishment", label: "Établissement",       icon: <Building2    className="h-4 w-4" />, group: "Site", minRank: 3 },
   { id: "contact",       label: "Contact",             icon: <Phone        className="h-4 w-4" />, group: "Site", minRank: 4 },
  
-  { id: "users",         label: "Utilisateurs",        icon: <Shield       className="h-4 w-4" />, group: "Administration", minRank: 1 },
+  { id: "users",         label: "Utilisateurs",        icon: <Shield       className="h-4 w-4" />, group: "Administration", minRank: 5 },
 
   { id: "banner",        label: "Bandeau global",      icon: <Megaphone    className="h-4 w-4" />, group: "Gestion", minRank: 1 },
   { id: "maintenance",   label: "Maintenance",         icon: <Wrench       className="h-4 w-4" />, group: "Gestion", minRank: 1 },

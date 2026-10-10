@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-const LAST_UPDATED = "16 septembre 2026"; // [À COMPLÉTER] mettre à jour à chaque modification
+const LAST_UPDATED = "10 octobre 2026"; // [À COMPLÉTER] mettre à jour à chaque modification
 
 const TOC: LegalTocEntry[] = [
   { id: "edition", label: "Édition du site" },

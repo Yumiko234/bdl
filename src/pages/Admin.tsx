@@ -149,7 +149,7 @@ const Admin = () => {
           .from("support_tickets")
           .select("*", { count: "exact", head: true })
           .eq("status", "pending")
-          .then(({ count }) => setPendingTickets(count ?? 0));
+          .then(({ count, error }) => { if (!error) setPendingTickets(count ?? 0); });
     }
   }, [user, authLoading]);
 

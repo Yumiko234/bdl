@@ -130,6 +130,7 @@ function PreCallSetup({ confTitle, isCreate, defaultAudioIn, defaultAudioOut, on
   const [micLevel, setMicLevel] = useState(0);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animRef = useRef<number>(0);
+  const audioCtxRef = useRef<AudioContext | null>(null);
 
   const startPreview = useCallback(async (videoId?: string) => {
     if (streamRef.current) { streamRef.current.getTracks().forEach((t) => t.stop()); }
@@ -145,7 +146,9 @@ function PreCallSetup({ confTitle, isCreate, defaultAudioIn, defaultAudioOut, on
 
       // Mic level meter
       try {
+        audioCtxRef.current?.close().catch(() => {});
         const ctx = new AudioContext();
+        audioCtxRef.current = ctx;
         const src = ctx.createMediaStreamSource(s);
         const analyser = ctx.createAnalyser();
         analyser.fftSize = 256;
@@ -174,6 +177,8 @@ function PreCallSetup({ confTitle, isCreate, defaultAudioIn, defaultAudioOut, on
     return () => {
       cancelAnimationFrame(animRef.current);
       streamRef.current?.getTracks().forEach((t) => t.stop());
+      audioCtxRef.current?.close().catch(() => {});
+      audioCtxRef.current = null;
     };
   }, []);
 
@@ -1314,10 +1319,11 @@ export default function ConferencePage() {
       created_at: new Date().toISOString(), ended_at: null,
       guest_allowed: guestAllowedForm,
     };
-    await supabase.from("conferences").insert({
+    const { error: insertErr } = await supabase.from("conferences").insert({
       id, title: conf.title, status: "live", host_id: user!.id, host_name: userName,
       guest_allowed: guestAllowedForm,
-    }).then(({ error }) => { if (error) console.warn("conferences table:", error.message); });
+    });
+    if (insertErr) { toast.error("Erreur lors de la création de la conférence"); setCreating(false); return; }
 
     setActiveConf(conf);
     setMyRole("moderator");
@@ -1528,6 +1534,7 @@ export default function ConferencePage() {
       if (!user && conf.guest_allowed) { setGuestConf(conf); setShowGuestDialog(true); return; }
       setPreCallConf(conf); setPreCallIsCreate(false); setShowPreCall(true);
     })();
+    // intentional: only re-run when the join link changes, not on every user/navigate reference change
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
@@ -1578,11 +1585,21 @@ export default function ConferencePage() {
     return () => clearInterval(interval);
   }, [inConference]);
 
+  const localAudioCtxRef = useRef<AudioContext | null>(null);
+
   // Attach local analyser when mic turns on
   useEffect(() => {
-    if (!micOn) { localAnalyserRef.current = null; setLocalVolume(0); return; }
+    if (!micOn) {
+      localAnalyserRef.current = null;
+      setLocalVolume(0);
+      localAudioCtxRef.current?.close().catch(() => {});
+      localAudioCtxRef.current = null;
+      return;
+    }
     try {
+      localAudioCtxRef.current?.close().catch(() => {});
       const ctx = new AudioContext();
+      localAudioCtxRef.current = ctx;
       const src = ctx.createMediaStreamSource(localStream.current);
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 256;
@@ -1590,6 +1607,10 @@ export default function ConferencePage() {
       const data = new Uint8Array(analyser.frequencyBinCount);
       localAnalyserRef.current = { analyser, data };
     } catch { /* optional */ }
+    return () => {
+      localAudioCtxRef.current?.close().catch(() => {});
+      localAudioCtxRef.current = null;
+    };
   }, [micOn]);
 
   // Cleanup peer analysers when peer leaves

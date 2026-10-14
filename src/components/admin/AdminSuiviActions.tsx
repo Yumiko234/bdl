@@ -187,15 +187,18 @@ export const SuiviActionsManagement = () => {
   // ── Load ────────────────────────────────────────────────────────────────────
 
   useEffect(() => {
+    let isMounted = true;
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
+      const { data: { user }, error: userErr } = await supabase.auth.getUser();
+      if (!isMounted) return;
+      if (!userErr && user) {
         const { data: p } = await supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle();
-        setCurrentUser({ id: user.id, name: (p as any)?.full_name ?? "Staff" });
+        if (isMounted) setCurrentUser({ id: user.id, name: (p as any)?.full_name ?? "Staff" });
       }
       await Promise.all([loadMembers(), loadActions(), loadNotes(), loadMeetings(), loadAttendance(), loadAbsenceRequests()]);
-      setLoading(false);
+      if (isMounted) setLoading(false);
     })();
+    return () => { isMounted = false; };
   }, []);
 
   const loadMembers = async () => {
@@ -389,9 +392,10 @@ export const SuiviActionsManagement = () => {
 
   const handleSaveNote = async (memberId: string) => {
     if (!noteForm.content.trim()) { toast.error("Note vide."); return; }
+    if (!currentUser) { toast.error("Utilisateur non chargé."); return; }
     const { error } = await (supabase.from("bdl_member_notes").insert({
       member_id: memberId,
-      author_id: currentUser!.id,
+      author_id: currentUser.id,
       content: noteForm.content.trim(),
       is_private: noteForm.is_private,
     }));

@@ -206,7 +206,8 @@ export const BDLMembersManagement = () => {
         // If linked to an account, sync the role in user_roles too
         if (userId) {
           await supabase.from("user_roles").delete().eq("user_id", userId);
-          await supabase.from("user_roles").insert({ user_id: userId, role: getSystemRole(form.role_label) as any });
+          const { error: roleErr } = await supabase.from("user_roles").insert({ user_id: userId, role: getSystemRole(form.role_label) as any });
+          if (roleErr) throw roleErr;
         }
 
         toast.success("Membre ajouté avec succès");
@@ -220,7 +221,8 @@ export const BDLMembersManagement = () => {
         // Sync role in user_roles if linked
         if (userId) {
           await supabase.from("user_roles").delete().eq("user_id", userId);
-          await supabase.from("user_roles").insert({ user_id: userId, role: getSystemRole(form.role_label) as any });
+          const { error: roleErr } = await supabase.from("user_roles").insert({ user_id: userId, role: getSystemRole(form.role_label) as any });
+          if (roleErr) throw roleErr;
         }
 
         toast.success("Membre mis à jour");

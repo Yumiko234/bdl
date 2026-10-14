@@ -51,6 +51,7 @@ interface Survey {
   allow_anonymous: boolean;
   is_form: boolean;
   limit_responses: boolean; // ← nouveau champ
+  created_at: string;
 }
 
 interface Question {
@@ -116,21 +117,23 @@ const ResponsesView = ({
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("survey_responses")
       .select("*")
       .eq("survey_id", survey.id)
       .order("submitted_at", { ascending: false });
 
+    if (error) { toast.error("Erreur lors du chargement des réponses"); setLoading(false); return; }
     setResponses(data || []);
 
     if (data && data.length > 0) {
       const responseIds = data.map((r: SurveyResponse) => r.id);
-      const { data: allAnswers } = await supabase
+      const { data: allAnswers, error: answersErr } = await supabase
         .from("survey_answers")
         .select("*")
         .in("response_id", responseIds);
 
+      if (answersErr) { toast.error("Erreur lors du chargement des réponses détaillées"); setLoading(false); return; }
       const grouped: Record<string, SurveyAnswer[]> = {};
       (allAnswers || []).forEach((a: SurveyAnswer) => {
         if (!grouped[a.response_id]) grouped[a.response_id] = [];
@@ -463,7 +466,8 @@ export const SurveyManagement = () => {
           option_text: text,
           display_order: idx,
         }));
-      await supabase.from("survey_options").insert(optionRows);
+      const { error: optErr } = await supabase.from("survey_options").insert(optionRows);
+      if (optErr) { toast.error("Erreur lors de l'ajout des options"); setLoading(false); return; }
     }
 
     toast.success("Question ajoutée");
@@ -515,10 +519,11 @@ export const SurveyManagement = () => {
 
   // ── update info block text inline ───────────────────────────────────────────
   const handleUpdateInfoText = async (questionId: string, newText: string) => {
-    await supabase
+    const { error } = await supabase
       .from("survey_questions")
       .update({ question_text: newText })
       .eq("id", questionId);
+    if (error) toast.error("Erreur lors de la mise à jour");
   };
 
   // ── option CRUD ─────────────────────────────────────────────────────────────
@@ -536,25 +541,28 @@ export const SurveyManagement = () => {
 
   // Persiste en base une seule fois, à la perte du focus.
   const persistOption = async (optionId: string, text: string) => {
-    await supabase
+    const { error } = await supabase
       .from("survey_options")
       .update({ option_text: text })
       .eq("id", optionId);
+    if (error) toast.error("Erreur lors de la mise à jour de l'option");
   };
 
   const handleAddOption = async (questionId: string, surveyId: string) => {
     const q = questions.find((q) => q.id === questionId);
     const nextOrder = q ? q.options.length : 0;
-    await supabase.from("survey_options").insert({
+    const { error } = await supabase.from("survey_options").insert({
       question_id: questionId,
       option_text: `Option ${nextOrder + 1}`,
       display_order: nextOrder,
     });
+    if (error) { toast.error("Erreur lors de l'ajout de l'option"); return; }
     await loadQuestions(surveyId);
   };
 
   const handleDeleteOption = async (optionId: string, surveyId: string) => {
-    await supabase.from("survey_options").delete().eq("id", optionId);
+    const { error } = await supabase.from("survey_options").delete().eq("id", optionId);
+    if (error) { toast.error("Erreur lors de la suppression de l'option"); return; }
     await loadQuestions(surveyId);
   };
 

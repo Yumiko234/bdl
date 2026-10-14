@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { CalendarX2, Users, MessageSquare, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -44,10 +45,11 @@ export const AdminAbsences = () => {
 
     if (!meetingsData) { setLoading(false); return; }
 
-    const { data: absencesData } = await supabase
+    const { data: absencesData, error: absErr } = await supabase
       .from("bdl_meeting_absence_requests")
       .select("meeting_id, member_id, reason, profiles(full_name, avatar_url, email)")
       .in("meeting_id", meetingsData.map((m) => m.id));
+    if (absErr) { toast.error("Erreur lors du chargement des absences"); setLoading(false); return; }
 
     const rows = (absencesData ?? []) as Array<{
       meeting_id: string;

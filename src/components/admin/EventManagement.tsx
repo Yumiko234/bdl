@@ -68,8 +68,8 @@ export const EventManagement = ({ isPresident }: EventManagementProps) => {
       return;
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) return;
 
     const { data: profile } = await supabase
       .from('profiles')
@@ -82,7 +82,8 @@ export const EventManagement = ({ isPresident }: EventManagementProps) => {
       .select('role')
       .eq('user_id', user.id);
 
-    const userRole = roles?.[0]?.role || 'bdl_member';
+    const ROLE_ORDER = ["administrator","president","presidente","vice_president","vice_presidente","secretary_general","secretary_general2","communication_manager","communication_manager2","bdl_member","vie_scolaire","student"];
+    const userRole = ROLE_ORDER.find((r) => roles?.some((x) => x.role === r)) ?? 'bdl_member';
 
     if (editingEvent) {
       const { error } = await supabase

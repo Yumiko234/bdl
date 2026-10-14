@@ -35,7 +35,6 @@ function BoumTexts({ boums }: { boums: BoumEntry[] }) {
             zIndex: 12,
           }}
         >
-          🎀 Joyeux Octobre Rose !
         </div>
       ))}
     </>
@@ -90,7 +89,6 @@ export function PinkParticlesEffect() {
           <HeartSVG size={h.size} color={h.color} />
         </div>
       ))}
-      <BoumTexts boums={boums} />
     </>
   );
 }

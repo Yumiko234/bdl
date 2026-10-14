@@ -28,7 +28,6 @@ function BoumTexts({ boums }: { boums: BoumEntry[] }) {
             zIndex: 12,
           }}
         >
-          🎀 Joyeux Octobre Rose !
         </div>
       ))}
     </>
@@ -112,8 +111,6 @@ export function PinkRibbonEffect() {
       <ClickableRibbon size={68} onBoum={fire} shadow="hsl(328 76% 40% / 0.46)" className="pink-particle--desktop" style={{ bottom: 22, right: 14, opacity: 0.74, animation: "pinkRibbonPulse 5.5s ease-in-out infinite 0.8s" }} />
       <ClickableRibbon size={54} onBoum={fire} shadow="hsl(342 65% 55% / 0.40)" className="pink-particle--desktop" style={{ top: "56%", left: 10, opacity: 0.68, animation: "pinkRibbonPulse 8s ease-in-out infinite 2s" }} />
 
-      {/* ── Textes boom ───────────────────────────────────── */}
-      <BoumTexts boums={boums} />
     </>
   );
 }

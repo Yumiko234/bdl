@@ -28,6 +28,7 @@ function BoumTexts({ boums }: { boums: BoumEntry[] }) {
             zIndex: 12,
           }}
         >
+          🎀 Pour toutes celles qui se battent
         </div>
       ))}
     </>

@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Calendar, Pin, Edit, Trash2 } from "lucide-react";
 import { safeHtml } from "@/lib/sanitize";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface Event {
   id: string;
@@ -33,6 +34,7 @@ export const EventManagement = ({ isPresident }: EventManagementProps) => {
   const formRef = useRef<HTMLDivElement>(null);
   const [events, setEvents] = useState<Event[]>([]);
   const [editingEvent, setEditingEvent] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<(() => Promise<void>) | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -141,20 +143,12 @@ export const EventManagement = ({ isPresident }: EventManagementProps) => {
     setTimeout(() => formRef.current?.scrollIntoView({ behavior: "instant", block: "start" }), 0);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer cet événement ?")) return;
-
-    const { error } = await supabase
-      .from('events')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      toast.error("Erreur lors de la suppression");
-    } else {
-      toast.success("Événement supprimé");
-      loadEvents();
-    }
+  const handleDelete = (id: string) => {
+    setConfirmDelete(() => async () => {
+      const { error } = await supabase.from('events').delete().eq('id', id);
+      if (error) toast.error("Erreur lors de la suppression");
+      else { toast.success("Événement supprimé"); loadEvents(); }
+    });
   };
 
   const handlePin = async (id: string, currentPinned: boolean) => {
@@ -335,6 +329,12 @@ export const EventManagement = ({ isPresident }: EventManagementProps) => {
             </Card>
           ))}
         </div>
+        <ConfirmDialog
+          open={confirmDelete !== null}
+          description="Êtes-vous sûr de vouloir supprimer cet événement ?"
+          onConfirm={async () => { await confirmDelete!(); setConfirmDelete(null); }}
+          onCancel={() => setConfirmDelete(null)}
+        />
       </CardContent>
     </Card>
   );

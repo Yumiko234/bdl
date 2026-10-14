@@ -38,13 +38,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     );
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
     return () => subscription.unsubscribe();
   }, []);
 
@@ -107,7 +100,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     navigate('/');
   };
 
-  const hasRole = async (role: 'student' | 'bdl_member' | 'president'): Promise<boolean> => {
+  const hasRole = async (role: string): Promise<boolean> => {
     if (!user) return false;
     
     const { data, error } = await supabase

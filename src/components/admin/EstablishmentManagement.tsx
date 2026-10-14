@@ -8,6 +8,7 @@ import { RichTextEditor } from "@/components/RichTextEditor";
 import { toast } from "sonner";
 import { Pencil, Trash2 } from "lucide-react";
 import { safeHtml } from "@/lib/sanitize";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface EstablishmentSection {
   id: string;
@@ -20,6 +21,7 @@ interface EstablishmentSection {
 export const EstablishmentManagement = () => {
   const [sections, setSections] = useState<EstablishmentSection[]>([]);
   const [editingSection, setEditingSection] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<(() => Promise<void>) | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     content: "",
@@ -108,24 +110,18 @@ export const EstablishmentManagement = () => {
     });
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer cette section ?")) {
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('establishment_info')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-      toast.success("Section supprimée avec succès");
-      loadSections();
-    } catch (error) {
-      console.error('Error deleting section:', error);
-      toast.error("Erreur lors de la suppression");
-    }
+  const handleDelete = (id: string) => {
+    setConfirmDelete(() => async () => {
+      try {
+        const { error } = await supabase.from('establishment_info').delete().eq('id', id);
+        if (error) throw error;
+        toast.success("Section supprimée avec succès");
+        loadSections();
+      } catch (error) {
+        console.error('Error deleting section:', error);
+        toast.error("Erreur lors de la suppression");
+      }
+    });
   };
 
   const resetForm = () => {
@@ -253,6 +249,12 @@ export const EstablishmentManagement = () => {
           </div>
         </CardContent>
       </Card>
+      <ConfirmDialog
+        open={confirmDelete !== null}
+        description="Êtes-vous sûr de vouloir supprimer cette section ?"
+        onConfirm={async () => { await confirmDelete!(); setConfirmDelete(null); }}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 };

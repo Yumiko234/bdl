@@ -204,17 +204,29 @@ const Admin = () => {
   const handleSaveMessage = async () => {
     if (primaryRole !== 'president' && primaryRole !== 'presidente' && primaryRole !== 'administrator') return;
     setSaving(true);
-    const { data: currentMessage } = await supabase.from('president_message').select('id').single();
+    const { data: existing } = await supabase.from('president_message').select('id').maybeSingle();
     let error;
-    if (currentMessage?.id) {
+    if (existing?.id) {
       ({ error } = await supabase
         .from('president_message')
         .update({ content: presidentMessage, updated_by: user?.id })
-        .eq('id', currentMessage.id));
+        .eq('id', existing.id));
     } else {
-      ({ error } = await supabase
+      const { error: insError } = await supabase
         .from('president_message')
-        .insert({ content: presidentMessage, updated_by: user?.id }));
+        .insert({ content: presidentMessage, updated_by: user?.id });
+      // Race condition: retry as update if unique violation
+      if (insError?.code === '23505') {
+        const { data: retry } = await supabase.from('president_message').select('id').maybeSingle();
+        if (retry?.id) {
+          ({ error } = await supabase
+            .from('president_message')
+            .update({ content: presidentMessage, updated_by: user?.id })
+            .eq('id', retry.id));
+        }
+      } else {
+        error = insError;
+      }
     }
     if (error) toast.error("Erreur de sauvegarde");
     else toast.success("Message mis à jour");

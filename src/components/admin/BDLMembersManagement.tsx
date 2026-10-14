@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Users,
   UserPlus,
@@ -97,6 +98,7 @@ const emptyForm = {
 export const BDLMembersManagement = () => {
   const [members, setMembers] = useState<BDLMember[]>([]);
   const [profiles, setProfiles] = useState<ProfileOption[]>([]);
+  const [confirmDelete, setConfirmDelete] = useState<(() => Promise<void>) | null>(null);
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
@@ -203,9 +205,8 @@ export const BDLMembersManagement = () => {
 
         // If linked to an account, sync the role in user_roles too
         if (userId) {
-          await supabase
-            .from("user_roles")
-            .upsert({ user_id: userId, role: getSystemRole(form.role_label) as any });
+          await supabase.from("user_roles").delete().eq("user_id", userId);
+          await supabase.from("user_roles").insert({ user_id: userId, role: getSystemRole(form.role_label) as any });
         }
 
         toast.success("Membre ajouté avec succès");
@@ -218,9 +219,8 @@ export const BDLMembersManagement = () => {
 
         // Sync role in user_roles if linked
         if (userId) {
-          await supabase
-            .from("user_roles")
-            .upsert({ user_id: userId, role: getSystemRole(form.role_label) as any });
+          await supabase.from("user_roles").delete().eq("user_id", userId);
+          await supabase.from("user_roles").insert({ user_id: userId, role: getSystemRole(form.role_label) as any });
         }
 
         toast.success("Membre mis à jour");
@@ -237,15 +237,12 @@ export const BDLMembersManagement = () => {
 
   /* ---- delete ---- */
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Retirer ce membre du BDL ?")) return;
-    const { error } = await supabase.from("bdl_members").delete().eq("id", id);
-    if (error) {
-      toast.error("Erreur lors de la suppression");
-    } else {
-      toast.success("Membre retiré");
-      loadMembers();
-    }
+  const handleDelete = (id: string) => {
+    setConfirmDelete(() => async () => {
+      const { error } = await supabase.from("bdl_members").delete().eq("id", id);
+      if (error) toast.error("Erreur lors de la suppression");
+      else { toast.success("Membre retiré"); loadMembers(); }
+    });
   };
 
   const exportCSV = () => {
@@ -538,6 +535,12 @@ export const BDLMembersManagement = () => {
             Aucun membre ne correspond à « {search} »
           </p>
         )}
+        <ConfirmDialog
+          open={confirmDelete !== null}
+          description="Retirer ce membre du BDL ?"
+          onConfirm={async () => { await confirmDelete!(); setConfirmDelete(null); }}
+          onCancel={() => setConfirmDelete(null)}
+        />
       </CardContent>
     </Card>
   );

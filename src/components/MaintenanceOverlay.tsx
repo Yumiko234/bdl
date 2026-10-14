@@ -56,7 +56,11 @@ export const MaintenanceOverlay = ({ children }: MaintenanceOverlayProps) => {
       .eq("user_id", user.id);
     if (data) {
       const staffRoles = [
-        "administrator",
+        "administrator", "president", "presidente",
+        "vice_president", "vice_presidente",
+        "secretary_general", "secretary_general2",
+        "communication_manager", "communication_manager2",
+        "vie_scolaire", "bdl_member",
       ];
       setIsBDLStaff(data.some((r: any) => staffRoles.includes(r.role)));
     }

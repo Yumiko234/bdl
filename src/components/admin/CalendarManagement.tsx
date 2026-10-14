@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { safeHtml } from "@/lib/sanitize";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -59,6 +60,7 @@ export const CalendarManagement = () => {
   const { user } = useAuth();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [confirmDelete, setConfirmDelete] = useState<(() => Promise<void>) | null>(null);
 
   // ---- form / modal state ----
   const [isOpen, setIsOpen] = useState(false);
@@ -185,16 +187,12 @@ export const CalendarManagement = () => {
   // -----------------------------------------------------------------------
   // Delete
   // -----------------------------------------------------------------------
-  const handleDelete = async (id: number) => {
-    if (!confirm("Supprimer cet événement ?")) return;
-
-    const { error } = await supabase.from("calendar_events").delete().eq("id", id);
-    if (error) {
-      toast.error("Erreur lors de la suppression");
-    } else {
-      toast.success("Événement supprimé");
-      await fetchEvents();
-    }
+  const handleDelete = (id: number) => {
+    setConfirmDelete(() => async () => {
+      const { error } = await supabase.from("calendar_events").delete().eq("id", id);
+      if (error) toast.error("Erreur lors de la suppression");
+      else { toast.success("Événement supprimé"); await fetchEvents(); }
+    });
   };
 
   // -----------------------------------------------------------------------
@@ -269,6 +267,13 @@ export const CalendarManagement = () => {
           ))
         )}
       </CardContent>
+
+      <ConfirmDialog
+        open={confirmDelete !== null}
+        description="Supprimer cet événement ?"
+        onConfirm={async () => { await confirmDelete!(); setConfirmDelete(null); }}
+        onCancel={() => setConfirmDelete(null)}
+      />
 
       {/* ---- Modal (create / edit) ---- */}
       {isOpen && (

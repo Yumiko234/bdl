@@ -176,7 +176,10 @@ export const ProfilePhotoUpload = ({
         const path = `avatars/${userId}-${Date.now()}.jpg`;
         if (avatarUrl) {
           const old = avatarUrl.split("/avatars/").pop();
-          if (old) await supabase.storage.from("avatars").remove([old]);
+          if (old) {
+            const { error: rmErr } = await supabase.storage.from("avatars").remove([old]);
+            if (rmErr) console.warn("Suppression ancien avatar échouée :", rmErr.message);
+          }
         }
         const { error: upErr } = await supabase.storage
           .from("avatars")

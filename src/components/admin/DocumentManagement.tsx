@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { FileText, Upload, Trash2, Download } from "lucide-react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface Document {
   id: string;
@@ -32,6 +33,7 @@ const categoryLabels: Record<string, string> = {
 export const DocumentManagement = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<(() => Promise<void>) | null>(null);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -131,22 +133,16 @@ export const DocumentManagement = () => {
     setUploading(false);
   };
 
-  const handleDelete = async (id: string, fileUrl: string | null) => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer ce document ?")) return;
-
-    if (fileUrl?.includes("/storage/v1/object/public/documents/")) {
-      const filePath = fileUrl.split("/storage/v1/object/public/documents/")[1];
-      if (filePath) await supabase.storage.from("documents").remove([filePath]);
-    }
-
-    const { error } = await supabase.from("documents").delete().eq("id", id);
-
-    if (error) {
-      toast.error("Erreur lors de la suppression");
-    } else {
-      toast.success("Document supprimé");
-      loadDocuments();
-    }
+  const handleDelete = (id: string, fileUrl: string | null) => {
+    setConfirmDelete(() => async () => {
+      if (fileUrl?.includes("/storage/v1/object/public/documents/")) {
+        const filePath = fileUrl.split("/storage/v1/object/public/documents/")[1];
+        if (filePath) await supabase.storage.from("documents").remove([filePath]);
+      }
+      const { error } = await supabase.from("documents").delete().eq("id", id);
+      if (error) toast.error("Erreur lors de la suppression");
+      else { toast.success("Document supprimé"); loadDocuments(); }
+    });
   };
 
   return (
@@ -299,6 +295,12 @@ export const DocumentManagement = () => {
             </Card>
           ))}
         </div>
+        <ConfirmDialog
+          open={confirmDelete !== null}
+          description="Êtes-vous sûr de vouloir supprimer ce document ?"
+          onConfirm={async () => { await confirmDelete!(); setConfirmDelete(null); }}
+          onCancel={() => setConfirmDelete(null)}
+        />
       </CardContent>
     </Card>
   );

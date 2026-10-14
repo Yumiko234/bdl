@@ -24,12 +24,12 @@ export const AdminDashboard = () => {
     const load = async () => {
       try {
         const [
-          { count: members },
-          { count: openScrutins },
-          { count: pendingTickets },
-          { data: latestNewsData },
-          { count: totalUsers },
-          { count: openSurveys },
+          { count: members, error: e1 },
+          { count: openScrutins, error: e2 },
+          { count: pendingTickets, error: e3 },
+          { data: latestNewsData, error: e4 },
+          { count: totalUsers, error: e5 },
+          { count: openSurveys, error: e6 },
         ] = await Promise.all([
           supabase.from("bdl_members").select("*", { count: "exact", head: true }),
           supabase.from("scrutins").select("*", { count: "exact", head: true }).eq("status", "open"),
@@ -38,6 +38,9 @@ export const AdminDashboard = () => {
           supabase.from("profiles").select("*", { count: "exact", head: true }),
           supabase.from("surveys").select("*", { count: "exact", head: true }).eq("status", "open"),
         ]);
+        if (e1 || e2 || e3 || e4 || e5 || e6) {
+          console.error("Erreur dashboard", { e1, e2, e3, e4, e5, e6 });
+        }
 
         setStats({
           members: members ?? 0,

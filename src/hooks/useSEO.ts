@@ -13,6 +13,7 @@ const DEFAULT_IMAGE = `${BASE_URL}/logo-bdl.jpeg`;
 
 export function useSEO({ title, description, image, url, jsonLd }: SEOProps) {
   const resolvedImage = image ?? DEFAULT_IMAGE;
+  const jsonLdStr = jsonLd ? JSON.stringify(jsonLd) : undefined;
   useEffect(() => {
     document.title = title;
 
@@ -66,5 +67,5 @@ export function useSEO({ title, description, image, url, jsonLd }: SEOProps) {
     } else if (existing) {
       existing.remove();
     }
-  }, [title, description, image, url, jsonLd]);
+  }, [title, description, image, url, jsonLdStr]);
 }

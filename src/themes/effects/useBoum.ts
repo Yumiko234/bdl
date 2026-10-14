@@ -9,7 +9,9 @@ export function useBoum() {
     const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const id = Date.now() + Math.random();
     const rawX = r.left + r.width / 2;
-    const x = Math.min(Math.max(rawX, 140), window.innerWidth - 140);
+    // ~2cm margin each side; text is ~280px wide so 160px stops it clipping
+    const margin = Math.max(160, window.innerWidth * 0.18);
+    const x = Math.min(Math.max(rawX, margin), window.innerWidth - margin);
     setBoums(p => [...p, { id, x, y: r.top + r.height / 2 }]);
     setTimeout(() => setBoums(p => p.filter(b => b.id !== id)), 2400);
   }, []);

@@ -90,6 +90,7 @@ export function PinkParticlesEffect() {
           <HeartSVG size={h.size} color={h.color} />
         </div>
       ))}
+      <BoumTexts boums={boums} />
     </>
   );
 }

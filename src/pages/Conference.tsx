@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useAuth } from "@/hooks/useAuth";
 import { useSEO } from "@/hooks/useSEO";
 import { useConferenceStats } from "@/hooks/useConferenceStats";
+import LiveKitCall from "@/components/conference/LiveKitCall";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -371,13 +372,14 @@ export default function ConferencePage() {
   const [showGuestDialog, setShowGuestDialog] = useState(false);
   const [guestName, setGuestName] = useState("");
   const [guestConf, setGuestConf] = useState<DBConference | null>(null);
+  const [callGuestName, setCallGuestName] = useState<string | undefined>(undefined);
 
   // ── view mode ──
   const [viewMode, setViewMode] = useState<"gallery" | "speaker">("gallery");
 
   // ── speaking / volume ──
-  const peerAnalysers = useRef<Record<string, { analyser: AnalyserNode; data: Uint8Array; ctx: AudioContext }>>({});
-  const localAnalyserRef = useRef<{ analyser: AnalyserNode; data: Uint8Array } | null>(null);
+  const peerAnalysers = useRef<Record<string, { analyser: AnalyserNode; data: Uint8Array<ArrayBuffer>; ctx: AudioContext }>>({});
+  const localAnalyserRef = useRef<{ analyser: AnalyserNode; data: Uint8Array<ArrayBuffer> } | null>(null);
   // Volumes stored in refs only — no state to avoid 8 re-renders/sec
   const peerVolumesRef = useRef<Record<string, number>>({});
   const localVolumeRef = useRef(0);
@@ -1323,7 +1325,6 @@ export default function ConferencePage() {
     setMyRole("moderator");
     setInConference(true);
     setMinimized(false);
-    setupChannel(id, "moderator");
     setCreating(false);
     setNewTitle("");
     toast.success("🎙️ Conférence démarrée !");
@@ -1350,74 +1351,18 @@ export default function ConferencePage() {
     setMyRole(role);
     setInConference(true);
     setMinimized(false);
-    setupChannel(conf.id, role);
     toast.success("Conférence rejointe !");
   };
 
   const joinAsGuest = (conf: DBConference, name: string) => {
     setShowGuestDialog(false);
     setGuestConf(null);
-    // Use a random guest ID for presence (no Supabase auth)
-    const guestId = "guest-" + crypto.randomUUID().slice(0, 8);
-    const role: ParticipantRole = "audience";
+    setUserName(name || "Invité");
+    setCallGuestName(name || "Invité");
     setActiveConf(conf);
-    setMyRole(role);
+    setMyRole("audience");
     setInConference(true);
     setMinimized(false);
-    // Override userName for this session
-    setUserName(name || "Invité");
-    // Build a minimal "user" substitute via presence only
-    const ch = supabase.channel(`conf:${conf.id}`, {
-      config: { broadcast: { self: false }, presence: { key: guestId } },
-    });
-    ch.on("broadcast", { event: "chat" }, ({ payload }) => {
-      setMessages((prev) => [...prev, payload as ChatMessage]);
-      setUnread((u) => u + 1);
-    });
-    ch.on("broadcast", { event: "reaction" }, ({ payload }) => {
-      const r: FloatingReaction = { id: payload.id, emoji: payload.emoji, userName: payload.userName, x: 10 + Math.random() * 80 };
-      setFloatingReactions((prev) => [...prev, r]);
-      setTimeout(() => setFloatingReactions((prev) => prev.filter((f) => f.id !== r.id)), 3000);
-    });
-    ch.on("broadcast", { event: "conf_end" }, () => {
-      toast.info("La conférence est terminée.");
-      doCleanup(false);
-      setInConference(false);
-      setMinimized(false);
-      setActiveConf(null);
-      fetchConfs();
-    });
-    ch.on("presence", { event: "sync" }, () => {
-      const state = ch.presenceState();
-      const list: Participant[] = Object.values(state).flat().map((p: any) => ({
-        user_id: p.user_id, user_name: p.user_name,
-        role: p.role ?? "audience", hand_raised: p.hand_raised ?? false,
-        is_muted: p.is_muted ?? true, is_video_off: p.is_video_off ?? true,
-        joined_at: p.joined_at ?? "",
-      }));
-      setParticipants(list);
-    });
-    ch.on("presence", { event: "join" }, ({ newPresences }) => {
-      const incoming = newPresences as any[];
-      setParticipants((prev) => {
-        const ids = new Set(prev.map((p) => p.user_id));
-        return [...prev, ...incoming.filter((p) => !ids.has(p.user_id)).map((p) => ({
-          user_id: p.user_id, user_name: p.user_name, role: p.role ?? "audience",
-          hand_raised: false, is_muted: true, is_video_off: true, joined_at: "",
-        }))];
-      });
-    });
-    ch.on("presence", { event: "leave" }, ({ leftPresences }) => {
-      const gone = new Set((leftPresences as any[]).map((p) => p.user_id));
-      setParticipants((prev) => prev.filter((p) => !gone.has(p.user_id)));
-      gone.forEach((id) => { peers[id]?.close(); delete peers[id]; cleanupPeerAnalyser(id); });
-    });
-    ch.subscribe(async (status) => {
-      if (status === "SUBSCRIBED") {
-        await ch.track({ user_id: guestId, user_name: name || "Invité", role, hand_raised: false, is_muted: true, joined_at: new Date().toISOString() });
-      }
-    });
-    channelRef.current = ch;
     toast.success("Conférence rejointe en tant qu'invité !");
   };
 
@@ -1580,7 +1525,7 @@ export default function ConferencePage() {
 
   // Attach local analyser when mic turns on
   useEffect(() => {
-    if (!micOn) { localAnalyserRef.current = null; setLocalVolume(0); return; }
+    if (!micOn) { localAnalyserRef.current = null; localVolumeRef.current = 0; return; }
     try {
       const ctx = new AudioContext();
       const src = ctx.createMediaStreamSource(localStream.current);
@@ -1613,6 +1558,8 @@ export default function ConferencePage() {
 
   // ─── Keyboard shortcuts ───────────────────────────────────────────────────
   useEffect(() => {
+    // Désactivé : LiveKit gère lui-même micro/caméra/main (évite une double demande de permission).
+    if (true as boolean) return;
     if (!inConference) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
@@ -1735,6 +1682,29 @@ export default function ConferencePage() {
       </button>
     </div>
   );
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // EN APPEL (LiveKit)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  if (inConference && activeConf) {
+    const closeCall = () => {
+      setInConference(false);
+      setMinimized(false);
+      setActiveConf(null);
+      setCallGuestName(undefined);
+      fetchConfs();
+    };
+    return (
+      <LiveKitCall
+        conferenceId={activeConf.id}
+        title={activeConf.title}
+        guestName={callGuestName}
+        onLeave={closeCall}
+        onEnded={closeCall}
+      />
+    );
+  }
 
   // ═══════════════════════════════════════════════════════════════════════════
   // LOBBY

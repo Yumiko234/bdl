@@ -1534,17 +1534,7 @@ export default function ConferencePage() {
 
   // Attach local analyser when mic turns on
   useEffect(() => {
-<<<<<<< HEAD
     if (!micOn) { localAnalyserRef.current = null; localVolumeRef.current = 0; return; }
-=======
-    if (!micOn) {
-      localAnalyserRef.current = null;
-      setLocalVolume(0);
-      localAudioCtxRef.current?.close().catch(() => {});
-      localAudioCtxRef.current = null;
-      return;
-    }
->>>>>>> c04ca225aa1933c7fec594073e9445245b9bd1d5
     try {
       localAudioCtxRef.current?.close().catch(() => {});
       const ctx = new AudioContext();

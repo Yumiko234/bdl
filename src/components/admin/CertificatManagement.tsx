@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { BdlQRCode } from "@/components/BdlQRCode";
 import {
   Award, Plus, Trash2, RefreshCw, Search,
   Copy, CheckCircle2, Loader2, Shield, Calendar,
@@ -89,12 +90,7 @@ const generateCertId = (roleValue: RoleValue = "bdl_member"): string => {
 const verifUrl = (certId: string): string =>
   `${window.location.origin}/certificat-verif?id=${encodeURIComponent(certId)}`;
 
-/**
- * Renvoie l'URL de l'image QR code via l'API publique qrserver.com
- * Pas de clé nécessaire, retourne un PNG.
- */
-const qrImgUrl = (certId: string, size = 220): string =>
-  `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&margin=10&data=${encodeURIComponent(verifUrl(certId))}`;
+const QR_SIZE = 240;
 
 const fmtDate = (iso: string) =>
   new Date(iso).toLocaleDateString("fr-FR", {
@@ -111,18 +107,16 @@ interface QrModalProps {
 const QrModal = ({ cert, onClose }: QrModalProps) => {
   if (!cert) return null;
 
-  const imgSrc = qrImgUrl(cert.certificate_id, 240);
   const url = verifUrl(cert.certificate_id);
 
-  const handleDownload = async () => {
+  const handleDownload = () => {
     try {
-      const res = await fetch(imgSrc);
-      const blob = await res.blob();
+      const canvas = document.getElementById(`qr-cert-${cert.certificate_id}`) as HTMLCanvasElement | null;
+      if (!canvas) return;
       const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
+      a.href = canvas.toDataURL("image/png");
       a.download = `qr-${cert.certificate_id}.png`;
       a.click();
-      URL.revokeObjectURL(a.href);
     } catch {
       toast.error("Impossible de télécharger le QR code.");
     }
@@ -153,12 +147,10 @@ const QrModal = ({ cert, onClose }: QrModalProps) => {
           {/* QR image */}
           <div className="flex justify-center">
             <div className="p-3 border-2 border-primary/20 rounded-xl bg-white shadow-sm">
-              <img
-                src={imgSrc}
-                alt={`QR code pour ${cert.certificate_id}`}
-                width={240}
-                height={240}
-                className="block"
+              <BdlQRCode
+                id={`qr-cert-${cert.certificate_id}`}
+                value={url}
+                size={QR_SIZE}
               />
             </div>
           </div>

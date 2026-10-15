@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Pencil, Trash2, Plus } from "lucide-react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface ContactInfo {
   id: string;
@@ -19,6 +20,7 @@ interface ContactInfo {
 export const ContactManagement = () => {
   const [contactInfos, setContactInfos] = useState<ContactInfo[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<(() => Promise<void>) | null>(null);
   const [formData, setFormData] = useState({
     section_key: "",
     title: "",
@@ -110,22 +112,12 @@ export const ContactManagement = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer cette information ?")) {
-      return;
-    }
-
-    const { error } = await supabase
-      .from('contact_info')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      toast.error("Erreur lors de la suppression");
-    } else {
-      toast.success("Information supprimée avec succès");
-      loadContactInfos();
-    }
+  const handleDelete = (id: string) => {
+    setConfirmDelete(() => async () => {
+      const { error } = await supabase.from('contact_info').delete().eq('id', id);
+      if (error) toast.error("Erreur lors de la suppression");
+      else { toast.success("Information supprimée avec succès"); loadContactInfos(); }
+    });
   };
 
   const handleCancel = () => {
@@ -242,6 +234,12 @@ export const ContactManagement = () => {
             </Card>
           ))}
         </div>
+        <ConfirmDialog
+          open={confirmDelete !== null}
+          description="Êtes-vous sûr de vouloir supprimer cette information ?"
+          onConfirm={async () => { await confirmDelete!(); setConfirmDelete(null); }}
+          onCancel={() => setConfirmDelete(null)}
+        />
       </CardContent>
     </Card>
   );

@@ -19,8 +19,8 @@ const ROLE_KEYS = [
   "secretary_general2",
   "communication_manager",
   "communication_manager2",
-  "vie_scolaire",
   "bdl_member",
+  "vie_scolaire",
   "student"
 ] as const;
 type RoleKey = typeof ROLE_KEYS[number];
@@ -35,8 +35,8 @@ const rolePrecedence: Record<RoleKey, number> = {
   secretary_general2: 4,
   communication_manager: 5,
   communication_manager2: 5,
-  vie_scolaire: 6,
-  bdl_member: 7,
+  bdl_member: 6,
+  vie_scolaire: 7,
   student: 8
 };
 
@@ -194,6 +194,10 @@ export const UserManagement = () => {
           .map((b) => chars[b % chars.length])
           .join('');
       };
+
+      // Sauvegarde la session admin avant signUp (qui peut créer une session pour le nouvel utilisateur)
+      const { data: { session: adminSession } } = await supabase.auth.getSession();
+
       const { data: signData, error: signError } = await supabase.auth.signUp({
         email: newUser.email,
         password: newUser.password || generatePassword(),
@@ -201,6 +205,14 @@ export const UserManagement = () => {
           data: { full_name: newUser.fullName }
         }
       } as any);
+
+      // Restaure immédiatement la session admin si elle a été remplacée
+      if (adminSession) {
+        await supabase.auth.setSession({
+          access_token: adminSession.access_token,
+          refresh_token: adminSession.refresh_token,
+        });
+      }
 
       if (signError) {
         toast.error("Erreur lors de la création du compte : " + (signError.message ?? "Erreur"));

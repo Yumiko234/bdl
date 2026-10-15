@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext } from 'react';
+import { useState, useEffect, useRef, createContext, useContext } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -37,13 +37,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setLoading(false);
       }
     );
-
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
 
     return () => subscription.unsubscribe();
   }, []);
@@ -100,6 +93,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signOut = async () => {
+    hasRoleCache.current.clear();
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
@@ -107,9 +101,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     navigate('/');
   };
 
-  const hasRole = async (role: 'student' | 'bdl_member' | 'president'): Promise<boolean> => {
+  const hasRoleCache = useRef<Map<string, boolean>>(new Map());
+
+  const hasRole = async (role: string): Promise<boolean> => {
     if (!user) return false;
-    
+    const cacheKey = `${user.id}:${role}`;
+    if (hasRoleCache.current.has(cacheKey)) return hasRoleCache.current.get(cacheKey)!;
+
     const { data, error } = await supabase
       .from('user_roles')
       .select('role')
@@ -117,7 +115,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       .eq('role', role)
       .maybeSingle();
 
-    return !error && !!data;
+    const result = !error && !!data;
+    hasRoleCache.current.set(cacheKey, result);
+    return result;
   };
 
   return (

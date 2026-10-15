@@ -46,10 +46,13 @@ const toPersonSlug = (name: string) =>
   name
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9\s]/g, "")
     .trim()
     .replace(/\s+/g, "_");
+
+// Membre honorifique toujours affiché en premier (comparé sur le slug de la personne)
+const PINNED_FIRST_SLUG = "alexandre_lejal";
 
 const BDLHistory = () => {
   useSEO({
@@ -137,20 +140,26 @@ const BDLHistory = () => {
           (profiles || []).forEach((p: any) => { slugMap[p.person_slug] = p.slug; });
         }
 
-        setHonorary(
-          personSlugs.map((key) => {
-            const g = grouped[key];
-            const label =
-              g.minStart != null && g.maxEnd != null ? `${g.minStart}-${g.maxEnd}` : "";
-            return {
-              full_name: g.full_name,
-              role: g.role,
-              avatar_url: g.avatar_url,
-              year_label: label,
-              profile_slug: slugMap[key] ?? key,
-            };
-          })
+        const list = personSlugs.map((key) => {
+          const g = grouped[key];
+          const label =
+            g.minStart != null && g.maxEnd != null ? `${g.minStart}-${g.maxEnd}` : "";
+          return {
+            full_name: g.full_name,
+            role: g.role,
+            avatar_url: g.avatar_url,
+            year_label: label,
+            profile_slug: slugMap[key] ?? key,
+            _key: key,
+          };
+        });
+
+        // Alexandre Lejal toujours en premier ; les autres gardent l'ordre de display_order
+        list.sort((a, b) =>
+          a._key === PINNED_FIRST_SLUG ? -1 : b._key === PINNED_FIRST_SLUG ? 1 : 0
         );
+
+        setHonorary(list.map(({ _key, ...m }) => m));
       }
     } catch (error) {
       console.error("Error loading history:", error);

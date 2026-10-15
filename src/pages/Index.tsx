@@ -29,7 +29,7 @@ interface InstagramPost {
 
 const INSTAGRAM_POSTS: InstagramPost[] = [
   {
-    url: "https://www.instagram.com/p/Dd14cWyoPOD/",
+    url: "https://www.instagram.com/p/DeezwalCDaw/",
     isPinned: false,
   },
   {

@@ -73,7 +73,7 @@ export const ScrutinManagement = () => {
         (s) => s.status === "open" && s.ends_at && new Date(s.ends_at) < new Date()
       );
       if (expired.length > 0) {
-        await Promise.all(
+        const results = await Promise.all(
           expired.map((s) =>
             supabase
               .from("scrutins")
@@ -81,7 +81,9 @@ export const ScrutinManagement = () => {
               .eq("id", s.id)
           )
         );
-        toast.info(`${expired.length} scrutin(s) clôturé(s) automatiquement.`);
+        const failed = results.filter((r) => r.error).length;
+        if (failed > 0) toast.error(`${failed} scrutin(s) n'ont pas pu être clôturés.`);
+        toast.info(`${expired.length - failed} scrutin(s) clôturé(s) automatiquement.`);
         const { data: refreshed } = await supabase
           .from("scrutins")
           .select("*")
@@ -122,7 +124,8 @@ export const ScrutinManagement = () => {
     }
 
     setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user }, error: userErr } = await supabase.auth.getUser();
+    if (userErr || !user) { toast.error("Utilisateur non authentifié"); setLoading(false); return; }
 
     const { error } = await supabase.from("scrutins").insert({
       title: formData.title,
@@ -230,7 +233,9 @@ export const ScrutinManagement = () => {
     const a = document.createElement("a");
     a.href = url;
     a.download = `scrutins_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
 

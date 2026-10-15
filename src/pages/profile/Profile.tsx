@@ -78,6 +78,8 @@ const Profile = () => {
     } else if (user) {
       loadProfile();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // loadProfile intentionally omitted: it only reads `user` which is already a dep
   }, [user, authLoading, navigate]);
 
   const loadProfile = async () => {

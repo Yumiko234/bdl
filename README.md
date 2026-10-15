@@ -43,7 +43,7 @@ Prod : <https://bdl-saintandre.fr> — hébergée sur Vercel, déploiement autom
 | Événements | `/events` | Événements à venir et passés, téléchargement `.ics` (Ajouter au calendrier) |
 | Calendrier | `/calendrier` | Vue mensuelle ou liste, export iCal et Google Agenda |
 | Documents | `/documents` | Règlements, comptes-rendus, formulaires, JO — recherche + aperçu PDF (Google Docs viewer) |
-| Journal Officiel | `/jo`, `/jo/:nor` | Décrets et communications officielles |
+| Journal Officiel | `/jo`, `/jo/:nor` | Décrets et communications officielles — QR code par document, historique des modifications accordion |
 | Contact | `/contact` | Formulaire de contact + demande d'audience (banner support pour les connectés) |
 | Vérification de certificat | `/certificat-verif` | Contrôle de l'authenticité d'un certificat émis par le Bureau |
 | Mentions légales / CGU / Confidentialité | `/legal/*` | Documents juridiques (RGPD) |
@@ -89,6 +89,7 @@ L'éditeur de contenu riche est basé sur `react-quill`.
 | Graphiques | `recharts` |
 | Backend | **Supabase** — PostgreSQL, Auth, Row Level Security, Realtime, Storage, Edge Functions (Deno) |
 | Notifications | `sonner` (toasts) |
+| QR codes | `qr-code-styling` — QR codes stylisés avec logo BDL circulaire |
 | PDF | `jspdf` (certificats), Google Docs viewer (aperçu documents) |
 | Sécurité | `dompurify` pour tout HTML injecté (`src/lib/sanitize.ts`) |
 | Analytics | `@vercel/analytics` |
@@ -152,6 +153,7 @@ src/
 │   ├── admin/                 22 modules de la console d'administration
 │   ├── ui/                    Composants shadcn/ui
 │   ├── legal/                 Layout des pages légales
+│   ├── BdlQRCode.tsx              QR code stylisé avec logo BDL (utilisé JO + certificats)
 │   ├── Navigation.tsx  Footer.tsx  GlobalBanner.tsx
 │   ├── MaintenanceOverlay.tsx  RichTextEditor.tsx  ErrorBoundary.tsx
 │   └── ScrollToTop.tsx  ProfilePhotoUpload.tsx

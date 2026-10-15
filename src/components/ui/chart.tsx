@@ -58,6 +58,10 @@ const ChartContainer = React.forwardRef<
 });
 ChartContainer.displayName = "Chart";
 
+// Strip characters that could escape a CSS selector or value context
+const safeCSSId = (id: string) => id.replace(/[^a-zA-Z0-9_-]/g, "");
+const safeCSSValue = (v: string) => v.replace(/[;{}]/g, "");
+
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
   const colorConfig = Object.entries(config).filter(([_, config]) => config.theme || config.color);
 
@@ -65,17 +69,19 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
     return null;
   }
 
+  const safeId = safeCSSId(id);
+
   return (
     <style
       dangerouslySetInnerHTML={{
         __html: Object.entries(THEMES)
           .map(
             ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
+${prefix} [data-chart=${safeId}] {
 ${colorConfig
   .map(([key, itemConfig]) => {
     const color = itemConfig.theme?.[theme as keyof typeof itemConfig.theme] || itemConfig.color;
-    return color ? `  --color-${key}: ${color};` : null;
+    return color ? `  --color-${safeCSSId(key)}: ${safeCSSValue(color)};` : null;
   })
   .join("\n")}
 }

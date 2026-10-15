@@ -166,7 +166,9 @@ const Scrutin = () => {
     if (scrutinsRef.current.length > 0) {
       loadMyVotesBatch(scrutinsRef.current.map((s) => s.id));
     }
-  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // intentional: checkVotingRights/loadMyVotesBatch capture `user` via closure; re-running on user change is correct
+  }, [user]);
 
   useEffect(() => {
     loadScrutins();

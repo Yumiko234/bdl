@@ -10,6 +10,7 @@ import {
   RefreshCw, Calendar, CheckCircle2, XCircle, Loader2,
   BarChart3, MessageSquare
 } from "lucide-react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -86,6 +87,7 @@ function StatCard({ label, value, icon }: { label: string; value: string | numbe
 export const AdminConference = () => {
   const [conferences, setConferences] = useState<DBConference[]>([]);
   const [loading, setLoading] = useState(true);
+  const [confirmDelete, setConfirmDelete] = useState<(() => Promise<void>) | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   // Create-from-admin form
@@ -167,19 +169,12 @@ export const AdminConference = () => {
     }
   };
 
-  const deleteConference = async (id: string) => {
-    if (!confirm("Supprimer définitivement cette conférence ?")) return;
-    const { error } = await supabase
-      .from("conferences")
-      .delete()
-      .eq("id", id);
-
-    if (error) {
-      toast.error("Erreur suppression : " + error.message);
-    } else {
-      toast.success("Conférence supprimée.");
-      fetchConferences(true);
-    }
+  const deleteConference = (id: string) => {
+    setConfirmDelete(() => async () => {
+      const { error } = await supabase.from("conferences").delete().eq("id", id);
+      if (error) toast.error("Erreur suppression : " + error.message);
+      else { toast.success("Conférence supprimée."); fetchConferences(true); }
+    });
   };
 
   // ── Derived stats ─────────────────────────────────────────────────────────────
@@ -365,6 +360,12 @@ export const AdminConference = () => {
           )}
         </CardContent>
       </Card>
+      <ConfirmDialog
+        open={confirmDelete !== null}
+        description="Supprimer définitivement cette conférence ?"
+        onConfirm={async () => { await confirmDelete!(); setConfirmDelete(null); }}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 };

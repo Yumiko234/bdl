@@ -13,6 +13,7 @@ import {
 import { diffWords } from "diff";
 import "@/styles/journal.css";
 import { safeHtml } from "@/lib/sanitize";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -475,6 +476,7 @@ const ArticleRenderer = ({ entry }: { entry: JournalEntry }) => {
 export const OfficialJournalManagement = () => {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [editingEntry, setEditingEntry] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<(() => Promise<void>) | null>(null);
   const [previewEntry, setPreviewEntry] = useState<JournalEntry | null>(null);
   const [originalContent, setOriginalContent] = useState<string>("");
   const [formData, setFormData] = useState({ title: "", nor_number: "", content: "", publication_date: "" });
@@ -540,11 +542,12 @@ export const OfficialJournalManagement = () => {
     setSignatories((entry.signatures || []).map((s) => ({ ...s, uid: s.uid || makeUid() })));
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer cette entrée ?")) return;
-    const { error } = await supabase.from("official_journal").delete().eq("id", id);
-    if (error) { toast.error("Erreur lors de la suppression"); console.error(error); }
-    else { toast.success("Entrée supprimée"); loadEntries(); }
+  const handleDelete = (id: string) => {
+    setConfirmDelete(() => async () => {
+      const { error } = await supabase.from("official_journal").delete().eq("id", id);
+      if (error) { toast.error("Erreur lors de la suppression"); console.error(error); }
+      else { toast.success("Entrée supprimée"); loadEntries(); }
+    });
   };
 
   const resetForm = () => {
@@ -667,6 +670,12 @@ export const OfficialJournalManagement = () => {
 
         </CardContent>
       </Card>
+      <ConfirmDialog
+        open={confirmDelete !== null}
+        description="Êtes-vous sûr de vouloir supprimer cette entrée ?"
+        onConfirm={async () => { await confirmDelete!(); setConfirmDelete(null); }}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 };

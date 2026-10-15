@@ -201,7 +201,7 @@ const Sondage = () => {
 
     if (!allIds.length) return;
 
-    const [{ data: qcmAnswers }, { data: textAnswers }] = await Promise.all([
+    const [{ data: qcmAnswers, error: qcmErr }, { data: textAnswers, error: textErr }] = await Promise.all([
       qcmQs.length > 0
         ? supabase.from("survey_answers").select("question_id, option_id").in("question_id", qcmQs.map((q) => q.id)).not("option_id", "is", null)
         : Promise.resolve({ data: [] as { question_id: string; option_id: string }[], error: null }),
@@ -209,6 +209,7 @@ const Sondage = () => {
         ? supabase.from("survey_answers").select("question_id, text_answer").in("question_id", textQs.map((q) => q.id)).not("text_answer", "is", null)
         : Promise.resolve({ data: [] as { question_id: string; text_answer: string }[], error: null }),
     ]);
+    if (qcmErr || textErr) { toast.error("Erreur lors du chargement des résultats"); return; }
 
     const qcmByQuestion: Record<string, Record<string, number>> = {};
     (qcmAnswers || []).forEach((ans: { question_id: string; option_id: string }) => {

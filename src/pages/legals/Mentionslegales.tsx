@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-const LAST_UPDATED = "16 septembre 2026"; // [À COMPLÉTER] mettre à jour à chaque modification
+const LAST_UPDATED = "10 octobre 2026"; // [À COMPLÉTER] mettre à jour à chaque modification
 
 const TOC: LegalTocEntry[] = [
   { id: "edition", label: "Édition du site" },
@@ -109,7 +109,7 @@ const MentionsLegales = () => {
             <p className="text-sm text-muted-foreground">Fondateur &amp; consultant</p>
             <div className="flex gap-4 mt-1 text-sm">
               <a href="https://fr.linkedin.com/in/alexandre-lejal" target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors">LinkedIn</a>
-              <Link to="/developpers/alexandre-lejal" className="hover:text-accent transition-colors">Profil développeur →</Link>
+              <Link to="/developers/alexandre-lejal" className="hover:text-accent transition-colors">Profil développeur →</Link>
             </div>
           </div>
           <div>
@@ -117,7 +117,7 @@ const MentionsLegales = () => {
             <p className="text-sm text-muted-foreground">Développeur web — co-mainteneur</p>
             <div className="flex gap-4 mt-1 text-sm">
               <a href="https://mymvweb.fr" target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors">Site web</a>
-              <Link to="/developpers/mael-vicq" className="hover:text-accent transition-colors">Profil développeur →</Link>
+              <Link to="/developers/mael-vicq" className="hover:text-accent transition-colors">Profil développeur →</Link>
             </div>
           </div>
         </div>

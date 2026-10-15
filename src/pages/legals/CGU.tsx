@@ -4,13 +4,14 @@ import { FileText } from "lucide-react";
 import LegalPageLayout, { LegalTocEntry } from "@/components/legal/LegalPageLayout";
 import { LegalSection, TodoNote } from "@/components/legal/LegalSection";
 
-const LAST_UPDATED = "8 août 2026"; // [À COMPLÉTER] mettre à jour à chaque modification
+const LAST_UPDATED = "15 octobre 2026"; // [À COMPLÉTER] mettre à jour à chaque modification
 
 const TOC: LegalTocEntry[] = [
   { id: "objet", label: "Objet du site" },
   { id: "acces", label: "Accès au site" },
   { id: "compte", label: "Création de compte" },
   { id: "scrutins", label: "Scrutins et sondages" },
+  { id: "conferences", label: "Conférences en direct" },
   { id: "regles", label: "Règles d'utilisation" },
   { id: "propriete", label: "Propriété intellectuelle" },
   { id: "donnees", label: "Données personnelles" },
@@ -196,7 +197,44 @@ const CGU = () => {
         </ul>
       </LegalSection>
 
-      <LegalSection id="regles" title="Article 5 — Règles d'utilisation et comportement des utilisateurs">
+      <LegalSection id="conferences" title="Article 5 — Conférences en direct">
+        <p>
+          Le Site propose une fonctionnalité de <strong>visioconférence en
+          temps réel</strong>, accessible depuis la page{" "}
+          <code className="text-xs bg-muted px-1 rounded">/conference</code>.
+          Les conférences sont organisées et animées par les membres du BDL.
+        </p>
+        <ul className="list-disc pl-5 space-y-1.5">
+          <li>
+            L'accès à une conférence peut nécessiter un compte valide ou,
+            si le modérateur l'autorise, une simple saisie de prénom
+            (mode invité).
+          </li>
+          <li>
+            L'Utilisateur consent à l'activation de son microphone et/ou de
+            sa caméra lors de la participation à une conférence. Il est seul
+            responsable de ce qu'il diffuse (image, voix, environnement
+            visible).
+          </li>
+          <li>
+            Les flux audio et vidéo transitent par les serveurs de{" "}
+            <strong>LiveKit Inc.</strong> (États-Unis) et{" "}
+            <strong>ne sont pas enregistrés</strong> par le BDL.
+          </li>
+          <li>
+            Tout comportement inapproprié lors d'une conférence (propos
+            injurieux, harcèlement, contenu illicite) peut entraîner
+            l'exclusion immédiate de la session et la suspension du compte,
+            sans préjudice des sanctions disciplinaires de l'établissement.
+          </li>
+          <li>
+            Le modérateur de la conférence se réserve le droit de mettre fin
+            à la session à tout moment.
+          </li>
+        </ul>
+      </LegalSection>
+
+      <LegalSection id="regles" title="Article 6 — Règles d'utilisation et comportement des utilisateurs">
         <p>En utilisant le Site, l'Utilisateur s'engage à :</p>
         <ul className="list-disc pl-5 space-y-1.5">
           <li>respecter la législation en vigueur ainsi que les droits des tiers ;</li>
@@ -225,7 +263,7 @@ const CGU = () => {
         </p>
       </LegalSection>
 
-      <LegalSection id="propriete" title="Article 6 — Propriété intellectuelle">
+      <LegalSection id="propriete" title="Article 7 — Propriété intellectuelle">
         <p>
           Le contenu du Site (textes, images, logos, mise en page, code
           source, base de données, etc.) est protégé par le droit de la
@@ -242,7 +280,7 @@ const CGU = () => {
         </p>
       </LegalSection>
 
-      <LegalSection id="donnees" title="Article 7 — Données personnelles">
+      <LegalSection id="donnees" title="Article 8 — Données personnelles">
         <p>
           L'utilisation du Site entraîne la collecte et le traitement de
           données à caractère personnel (identité, e-mail, données de
@@ -258,7 +296,7 @@ const CGU = () => {
         </p>
       </LegalSection>
 
-      <LegalSection id="disponibilite" title="Article 8 — Disponibilité et évolution du service">
+      <LegalSection id="disponibilite" title="Article 9 — Disponibilité et évolution du service">
         <p>
           Le BDL se réserve le droit, à tout moment et sans préavis, de
           modifier, suspendre ou interrompre tout ou partie du Site,
@@ -271,7 +309,7 @@ const CGU = () => {
         </p>
       </LegalSection>
 
-      <LegalSection id="responsabilite" title="Article 9 — Responsabilité">
+      <LegalSection id="responsabilite" title="Article 10 — Responsabilité">
         <p>
           Le BDL met en œuvre des moyens raisonnables pour assurer
           l'exactitude des informations diffusées sur le Site, sans
@@ -286,7 +324,7 @@ const CGU = () => {
         </ul>
       </LegalSection>
 
-      <LegalSection id="modification" title="Article 10 — Modification des CGU">
+      <LegalSection id="modification" title="Article 11 — Modification des CGU">
         <p>
           Le BDL se réserve le droit de modifier les présentes CGU à tout
           moment, notamment pour se conformer à toute évolution légale,
@@ -299,7 +337,7 @@ const CGU = () => {
         </p>
       </LegalSection>
 
-      <LegalSection id="droit" title="Article 11 — Droit applicable et litiges">
+      <LegalSection id="droit" title="Article 12 — Droit applicable et litiges">
         <p>
           Les présentes CGU sont soumises au droit français. En cas de
           différend relatif à leur interprétation ou à leur exécution, les
@@ -310,7 +348,7 @@ const CGU = () => {
         </p>
       </LegalSection>
 
-      <LegalSection id="contact" title="Article 12 — Contact">
+      <LegalSection id="contact" title="Article 13 — Contact">
         <div className="rounded-lg border border-border bg-muted/30 p-5 space-y-1">
           <p className="font-semibold text-foreground">
             Bureau des Lycéens — Lycée Saint-André

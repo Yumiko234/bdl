@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-const LAST_UPDATED = "8 août 2026"; // [À COMPLÉTER] mettre à jour à chaque modification
+const LAST_UPDATED = "15 octobre 2026"; // [À COMPLÉTER] mettre à jour à chaque modification
 
 const TOC: LegalTocEntry[] = [
   { id: "responsable", label: "Responsable de traitement" },
@@ -116,6 +116,11 @@ const Confidentialite = () => {
               <TableCell>Informations nécessaires à la vérification d'un certificat</TableCell>
               <TableCell>Utilisation de cette fonctionnalité</TableCell>
             </TableRow>
+            <TableRow>
+              <TableCell className="font-medium text-foreground">Données de visioconférence</TableCell>
+              <TableCell>Flux audio et vidéo en temps réel, prénom saisi (invités non connectés), identifiant de session</TableCell>
+              <TableCell>Participation à une conférence en direct</TableCell>
+            </TableRow>
           </TableBody>
         </Table></div>
         <p>
@@ -151,6 +156,10 @@ const Confidentialite = () => {
             <TableRow>
               <TableCell>Mesurer l'audience du Site (Vercel Analytics)</TableCell>
               <TableCell>Intérêt légitime ou consentement selon la configuration</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>Permettre la visioconférence en temps réel (LiveKit)</TableCell>
+              <TableCell>Exécution des CGU (art. 6.1.b)</TableCell>
             </TableRow>
             <TableRow>
               <TableCell>Assurer la sécurité du Site (fraude aux votes, usurpation)</TableCell>
@@ -237,6 +246,11 @@ const Confidentialite = () => {
               <TableCell>Mesure d'audience (Vercel Analytics)</TableCell>
               <TableCell>États-Unis (aucun choix de région disponible)</TableCell>
             </TableRow>
+            <TableRow>
+              <TableCell className="font-medium text-foreground">LiveKit Inc.</TableCell>
+              <TableCell>Visioconférence en temps réel (flux audio/vidéo, gestion des salles)</TableCell>
+              <TableCell>États-Unis</TableCell>
+            </TableRow>
           </TableBody>
         </Table></div>
 
@@ -257,6 +271,24 @@ const Confidentialite = () => {
             rel="noopener noreferrer"
           >
             politique de confidentialité de Vercel
+          </a>
+          .
+        </p>
+        <p>
+          Les données de visioconférence (flux audio et vidéo) sont traitées
+          par <strong>LiveKit Inc.</strong> (États-Unis), prestataire
+          spécialisé dans la communication en temps réel. Ces flux sont
+          transmis de manière chiffrée et ne sont pas enregistrés par le BDL
+          ni conservés par LiveKit au-delà de la durée de la session. Ce
+          transfert vers les États-Unis est encadré par les{" "}
+          <strong>clauses contractuelles types (CCT)</strong> de la Commission
+          européenne. Pour plus de détails, consultez la{" "}
+          <a
+            href="https://livekit.io/legal/privacy-policy"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            politique de confidentialité de LiveKit
           </a>
           .
         </p>

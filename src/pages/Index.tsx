@@ -191,8 +191,7 @@ const Index = () => {
 
   const loadPresidentMessage = async () => {
     try {
-      const { data } = await supabase
-        .from("president_message")
+      const { data } = await (supabase.from("president_message") as any)
         .select("content, president_user_id")
         .maybeSingle();
       if (data) {

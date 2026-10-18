@@ -192,7 +192,7 @@ const Admin = () => {
   };
 
   const loadPresidentMessage = async () => {
-    const { data, error } = await supabase.from('president_message').select('content, president_user_id').single();
+    const { data, error } = await (supabase.from('president_message') as any).select('content, president_user_id').single();
     if (error) console.error("Erreur chargement message présidence", error);
     else if (data) {
       setPresidentMessage(data.content);
@@ -231,19 +231,19 @@ const Admin = () => {
     if (existing?.id) {
       ({ error } = await supabase
         .from('president_message')
-        .update({ content: presidentMessage, updated_by: user?.id, president_user_id: presidentUserId || null })
+        .update({ content: presidentMessage, updated_by: user?.id, president_user_id: presidentUserId || null } as any)
         .eq('id', existing.id));
     } else {
       const { error: insError } = await supabase
         .from('president_message')
-        .insert({ content: presidentMessage, updated_by: user?.id, president_user_id: presidentUserId || null });
+        .insert({ content: presidentMessage, updated_by: user?.id, president_user_id: presidentUserId || null } as any);
       // Race condition: retry as update if unique violation
       if (insError?.code === '23505') {
         const { data: retry } = await supabase.from('president_message').select('id').maybeSingle();
         if (retry?.id) {
           ({ error } = await supabase
             .from('president_message')
-            .update({ content: presidentMessage, updated_by: user?.id, president_user_id: presidentUserId || null })
+            .update({ content: presidentMessage, updated_by: user?.id, president_user_id: presidentUserId || null } as any)
             .eq('id', retry.id));
         }
       } else {

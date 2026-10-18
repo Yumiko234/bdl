@@ -186,7 +186,6 @@ const Index = () => {
 
   useEffect(() => {
     loadPresidentMessage();
-    loadPresidentProfile();
     loadLatestContent();
   }, []);
 
@@ -194,28 +193,34 @@ const Index = () => {
     try {
       const { data } = await supabase
         .from("president_message")
-        .select("content")
+        .select("content, president_user_id")
         .maybeSingle();
-      if (data) setPresidentMessage(data.content);
-    } catch (err) {
-      console.error("loadPresidentMessage", err);
-    }
-  };
-
-  const loadPresidentProfile = async () => {
-    try {
-      const { data } = await supabase
-        .from("user_roles")
-        .select("user_id, role, profiles(full_name, avatar_url)")
-        .in("role", ["president", "presidente"])
-        .limit(1)
-        .maybeSingle();
-      if (data?.profiles) {
-        const p = data.profiles as any;
-        setPresidentProfile({ name: p.full_name, avatar: p.avatar_url, role: data.role });
+      if (data) {
+        setPresidentMessage(data.content);
+        if (data.president_user_id) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("full_name, avatar_url")
+            .eq("id", data.president_user_id)
+            .maybeSingle();
+          const { data: roleRow } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", data.president_user_id)
+            .in("role", ["president", "presidente"])
+            .limit(1)
+            .maybeSingle();
+          if (profile) {
+            setPresidentProfile({
+              name: (profile as any).full_name,
+              avatar: (profile as any).avatar_url,
+              role: roleRow?.role ?? "president",
+            });
+          }
+        }
       }
     } catch (err) {
-      console.error("loadPresidentProfile", err);
+      console.error("loadPresidentMessage", err);
     }
   };
 

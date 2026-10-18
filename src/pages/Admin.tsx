@@ -39,6 +39,8 @@ import { Button } from "@/components/ui/button";
 import { Badge }  from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { 
   Loader2, Newspaper, Calendar, FileText, Users,
   History, Phone, Building2, CalendarDays, Vote,
@@ -133,6 +135,8 @@ const Admin = () => {
   }, [activeSection, mobileOpen]);
   
   const [presidentMessage, setPresidentMessage] = useState("");
+  const [presidentUserId, setPresidentUserId] = useState<string>("");
+  const [presidentOptions, setPresidentOptions] = useState<{ id: string; full_name: string; role: string }[]>([]);
   const [audienceRequests, setAudienceRequests] = useState<AudienceRequest[]>([]);
   const [saving, setSaving] = useState(false);
 
@@ -144,6 +148,7 @@ const Admin = () => {
     if (user) {
         loadUserRoles();
         loadPresidentMessage();
+        loadPresidentOptions();
         loadAudienceRequests();
         supabase
           .from("support_tickets")
@@ -187,9 +192,26 @@ const Admin = () => {
   };
 
   const loadPresidentMessage = async () => {
-    const { data, error } = await supabase.from('president_message').select('content').single();
+    const { data, error } = await supabase.from('president_message').select('content, president_user_id').single();
     if (error) console.error("Erreur chargement message présidence", error);
-    else if (data) setPresidentMessage(data.content);
+    else if (data) {
+      setPresidentMessage(data.content);
+      if (data.president_user_id) setPresidentUserId(data.president_user_id);
+    }
+  };
+
+  const loadPresidentOptions = async () => {
+    const { data } = await supabase
+      .from('user_roles')
+      .select('user_id, role, profiles(full_name)')
+      .in('role', ['president', 'presidente']);
+    if (data) {
+      setPresidentOptions(data.map((r: any) => ({
+        id: r.user_id,
+        full_name: r.profiles?.full_name ?? r.user_id,
+        role: r.role,
+      })));
+    }
   };
 
   const loadAudienceRequests = async () => {
@@ -209,19 +231,19 @@ const Admin = () => {
     if (existing?.id) {
       ({ error } = await supabase
         .from('president_message')
-        .update({ content: presidentMessage, updated_by: user?.id })
+        .update({ content: presidentMessage, updated_by: user?.id, president_user_id: presidentUserId || null })
         .eq('id', existing.id));
     } else {
       const { error: insError } = await supabase
         .from('president_message')
-        .insert({ content: presidentMessage, updated_by: user?.id });
+        .insert({ content: presidentMessage, updated_by: user?.id, president_user_id: presidentUserId || null });
       // Race condition: retry as update if unique violation
       if (insError?.code === '23505') {
         const { data: retry } = await supabase.from('president_message').select('id').maybeSingle();
         if (retry?.id) {
           ({ error } = await supabase
             .from('president_message')
-            .update({ content: presidentMessage, updated_by: user?.id })
+            .update({ content: presidentMessage, updated_by: user?.id, president_user_id: presidentUserId || null })
             .eq('id', retry.id));
         }
       } else {
@@ -351,6 +373,21 @@ const Admin = () => {
         <Card>
           <CardHeader><CardTitle className="flex items-center gap-2"><MessageSquare className="h-5 w-5" /> Message de la Présidence</CardTitle></CardHeader>
           <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Président(e) affiché(e)</Label>
+              <Select value={presidentUserId} onValueChange={setPresidentUserId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner un(e) président(e)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {presidentOptions.map((opt) => (
+                    <SelectItem key={opt.id} value={opt.id}>
+                      {opt.full_name} — {opt.role === 'presidente' ? 'Présidente' : 'Président'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <RichTextEditor value={presidentMessage} onChange={setPresidentMessage} />
             <Button onClick={handleSaveMessage} disabled={saving}>{saving ? "Enregistrement..." : "Mettre à jour le message"}</Button>
           </CardContent>

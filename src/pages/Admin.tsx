@@ -226,6 +226,7 @@ const Admin = () => {
   const handleSaveMessage = async () => {
     if (primaryRole !== 'president' && primaryRole !== 'presidente' && primaryRole !== 'administrator') return;
     setSaving(true);
+    console.log("[handleSaveMessage] presidentUserId =", presidentUserId);
     const { data: existing } = await supabase.from('president_message').select('id').maybeSingle();
     let error;
     if (existing?.id) {
@@ -250,7 +251,7 @@ const Admin = () => {
         error = insError;
       }
     }
-    if (error) toast.error("Erreur de sauvegarde");
+    if (error) { console.error("[handleSaveMessage] erreur update:", error); toast.error("Erreur de sauvegarde"); }
     else toast.success("Message mis à jour");
     setSaving(false);
   };

@@ -24,7 +24,7 @@ export const CATALOGUE: Record<EventThemeId, CatalogueEntry> = {
     name: "Halloween",
     icon: "🎃",
     description: "Ambiance Halloween — fin octobre",
-    defaultDateRange: { startMonth: 10, startDay: 25, endMonth: 11, endDay: 1 },
+    defaultDateRange: { startMonth: 10, startDay: 23, endMonth: 11, endDay: 2 },
     defaultPriority: 90,
     defaultEffects: {
       glow: true,

@@ -57,7 +57,7 @@ export const AdminDashboard = () => {
           supabase.from("profiles").select("*", { count: "exact", head: true }).gte("created_at", oneWeekAgo),
           supabase.from("scrutin_votes").select("scrutin_id, scrutins!inner(status)", { count: "exact", head: true }).eq("scrutins.status", "open"),
           supabase.from("news").select("*", { count: "exact", head: true }).not("published_at", "is", null),
-          supabase.from("profiles").select("first_name, last_name, class_name, created_at").order("created_at", { ascending: false }).not("first_name", "is", null).limit(5),
+          supabase.from("profiles").select("first_name, last_name, class_name, created_at").order("created_at", { ascending: false }).not("first_name", "is", null).not("last_name", "is", null).limit(5),
         ]);
 
         setStats({

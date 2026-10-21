@@ -44,14 +44,14 @@ export const developers: Developer[] = [
     fullName: "Alexandre Lejal",
     handle: "@Yumiko234",
     role: "Consultant — Fondateur et propriétaire du site",
-    tagline: "Je suis censé être en L1 Droit, qu'est-ce que je fou là ?",
+    tagline: "Je suis censé être en L1 Droit, qu'est-ce que je fous là ?",
     accent: "217 91% 55%", 
     avatarInitials: "AL",
     avatarUrl: "https://ppmlhjcwdyaarbqpngla.supabase.co/storage/v1/object/public/avatars/avatars/13017c3d-e4bb-4e30-aed1-721e321512d7-1772204554404.jpg",
     bio: [
 
       "À l'origine Président du Bureau, j'ai voulu lui donner une seconde vie en le mettant à l'ère du numérique. Les actus, sondages, JoBDL, intranet, etc... c'est mon œuvre !",
-      "Heureusement que Maël est là, il m'apporte une réelle expertise et sait trouver les petits bugs là où je ne vois qu'une raison de m'énnerver.",
+      "Heureusement que Maël est là, il m'apporte une réelle expertise et sait trouver les petits bugs là où je ne vois qu'une raison de m'énerver.",
     ],
     skillsLabel: "Droit",
     stack: [

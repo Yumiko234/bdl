@@ -25,6 +25,8 @@ import {
   EyeOff,
   Megaphone as BannerIcon,
   X,
+  RefreshCw,
+  CalendarClock,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -48,6 +50,7 @@ interface Banner {
   is_bold: boolean;
   is_italic: boolean;
   expires_at: string | null;
+  auto_display_at: string | null;
   is_active: boolean;
   created_at: string;
 }
@@ -98,6 +101,7 @@ const DEFAULT_FORM = {
   is_bold: false,
   is_italic: false,
   expires_at: "",
+  auto_display_at: "",
   is_active: true,
 };
 
@@ -117,11 +121,38 @@ export const BannerManagement = () => {
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (!error && data) {
-      setBanners(data as Banner[]);
-    } else if (error) {
+    if (error) {
       toast.error("Erreur lors du chargement des bandeaux");
+      return;
     }
+    if (!data) return;
+
+    // Auto-activation des bandeaux planifiés
+    const now = new Date();
+    const scheduledToActivate = (data as Banner[]).filter(
+      (b) =>
+        b.auto_display_at &&
+        new Date(b.auto_display_at) <= now &&
+        !b.is_active &&
+        (!b.expires_at || new Date(b.expires_at) > now)
+    );
+
+    if (scheduledToActivate.length > 0) {
+      const toActivate = scheduledToActivate.sort(
+        (a, b) => new Date(b.auto_display_at!).getTime() - new Date(a.auto_display_at!).getTime()
+      )[0];
+      await supabase.from("global_banners").update({ is_active: false } as any).eq("is_active", true);
+      await supabase.from("global_banners").update({ is_active: true } as any).eq("id", toActivate.id);
+      toast.success(`Bandeau activé automatiquement : "${toActivate.message.substring(0, 40)}..."`);
+      const { data: freshData } = await supabase
+        .from("global_banners")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (freshData) setBanners(freshData as Banner[]);
+      return;
+    }
+
+    setBanners(data as Banner[]);
   };
 
   const handleCreate = async () => {
@@ -134,6 +165,7 @@ export const BannerManagement = () => {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError) { toast.error("Erreur d'authentification"); setLoading(false); return; }
 
+    const isScheduled = !!form.auto_display_at;
     const payload = {
       message: form.message,
       color: form.color,
@@ -142,13 +174,14 @@ export const BannerManagement = () => {
       font_style: form.font_style,
       is_bold: form.is_bold,
       is_italic: form.is_italic,
-      is_active: form.is_active,
+      is_active: isScheduled ? false : form.is_active,
       created_by: user?.id,
       expires_at: form.expires_at ? new Date(form.expires_at).toISOString() : null,
+      auto_display_at: form.auto_display_at ? new Date(form.auto_display_at).toISOString() : null,
     };
 
-    // If activating this banner, deactivate all others first
-    if (form.is_active) {
+    // If activating this banner immediately (no schedule), deactivate all others first
+    if (!isScheduled && form.is_active) {
       const { error: deactivateError } = await supabase
         .from("global_banners")
         .update({ is_active: false })
@@ -208,9 +241,34 @@ export const BannerManagement = () => {
     }
   };
 
+  const handleRelaunch = async (banner: Banner) => {
+    const { error: deactivateError } = await supabase
+      .from("global_banners")
+      .update({ is_active: false } as any)
+      .eq("is_active", true);
+    if (deactivateError) { toast.error("Erreur lors de la désactivation"); return; }
+
+    const { error } = await supabase
+      .from("global_banners")
+      .update({ is_active: true, expires_at: null } as any)
+      .eq("id", banner.id);
+
+    if (error) {
+      toast.error("Erreur lors du relancement");
+    } else {
+      toast.success("Bandeau relancé (expiration supprimée)");
+      loadBanners();
+    }
+  };
+
   const isExpired = (expiresAt: string | null) => {
     if (!expiresAt) return false;
     return new Date(expiresAt) < new Date();
+  };
+
+  const isPending = (autoDisplayAt: string | null) => {
+    if (!autoDisplayAt) return false;
+    return new Date(autoDisplayAt) > new Date();
   };
 
   // Live preview
@@ -403,6 +461,27 @@ export const BannerManagement = () => {
               </div>
             </div>
 
+            {/* Date d'affichage automatique */}
+            <div className="space-y-2">
+              <Label htmlFor="auto_display_at" className="flex items-center gap-2">
+                <CalendarClock className="h-4 w-4" />
+                Date d'affichage automatique{" "}
+                <span className="text-muted-foreground text-xs font-normal">(optionnel)</span>
+              </Label>
+              <Input
+                id="auto_display_at"
+                type="datetime-local"
+                value={form.auto_display_at}
+                onChange={(e) => setForm({ ...form, auto_display_at: e.target.value, is_active: false })}
+              />
+              {form.auto_display_at && (
+                <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded px-3 py-2">
+                  ⚡ À cette date, ce bandeau sera activé automatiquement et tous les bandeaux en cours seront désactivés.
+                  Le switch « Actif immédiatement » est ignoré.
+                </p>
+              )}
+            </div>
+
             {/* Date d'expiration */}
             <div className="space-y-2">
               <Label htmlFor="expires_at">
@@ -434,6 +513,7 @@ export const BannerManagement = () => {
           ) : (
             banners.map((banner) => {
               const expired = isExpired(banner.expires_at);
+              const pending = isPending(banner.auto_display_at);
               const iconEl = ICON_RENDER_MAP[banner.icon] ?? null;
 
               return (
@@ -441,7 +521,7 @@ export const BannerManagement = () => {
                   {/* Mini preview */}
                   <div
                     className="py-2 px-4 flex items-center justify-center gap-2 text-sm"
-                    style={{ backgroundColor: banner.color }}
+                    style={{ backgroundColor: banner.color, opacity: expired ? 0.6 : 1 }}
                   >
                     {iconEl && (
                       <span style={{ color: banner.text_color }}>{iconEl}</span>
@@ -465,11 +545,22 @@ export const BannerManagement = () => {
                           <Badge className="bg-green-600 text-white">Actif</Badge>
                         ) : expired ? (
                           <Badge variant="destructive">Expiré</Badge>
+                        ) : pending ? (
+                          <Badge className="bg-amber-500 text-white flex items-center gap-1">
+                            <CalendarClock className="h-3 w-3" />
+                            Planifié
+                          </Badge>
                         ) : (
                           <Badge variant="secondary">Inactif</Badge>
                         )}
 
-                        {banner.expires_at && !expired && (
+                        {pending && banner.auto_display_at && (
+                          <span className="text-xs text-amber-600 dark:text-amber-400">
+                            Affichage le {new Date(banner.auto_display_at).toLocaleString("fr-FR")}
+                          </span>
+                        )}
+
+                        {banner.expires_at && !expired && !pending && (
                           <span className="text-xs text-muted-foreground">
                             Expire le {new Date(banner.expires_at).toLocaleString("fr-FR")}
                           </span>
@@ -481,19 +572,31 @@ export const BannerManagement = () => {
                       </div>
 
                       <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleToggleActive(banner)}
-                          disabled={expired}
-                          title={banner.is_active ? "Désactiver" : "Activer"}
-                        >
-                          {banner.is_active ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </Button>
+                        {expired ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleRelaunch(banner)}
+                            title="Relancer ce bandeau (supprime l'expiration)"
+                            className="gap-1 text-xs"
+                          >
+                            <RefreshCw className="h-4 w-4" />
+                            Relancer
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleToggleActive(banner)}
+                            title={banner.is_active ? "Désactiver" : "Activer"}
+                          >
+                            {banner.is_active ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </Button>
+                        )}
 
                         <AlertDialog>
                           <AlertDialogTrigger asChild>

@@ -20,7 +20,16 @@ import { ProfilePhotoUpload } from "@/components/ProfilePhotoUpload";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { User, Mail, Shield, Trash, MailMinus } from "lucide-react";
+import { User, Trash, Trash2, AlertTriangle, Info } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 import { roleLabel } from "@/lib/roles";
 
@@ -68,6 +77,11 @@ const Profile = () => {
     password: "",
     confirmPassword: ""
   });
+
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteChecked, setDeleteChecked] = useState(false);
+  const [deleteEmail, setDeleteEmail] = useState("");
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   /* ===================== LOAD PROFILE ===================== */
 
@@ -210,6 +224,36 @@ const Profile = () => {
     } catch (error) {
       console.error(error);
       toast.error("Erreur lors du changement de mot de passe");
+    }
+  };
+
+  /* ===================== DELETE ACCOUNT ===================== */
+
+  const handleDeleteAccount = async () => {
+    if (!user || deleteEmail !== profile?.email || !deleteChecked) return;
+    setDeleteLoading(true);
+    try {
+      const scheduledAt = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString();
+      const { error } = await supabase.from("deletion_requests").upsert(
+        {
+          user_id: user.id,
+          requested_at: new Date().toISOString(),
+          scheduled_deletion_at: scheduledAt,
+          cancelled_at: null,
+        },
+        { onConflict: "user_id" }
+      );
+      if (error) throw error;
+
+      toast.success("Demande enregistrée. Votre compte sera supprimé dans 10 jours. Reconnectez-vous pour annuler.");
+      setDeleteOpen(false);
+      await supabase.auth.signOut();
+      navigate("/");
+    } catch (err) {
+      console.error(err);
+      toast.error("Erreur lors de la demande de suppression. Réessayez.");
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -393,9 +437,128 @@ const Profile = () => {
                 </CardContent>
               </Card>
 
+              {/* ZONE DANGEREUSE */}
+              <Card className="shadow-card border-destructive/40">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-destructive">
+                    <AlertTriangle className="h-5 w-5" />
+                    Zone dangereuse
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    La suppression de votre compte est définitive après un délai de 10 jours.
+                    Vous pouvez l'annuler à tout moment en vous reconnectant pendant ce délai.
+                  </p>
+                  <Button
+                    variant="destructive"
+                    className="gap-2"
+                    onClick={() => setDeleteOpen(true)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Supprimer mon compte
+                  </Button>
+                </CardContent>
+              </Card>
+
             </div>
           </div>
         </section>
+
+        {/* DIALOG SUPPRESSION */}
+        <Dialog
+          open={deleteOpen}
+          onOpenChange={(o) => {
+            setDeleteOpen(o);
+            if (!o) { setDeleteEmail(""); setDeleteChecked(false); }
+          }}
+        >
+          <DialogContent className="border-destructive/50 max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-destructive">
+                <AlertTriangle className="h-5 w-5" />
+                Supprimer votre compte
+              </DialogTitle>
+              <DialogDescription>
+                Cette action est définitive passé le délai de rétractation.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              {/* Ce qui sera supprimé */}
+              <div className="rounded-md bg-destructive/10 border border-destructive/30 p-4 space-y-2 text-sm">
+                <p className="font-semibold text-destructive">Ce qui sera supprimé :</p>
+                <ul className="list-disc pl-4 space-y-1 text-foreground/80">
+                  <li>Votre compte et vos informations personnelles</li>
+                  <li>Votre historique de votes et sondages</li>
+                  <li>Vos inscriptions aux événements</li>
+                  <li>Votre photo de profil</li>
+                  <li>Tous vos messages et participations</li>
+                </ul>
+              </div>
+
+              {/* Délai de rétractation */}
+              <div className="rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-3 text-sm text-amber-800 dark:text-amber-200 flex gap-2">
+                <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                <span>
+                  Vous avez <strong>10 jours</strong> pour changer d'avis.
+                  Il vous suffit de vous reconnecter avec vos identifiants pour annuler la suppression automatiquement.
+                </span>
+              </div>
+
+              {/* Checkbox confirmation */}
+              <div className="flex items-start gap-2">
+                <Checkbox
+                  id="delete-check"
+                  checked={deleteChecked}
+                  onCheckedChange={(c) => setDeleteChecked(c as boolean)}
+                />
+                <Label htmlFor="delete-check" className="text-sm cursor-pointer leading-snug">
+                  Je comprends que la suppression définitive de mon compte sera effective
+                  dans 10 jours et est irréversible
+                </Label>
+              </div>
+
+              {/* Email de confirmation */}
+              <div className="space-y-1.5">
+                <Label htmlFor="delete-email" className="text-sm">
+                  Pour confirmer, saisissez votre adresse email :
+                </Label>
+                <Input
+                  id="delete-email"
+                  type="email"
+                  value={deleteEmail}
+                  onChange={(e) => setDeleteEmail(e.target.value)}
+                  placeholder={profile?.email || ""}
+                  disabled={!deleteChecked}
+                  className={deleteChecked && deleteEmail && deleteEmail !== profile?.email
+                    ? "border-destructive focus-visible:ring-destructive"
+                    : ""}
+                />
+                {deleteChecked && deleteEmail && deleteEmail !== profile?.email && (
+                  <p className="text-xs text-destructive">L'adresse ne correspond pas à votre compte</p>
+                )}
+              </div>
+            </div>
+
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => setDeleteOpen(false)}>
+                Annuler
+              </Button>
+              <Button
+                variant="destructive"
+                disabled={!deleteChecked || deleteEmail !== profile?.email || deleteLoading}
+                onClick={handleDeleteAccount}
+                className="gap-2"
+              >
+                {deleteLoading
+                  ? "Traitement…"
+                  : <><Trash2 className="h-4 w-4" /> Supprimer définitivement</>
+                }
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         </MaintenanceOverlay>
       </main>
 

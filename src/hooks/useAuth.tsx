@@ -29,12 +29,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+
+        // Auto-annuler une demande de suppression si l'utilisateur se reconnecte
+        if (event === "SIGNED_IN" && session) {
+          supabase.rpc("cancel_account_deletion" as any).then(({ data }) => {
+            if (data === true) {
+              toast.success("Bienvenue ! Votre demande de suppression de compte a été annulée.");
+            }
+          });
+        }
       }
     );
 

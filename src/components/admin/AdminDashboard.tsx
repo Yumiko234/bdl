@@ -54,6 +54,11 @@ export const AdminDashboard = () => {
   }, [user]);
 
   useEffect(() => {
+    if (!userGreeting) return;
+    if (rolePrecedence[userGreeting.role] > 5) {
+      setLoading(false);
+      return;
+    }
     const load = async () => {
       try {
         const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -101,7 +106,7 @@ export const AdminDashboard = () => {
       }
     };
     load();
-  }, []);
+  }, [userGreeting]);
 
   const statCards = stats ? [
     {
@@ -180,7 +185,7 @@ export const AdminDashboard = () => {
       )}
 
       {/* Stat cards — réservés aux rangs ≤ 5 (communication_manager et au-dessus) */}
-      {(!userGreeting || rolePrecedence[userGreeting.role] <= 5) && <>{/* Stat cards */}
+      {userGreeting && rolePrecedence[userGreeting.role] <= 5 && <>{/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         {loading
           ? Array.from({ length: 6 }).map((_, i) => (

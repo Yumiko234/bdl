@@ -350,7 +350,18 @@ const Admin = () => {
 
   const renderSection = () => {
     const requestedItem = NAV_ITEMS.find((i) => i.id === activeSection);
-    if (requestedItem?.minRank && userRank > requestedItem.minRank) return null;
+    if (requestedItem?.minRank && userRank > requestedItem.minRank) return (
+      <div className="flex flex-col items-center justify-center py-24 text-center gap-4">
+        <Shield className="h-12 w-12 text-muted-foreground/40" />
+        <h2 className="text-xl font-semibold">Accès non autorisé</h2>
+        <p className="text-sm text-muted-foreground max-w-sm">
+          Cette section est réservée aux responsables BDL. Votre rôle actuel ne permet pas d'y accéder.
+        </p>
+        <Button variant="outline" size="sm" onClick={() => navigate("/admin/dashboard")}>
+          Retour au tableau de bord
+        </Button>
+      </div>
+    );
 
     switch (activeSection) {
       case "news":          return <NewsManagement         isPresident={isPresident} />;

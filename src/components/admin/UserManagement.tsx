@@ -11,6 +11,8 @@ import { Users, UserPlus, Shield } from "lucide-react";
 
 const ROLE_KEYS = [
   "administrator",
+  "consultante",
+  "consultant",
   "president",
   "presidente",
   "vice_president",
@@ -27,6 +29,8 @@ type RoleKey = typeof ROLE_KEYS[number];
 
 const rolePrecedence: Record<RoleKey, number> = {
   administrator: 1,
+  consultante: 1.4,
+  consultant: 1.5,
   president: 2,
   presidente: 2,
   vice_president: 3,
@@ -42,6 +46,8 @@ const rolePrecedence: Record<RoleKey, number> = {
 
 const roleLabel = (r: RoleKey | string) =>
   r === "administrator"          ? "Administrateur" :
+  r === "consultante"            ? "Consultante" :
+  r === "consultant"             ? "Consultant" :
   r === "president"              ? "Président" :
   r === "presidente"             ? "Présidente" :
   r === "vice_president"         ? "Vice-président" :

@@ -173,7 +173,7 @@ const Admin = () => {
 
       // administrator + tous les rôles BDL ont accès
       const isBDLStaff = roles.some((r) =>
-        ['administrator', 'president', 'presidente', 'vice_president', 'vice_presidente', 'secretary_general', 'secretary_general2', 'communication_manager', 'communication_manager2', 'bdl_member'].includes(r)
+        ['administrator', 'consultante', 'consultant','president', 'presidente', 'vice_president', 'vice_presidente', 'secretary_general', 'secretary_general2', 'communication_manager', 'communication_manager2', 'bdl_member'].includes(r)
       );
 
       if (!isBDLStaff) {

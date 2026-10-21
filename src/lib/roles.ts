@@ -3,6 +3,8 @@
 
 export const ROLE_KEYS = [
   "administrator",
+  "consultante",
+  "consultant",
   "president",
   "presidente",
   "vice_president",
@@ -21,6 +23,8 @@ export type RoleKey = typeof ROLE_KEYS[number];
 // Lower number = higher precedence
 export const rolePrecedence: Record<RoleKey, number> = {
   administrator: 1,
+  consultante: 1.4,
+  consultant: 1.5,
   president: 2,
   presidente: 2,
   vice_president: 3,
@@ -36,6 +40,8 @@ export const rolePrecedence: Record<RoleKey, number> = {
 
 export const roleLabel = (r: string): string =>
   r === "administrator"          ? "Administrateur"        :
+  r === "consultante"            ? "Consultante"           :
+  r === "consultant"             ? "Consultant"            :  
   r === "president"              ? "Président"             :
   r === "presidente"             ? "Présidente"            :
   r === "vice_president"         ? "Vice-Président"        :

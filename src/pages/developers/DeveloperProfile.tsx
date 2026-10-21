@@ -72,8 +72,8 @@ const DeveloperProfile = () => {
         {/* Breadcrumb / retour */}
         <div className="relative container mx-auto px-4 pt-8">
           <div className="flex items-center justify-between flex-wrap gap-3">
-            <Link to="/developpers" className="inline-flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors font-mono">
-              <ChevronLeft className="h-4 w-4" /> /developpers
+            <Link to="/developers" className="inline-flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors font-mono">
+              <ChevronLeft className="h-4 w-4" /> /developers
             </Link>
             <div className="flex items-center gap-2">
               {others.map((o) => (

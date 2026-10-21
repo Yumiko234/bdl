@@ -1,4 +1,4 @@
-export type EventThemeId = "pink-october" | "halloween";
+export type EventThemeId = "pink-october" | "halloween" | "noel";
 
 export type GlobalMode = "auto" | "normal" | `force:${EventThemeId}`;
 
@@ -19,6 +19,9 @@ export interface ThemeEffectConfig {
   halloweenParticles?: boolean;
   bats?: boolean;
   pumpkins?: boolean;
+  // Noël
+  snowflakes?: boolean;
+  christmasGlow?: boolean;
 }
 
 export type EffectKey = keyof ThemeEffectConfig;

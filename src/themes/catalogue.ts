@@ -40,7 +40,25 @@ export const CATALOGUE: Record<EventThemeId, CatalogueEntry> = {
       pumpkins: "Citrouilles",
     },
   },
+
+  noel: {
+    id: "noel",
+    name: "Noël",
+    icon: "🎄",
+    description: "Ambiance Noël — décembre / début janvier",
+    defaultDateRange: { startMonth: 12, startDay: 1, endMonth: 1, endDay: 6 },
+    defaultPriority: 95,
+    defaultEffects: {
+      snowflakes: true,
+      christmasGlow: true,
+    },
+    availableEffects: ["snowflakes", "christmasGlow"],
+    effectLabels: {
+      snowflakes: "Flocons de neige",
+      christmasGlow: "Lueurs & décorations",
+    },
+  },
 };
 
 // Ordered list used as tiebreaker in priority resolution
-export const CATALOGUE_ORDER: EventThemeId[] = ["pink-october", "halloween"];
+export const CATALOGUE_ORDER: EventThemeId[] = ["pink-october", "halloween", "noel"];

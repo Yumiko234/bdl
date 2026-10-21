@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Link } from "react-router-dom";
 import { ChevronRight, FileText, Users, MessageCircle, AlertCircle, Vote, X, Headphones, Instagram, ExternalLink, Pin, BookUser } from "lucide-react";
-import logo from "@/assets/logo-bdl.jpeg";
+import { useBdlLogo } from "@/hooks/useBdlLogo";
 import { supabase } from "@/integrations/supabase/client";
 import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 import { safeHtml } from "@/lib/sanitize";
@@ -175,6 +175,7 @@ const Index = () => {
     description: "Site officiel du Bureau des Lycéens du Lycée Saint-André : actualités, événements, documents et espace intranet.",
     url: "/",
   });
+  const logo = useBdlLogo();
   const [presidentMessage, setPresidentMessage] = useState("");
   const [presidentProfile, setPresidentProfile] = useState<{ name: string; avatar: string | null; role: string } | null>(null);
   const [latestNews, setLatestNews] = useState<any[]>([]);

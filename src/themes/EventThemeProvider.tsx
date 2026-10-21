@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
 } from "react";
+import logoBdlNoel from "@/assets/logo-bdl-noel.png";
 import type {
   EventThemeContextValue,
   EventThemeId,
@@ -160,6 +161,19 @@ export function EventThemeProvider({ children }: Props) {
   // Apply data-event-theme to <html>
   useEffect(() => {
     applyThemeAttribute(resolved.id);
+  }, [resolved.id]);
+
+  // Swap favicon for Noël theme
+  useEffect(() => {
+    const DEFAULT_FAVICON = "https://storage.googleapis.com/gpt-engineer-file-uploads/PFH58AOHWBX3P9oafmX078UDBlx2/uploads/1760107895218-IMG_2736.jpeg";
+    let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+    if (!link) {
+      link = document.createElement("link");
+      link.rel = "icon";
+      link.type = "image/png";
+      document.head.appendChild(link);
+    }
+    link.href = resolved.id === "noel" ? logoBdlNoel : DEFAULT_FAVICON;
   }, [resolved.id]);
 
   const setMode = useCallback((mode: GlobalMode) => {

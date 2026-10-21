@@ -5,6 +5,8 @@ import { HalloweenGlowEffect } from "./effects/HalloweenGlowEffect";
 import { HalloweenParticlesEffect } from "./effects/HalloweenParticlesEffect";
 import { HalloweenBatsEffect } from "./effects/HalloweenBatsEffect";
 import { HalloweenPumpkinsEffect } from "./effects/HalloweenPumpkinsEffect";
+import { ChristmasSnowflakesEffect } from "./effects/ChristmasSnowflakesEffect";
+import { ChristmasGlowEffect } from "./effects/ChristmasGlowEffect";
 
 // Rendered once at the app root. Fixed, pointer-events:none, z-index below nav (z-50).
 // overflow:hidden on the container prevents any effect from causing horizontal scroll.
@@ -40,6 +42,13 @@ export function EventThemeOverlay() {
           {fx.halloweenParticles && <HalloweenParticlesEffect />}
           {fx.bats && <HalloweenBatsEffect />}
           {fx.pumpkins && <HalloweenPumpkinsEffect />}
+        </>
+      )}
+
+      {id === "noel" && (
+        <>
+          {fx.snowflakes && <ChristmasSnowflakesEffect />}
+          {fx.christmasGlow && <ChristmasGlowEffect />}
         </>
       )}
     </div>

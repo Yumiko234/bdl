@@ -299,6 +299,65 @@ html.dark[data-event-theme="pink-october"] {
   --ring: 335 80% 65%;
 }
 
+/* ── Noël ─────────────────────────────────────────────────── */
+
+/* Light */
+html[data-event-theme="noel"] {
+  --gradient-institutional: linear-gradient(135deg, hsl(145 55% 22%) 0%, hsl(145 50% 16%) 50%, hsl(0 60% 24%) 100%);
+  --event-primary: 0 72% 48%;
+  --event-secondary: 145 55% 38%;
+  --event-accent: 0 75% 48%;
+  --event-decoration: 145 52% 32%;
+  --event-particle: 200 60% 88%;
+  --event-glow: 145 55% 38% / 0.22;
+  /* Palette site — vert sapin + rouge Noël */
+  --background: 145 18% 98%;
+  --foreground: 145 30% 10%;
+  --card: 145 12% 96%;
+  --card-foreground: 145 30% 10%;
+  --popover: 145 15% 98%;
+  --popover-foreground: 145 30% 10%;
+  --primary: 145 52% 28%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 145 22% 88%;
+  --secondary-foreground: 145 35% 15%;
+  --muted: 145 18% 92%;
+  --muted-foreground: 145 20% 40%;
+  --accent: 0 72% 45%;
+  --accent-foreground: 0 0% 100%;
+  --border: 145 18% 84%;
+  --input: 145 18% 84%;
+  --ring: 145 52% 28%;
+}
+
+/* Dark */
+html.dark[data-event-theme="noel"] {
+  --gradient-institutional: linear-gradient(135deg, hsl(145 48% 16%) 0%, hsl(145 44% 11%) 50%, hsl(0 55% 18%) 100%);
+  --event-primary: 0 78% 60%;
+  --event-secondary: 145 60% 50%;
+  --event-accent: 0 78% 58%;
+  --event-decoration: 145 58% 48%;
+  --event-particle: 200 70% 92%;
+  --event-glow: 145 58% 42% / 0.32;
+  --background: 145 14% 7%;
+  --foreground: 145 18% 94%;
+  --card: 145 12% 11%;
+  --card-foreground: 145 18% 94%;
+  --popover: 145 12% 13%;
+  --popover-foreground: 145 18% 94%;
+  --primary: 145 55% 44%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 145 15% 17%;
+  --secondary-foreground: 145 18% 90%;
+  --muted: 145 14% 17%;
+  --muted-foreground: 145 14% 60%;
+  --accent: 0 75% 54%;
+  --accent-foreground: 0 0% 100%;
+  --border: 145 16% 22%;
+  --input: 145 16% 22%;
+  --ring: 145 55% 44%;
+}
+
 /* ── Halloween ────────────────────────────────────────────── */
 
 /* Light */
@@ -417,6 +476,41 @@ html.dark[data-event-theme="halloween"] {
   50%       { transform: rotate(4deg) translateY(-4px); }
 }
 
+/* ── Noël ─────────────────────────────────────────────────── */
+@keyframes noelSnowFall {
+  0%   { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0; }
+  8%   { opacity: 1; }
+  50%  { transform: translateY(50vh) translateX(15px) rotate(180deg); }
+  92%  { opacity: 0.8; }
+  100% { transform: translateY(105vh) translateX(-10px) rotate(360deg); opacity: 0; }
+}
+@keyframes noelSnowFallB {
+  0%   { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0; }
+  8%   { opacity: 1; }
+  50%  { transform: translateY(50vh) translateX(-18px) rotate(-180deg); }
+  92%  { opacity: 0.8; }
+  100% { transform: translateY(105vh) translateX(12px) rotate(-360deg); opacity: 0; }
+}
+@keyframes noelGlowPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.6; transform: scale(1.1); }
+}
+@keyframes noelSway {
+  0%, 100% { transform: rotate(-5deg); }
+  50%       { transform: rotate(4deg); }
+}
+@keyframes noelStarTwinkle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.85); }
+}
+@keyframes noelItsTime {
+  0%   { transform: translateX(-50%) translateY(0) scale(0.7); opacity: 0; }
+  10%  { transform: translateX(-50%) translateY(-10px) scale(1.2); opacity: 1; }
+  40%  { transform: translateX(-50%) translateY(-35px) scale(1.05); opacity: 1; }
+  85%  { transform: translateX(-50%) translateY(-80px) scale(0.95); opacity: 0.8; }
+  100% { transform: translateX(-50%) translateY(-110px) scale(0.85); opacity: 0; }
+}
+
 /* ── Effet boum (clic sur icône) ─────────────────────────── */
 @keyframes boumFloat {
   0%   { transform: translateX(-50%) translateY(0) scale(0.6); opacity: 0; }
@@ -438,7 +532,8 @@ html.dark[data-event-theme="halloween"] {
   .pink-particle--desktop,
   .hw-particle--desktop,
   .hw-bat--desktop,
-  .hw-pumpkin--desktop { display: none !important; }
+  .hw-pumpkin--desktop,
+  .noel--desktop { display: none !important; }
 }
 
 /* Supprimer les mouvements si l'utilisateur le préfère */

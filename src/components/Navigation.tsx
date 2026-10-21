@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Menu, X, User, LogOut, LayoutDashboard, Ticket } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
-import logoBdl from "@/assets/logo-bdl.jpeg";
+import { useBdlLogo } from "@/hooks/useBdlLogo";
 import GlobalBanner from "./GlobalBanner";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +16,7 @@ const Navigation = () => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
+  const logoBdl = useBdlLogo();
   const [navProfile, setNavProfile] = useState<{ full_name: string; avatar_url: string | null } | null>(null);
   const [unreadTickets, setUnreadTickets] = useState(0);
 

@@ -1,11 +1,12 @@
 import { Link } from "react-router-dom";
-import logoBdl from "@/assets/logo-bdl.jpeg";
 import { safeHtml } from "@/lib/sanitize";
 import { useDarkMode } from "@/hooks/useDarkMode";
+import { useBdlLogo } from "@/hooks/useBdlLogo";
 import { Monitor, Moon, Sun } from "lucide-react";
 
 const Footer = () => {
   const { theme, setTheme } = useDarkMode();
+  const logoBdl = useBdlLogo();
 
   return (
     <footer className="bg-secondary text-secondary-foreground mt-20">

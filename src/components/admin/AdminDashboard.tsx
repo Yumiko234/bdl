@@ -173,7 +173,14 @@ export const AdminDashboard = () => {
         <p className="text-sm text-muted-foreground">Vue d'ensemble de l'activité BDL</p>
       </div>
 
-      {/* Stat cards */}
+      {userGreeting && rolePrecedence[userGreeting.role] > 5 && (
+        <p className="text-sm text-muted-foreground bg-muted/40 rounded-lg px-4 py-3">
+          Bienvenue dans l'espace d'administration. Les statistiques détaillées sont réservées aux responsables BDL.
+        </p>
+      )}
+
+      {/* Stat cards — réservés aux rangs ≤ 5 (communication_manager et au-dessus) */}
+      {(!userGreeting || rolePrecedence[userGreeting.role] <= 5) && <>{/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         {loading
           ? Array.from({ length: 6 }).map((_, i) => (
@@ -328,6 +335,8 @@ export const AdminDashboard = () => {
           )}
         </CardContent>
       </Card>
+
+      </>}
 
       {/* Accès rapides */}
       <Card className="shadow-card">

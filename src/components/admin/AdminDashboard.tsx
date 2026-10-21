@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, Vote, Headphones, Newspaper, TrendingUp, Clock } from "lucide-react";
+import { Users, Vote, Headphones, Newspaper, TrendingUp, Clock, UserPlus, BarChart2 } from "lucide-react";
 
 interface Stats {
   members: number;
@@ -13,23 +13,40 @@ interface Stats {
   latestNews: { title: string; published_at: string } | null;
   totalUsers: number;
   openSurveys: number;
+  newUsersThisWeek: number;
+  openScrutinVotes: number;
+  publishedNews: number;
+}
+
+interface RecentUser {
+  first_name: string | null;
+  last_name: string | null;
+  class_name: string | null;
+  created_at: string;
 }
 
 export const AdminDashboard = () => {
   const navigate = useNavigate();
   const [stats, setStats] = useState<Stats | null>(null);
+  const [recentUsers, setRecentUsers] = useState<RecentUser[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
       try {
+        const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
         const [
-          { count: members, error: e1 },
-          { count: openScrutins, error: e2 },
-          { count: pendingTickets, error: e3 },
-          { data: latestNewsData, error: e4 },
-          { count: totalUsers, error: e5 },
-          { count: openSurveys, error: e6 },
+          { count: members },
+          { count: openScrutins },
+          { count: pendingTickets },
+          { data: latestNewsData },
+          { count: totalUsers },
+          { count: openSurveys },
+          { count: newUsersThisWeek },
+          { count: openScrutinVotes },
+          { count: publishedNews },
+          { data: recentUsersData },
         ] = await Promise.all([
           supabase.from("bdl_members").select("*", { count: "exact", head: true }),
           supabase.from("scrutins").select("*", { count: "exact", head: true }).eq("status", "open"),
@@ -37,10 +54,11 @@ export const AdminDashboard = () => {
           supabase.from("news").select("title, published_at").order("published_at", { ascending: false }).limit(1),
           supabase.from("profiles").select("*", { count: "exact", head: true }),
           supabase.from("surveys").select("*", { count: "exact", head: true }).eq("status", "open"),
+          supabase.from("profiles").select("*", { count: "exact", head: true }).gte("created_at", oneWeekAgo),
+          supabase.from("scrutin_votes").select("scrutin_id, scrutins!inner(status)", { count: "exact", head: true }).eq("scrutins.status", "open"),
+          supabase.from("news").select("*", { count: "exact", head: true }).not("published_at", "is", null),
+          supabase.from("profiles").select("first_name, last_name, class_name, created_at").order("created_at", { ascending: false }).limit(5),
         ]);
-        if (e1 || e2 || e3 || e4 || e5 || e6) {
-          console.error("Erreur dashboard", { e1, e2, e3, e4, e5, e6 });
-        }
 
         setStats({
           members: members ?? 0,
@@ -49,7 +67,11 @@ export const AdminDashboard = () => {
           latestNews: latestNewsData?.[0] ?? null,
           totalUsers: totalUsers ?? 0,
           openSurveys: openSurveys ?? 0,
+          newUsersThisWeek: newUsersThisWeek ?? 0,
+          openScrutinVotes: openScrutinVotes ?? 0,
+          publishedNews: publishedNews ?? 0,
         });
+        setRecentUsers(recentUsersData ?? []);
       } catch (err) {
         console.error("Erreur chargement dashboard", err);
       } finally {
@@ -68,6 +90,21 @@ export const AdminDashboard = () => {
       color: "bg-primary/10",
     },
     {
+      label: "Comptes inscrits",
+      value: stats.totalUsers,
+      icon: <TrendingUp className="h-5 w-5 text-blue-600" />,
+      section: "users",
+      color: "bg-blue-50 dark:bg-blue-900/20",
+    },
+    {
+      label: "Nouveaux cette semaine",
+      value: stats.newUsersThisWeek,
+      icon: <UserPlus className="h-5 w-5 text-indigo-600" />,
+      section: "users",
+      color: "bg-indigo-50 dark:bg-indigo-900/20",
+      badge: stats.newUsersThisWeek > 0 ? { label: "+7j", variant: "secondary" as const } : undefined,
+    },
+    {
       label: "Scrutins ouverts",
       value: stats.openScrutins,
       icon: <Vote className="h-5 w-5 text-green-600" />,
@@ -76,19 +113,19 @@ export const AdminDashboard = () => {
       badge: stats.openScrutins > 0 ? { label: "En cours", variant: "default" as const } : undefined,
     },
     {
+      label: "Votes en cours",
+      value: stats.openScrutinVotes,
+      icon: <BarChart2 className="h-5 w-5 text-emerald-600" />,
+      section: "scrutin",
+      color: "bg-emerald-50 dark:bg-emerald-900/20",
+    },
+    {
       label: "Tickets en attente",
       value: stats.pendingTickets,
       icon: <Headphones className="h-5 w-5 text-amber-600" />,
       section: "support",
       color: "bg-amber-50 dark:bg-amber-900/20",
       badge: stats.pendingTickets > 0 ? { label: "À traiter", variant: "secondary" as const } : undefined,
-    },
-    {
-      label: "Comptes inscrits",
-      value: stats.totalUsers,
-      icon: <TrendingUp className="h-5 w-5 text-blue-600" />,
-      section: "users",
-      color: "bg-blue-50 dark:bg-blue-900/20",
     },
   ] : [];
 
@@ -100,9 +137,9 @@ export const AdminDashboard = () => {
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         {loading
-          ? Array.from({ length: 4 }).map((_, i) => (
+          ? Array.from({ length: 6 }).map((_, i) => (
               <Card key={i} className="shadow-card">
                 <CardContent className="p-5 space-y-3">
                   <Skeleton className="h-9 w-9 rounded-lg" />
@@ -135,8 +172,8 @@ export const AdminDashboard = () => {
             ))}
       </div>
 
-      {/* Dernière actu + sondages */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {/* Actu + sondages */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Card
           className="shadow-card cursor-pointer hover:shadow-md transition-shadow"
           onClick={() => navigate("/admin/news")}
@@ -144,7 +181,7 @@ export const AdminDashboard = () => {
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <Newspaper className="h-4 w-4" />
-              Dernière actualité publiée
+              Dernière actualité
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -165,6 +202,25 @@ export const AdminDashboard = () => {
               </>
             ) : (
               <p className="text-sm text-muted-foreground">Aucune actualité publiée</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card
+          className="shadow-card cursor-pointer hover:shadow-md transition-shadow"
+          onClick={() => navigate("/admin/news")}
+        >
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Newspaper className="h-4 w-4" />
+              Articles publiés
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <span className="text-3xl font-bold">{stats?.publishedNews ?? 0}</span>
             )}
           </CardContent>
         </Card>
@@ -193,6 +249,48 @@ export const AdminDashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Dernières inscriptions */}
+      <Card className="shadow-card">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <UserPlus className="h-4 w-4" />
+            Dernières inscriptions
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-8 w-full" />
+              ))}
+            </div>
+          ) : recentUsers.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Aucun compte enregistré</p>
+          ) : (
+            <div className="divide-y">
+              {recentUsers.map((u, i) => (
+                <div key={i} className="flex items-center justify-between py-2 text-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary">
+                      {(u.first_name?.[0] ?? "?").toUpperCase()}
+                    </div>
+                    <span className="font-medium">
+                      {u.first_name ?? "–"} {u.last_name ?? ""}
+                    </span>
+                    {u.class_name && (
+                      <span className="text-xs text-muted-foreground">{u.class_name}</span>
+                    )}
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(u.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Accès rapides */}
       <Card className="shadow-card">

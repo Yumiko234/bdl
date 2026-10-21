@@ -117,6 +117,7 @@ const Admin = () => {
   const [primaryRole,   setPrimaryRole]   = useState<RoleKey>("student");
   const [userProfile,   setUserProfile]   = useState<{ full_name: string } | null>(null);
   const [rolesLoading,  setRolesLoading]  = useState(true);
+  const [accessDenied,  setAccessDenied]  = useState(false);
   const [mobileOpen,    setMobileOpen]    = useState(false);
   const [pendingTickets, setPendingTickets] = useState(0);
 
@@ -177,8 +178,7 @@ const Admin = () => {
       );
 
       if (!isBDLStaff) {
-        toast.error("Accès réservé au Bureau des Lycéens");
-        navigate("/");
+        setAccessDenied(true);
         return;
       }
 
@@ -283,6 +283,35 @@ const Admin = () => {
         <div className="flex-1 flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
+      </div>
+    );
+  }
+
+  if (accessDenied) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navigation />
+        <div className="flex-1 flex items-center justify-center px-4">
+          <div className="max-w-md w-full text-center space-y-6">
+            <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center mx-auto">
+              <Shield className="h-10 w-10 text-muted-foreground/50" />
+            </div>
+            <div className="space-y-2">
+              <h1 className="text-2xl font-bold">Espace réservé</h1>
+              <p className="text-muted-foreground">
+                Cette section est exclusivement accessible aux membres du Bureau des Lycéens.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Si tu fais partie du BDL et que tu vois ce message, contacte un administrateur pour que ton rôle soit attribué.
+              </p>
+            </div>
+            <div className="flex gap-3 justify-center">
+              <Button onClick={() => navigate("/")}>Retour à l'accueil</Button>
+              <Button variant="outline" onClick={() => navigate("/support")}>Contacter le support</Button>
+            </div>
+          </div>
+        </div>
+        <Footer />
       </div>
     );
   }

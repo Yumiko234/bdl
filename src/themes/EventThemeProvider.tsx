@@ -15,17 +15,19 @@ import type {
   ThemeSettings,
 } from "./types";
 import { resolveActiveTheme } from "./resolver";
+import { supabase } from "@/integrations/supabase/client";
 
-// ─── Storage helpers ──────────────────────────────────────────────────────────
+// ─── Storage helpers (localStorage = fallback uniquement) ─────────────────────
 
 const STORAGE_KEY = "bdl-event-theme-store";
+const SUPABASE_KEY = "event_theme_store";
 
 const DEFAULT_STORE: EventThemeStore = {
   mode: "auto",
   themes: {},
 };
 
-function readStore(): EventThemeStore {
+function readLocalStore(): EventThemeStore {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_STORE;
@@ -39,7 +41,7 @@ function readStore(): EventThemeStore {
   }
 }
 
-function writeStore(store: EventThemeStore): void {
+function writeLocalStore(store: EventThemeStore): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
   } catch {}
@@ -56,8 +58,6 @@ export function useEventTheme(): EventThemeContextValue {
 }
 
 // ─── DOM side-effect: set data-event-theme on <html> ─────────────────────────
-// This is what the CSS selectors target (e.g. html[data-event-theme="halloween"]).
-// It is completely independent of the .dark class managed by useDarkMode.
 
 function applyThemeAttribute(id: EventThemeId | null) {
   const root = document.documentElement;
@@ -75,30 +75,92 @@ interface Props {
 }
 
 export function EventThemeProvider({ children }: Props) {
-  const [store, setStore] = useState<EventThemeStore>(readStore);
+  // Start with localStorage as instant fallback while Supabase loads
+  const [store, setStore] = useState<EventThemeStore>(readLocalStore);
 
-  // Re-resolve every minute so date changes are picked up (e.g. midnight transition)
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Prevent write-back loops and premature writes before initial Supabase fetch
+  const isFromRemote = useRef(false);
+  const isInitialLoad = useRef(true);
 
+  // ── Fetch initial store from Supabase + realtime subscription ──────────────
+  useEffect(() => {
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    supabase
+      .from("site_settings" as any)
+      .select("value")
+      .eq("key", SUPABASE_KEY)
+      .single()
+      .then(({ data, error }: { data: any; error: any }) => {
+        isInitialLoad.current = false;
+        if (!error && data?.value) {
+          isFromRemote.current = true;
+          const remote = data.value as Partial<EventThemeStore>;
+          setStore({
+            mode: remote.mode ?? "auto",
+            themes: remote.themes ?? {},
+          });
+        }
+      });
+
+    channel = supabase
+      .channel("site-settings-theme")
+      .on(
+        "postgres_changes" as any,
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "site_settings",
+          filter: `key=eq.${SUPABASE_KEY}`,
+        },
+        (payload: any) => {
+          const remote = payload.new?.value as Partial<EventThemeStore> | undefined;
+          if (remote) {
+            isFromRemote.current = true;
+            setStore({
+              mode: remote.mode ?? "auto",
+              themes: remote.themes ?? {},
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      if (channel) supabase.removeChannel(channel);
+    };
+  }, []);
+
+  // ── Write store to Supabase (admin) + localStorage (fallback) on change ────
+  useEffect(() => {
+    // Skip during initial load or when change came from remote
+    if (isInitialLoad.current || isFromRemote.current) {
+      isFromRemote.current = false;
+      return;
+    }
+    writeLocalStore(store);
+    supabase
+      .from("site_settings" as any)
+      .upsert(
+        { key: SUPABASE_KEY, value: store as any, updated_at: new Date().toISOString() },
+        { onConflict: "key" }
+      )
+      .then(() => {});
+  }, [store]);
+
+  // ── Re-resolve every minute so midnight transitions are picked up ───────────
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
-    timerRef.current = setInterval(() => setNow(new Date()), 60_000);
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
+    const timer = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(timer);
   }, []);
 
   const resolved = useMemo(() => resolveActiveTheme(store, now), [store, now]);
 
-  // Apply data-event-theme to <html> whenever resolved theme changes
+  // Apply data-event-theme to <html>
   useEffect(() => {
     applyThemeAttribute(resolved.id);
   }, [resolved.id]);
-
-  // Persist store to localStorage on every change
-  useEffect(() => {
-    writeStore(store);
-  }, [store]);
 
   const setMode = useCallback((mode: GlobalMode) => {
     setStore((prev) => ({ ...prev, mode }));

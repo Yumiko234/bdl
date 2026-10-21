@@ -27,6 +27,8 @@ import {
   X,
   RefreshCw,
   CalendarClock,
+  Pencil,
+  Check,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -110,6 +112,7 @@ export const BannerManagement = () => {
   const [form, setForm] = useState({ ...DEFAULT_FORM });
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   useEffect(() => {
     loadBanners();
@@ -241,6 +244,81 @@ export const BannerManagement = () => {
     }
   };
 
+  const handleStartEdit = (banner: Banner) => {
+    setEditingId(banner.id);
+    setForm({
+      message: banner.message,
+      color: banner.color,
+      text_color: banner.text_color,
+      icon: banner.icon,
+      font_style: banner.font_style,
+      is_bold: banner.is_bold,
+      is_italic: banner.is_italic,
+      expires_at: banner.expires_at
+        ? new Date(banner.expires_at).toISOString().slice(0, 16)
+        : "",
+      auto_display_at: banner.auto_display_at
+        ? new Date(banner.auto_display_at).toISOString().slice(0, 16)
+        : "",
+      is_active: banner.is_active,
+    });
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleUpdate = async () => {
+    if (!editingId || !form.message.trim()) {
+      toast.error("Le message est obligatoire");
+      return;
+    }
+    setLoading(true);
+
+    const isScheduled = !!form.auto_display_at;
+    const payload = {
+      message: form.message,
+      color: form.color,
+      text_color: form.text_color,
+      icon: form.icon,
+      font_style: form.font_style,
+      is_bold: form.is_bold,
+      is_italic: form.is_italic,
+      is_active: isScheduled ? false : form.is_active,
+      expires_at: form.expires_at ? new Date(form.expires_at).toISOString() : null,
+      auto_display_at: form.auto_display_at ? new Date(form.auto_display_at).toISOString() : null,
+    };
+
+    // Si on active ce bandeau maintenant, désactiver les autres
+    if (!isScheduled && form.is_active) {
+      await supabase
+        .from("global_banners")
+        .update({ is_active: false })
+        .eq("is_active", true)
+        .neq("id", editingId);
+    }
+
+    const { error } = await supabase
+      .from("global_banners")
+      .update(payload)
+      .eq("id", editingId);
+
+    if (error) {
+      toast.error("Erreur lors de la modification");
+    } else {
+      toast.success("Bandeau modifié");
+      setForm({ ...DEFAULT_FORM });
+      setShowForm(false);
+      setEditingId(null);
+      loadBanners();
+    }
+    setLoading(false);
+  };
+
+  const handleCancelForm = () => {
+    setShowForm(false);
+    setEditingId(null);
+    setForm({ ...DEFAULT_FORM });
+  };
+
   const handleRelaunch = async (banner: Banner) => {
     const { error: deactivateError } = await supabase
       .from("global_banners")
@@ -289,7 +367,15 @@ export const BannerManagement = () => {
             Gestion du Bandeau Global
           </CardTitle>
           <Button
-            onClick={() => setShowForm((v) => !v)}
+            onClick={() => {
+              if (showForm) {
+                handleCancelForm();
+              } else {
+                setEditingId(null);
+                setForm({ ...DEFAULT_FORM });
+                setShowForm(true);
+              }
+            }}
             variant={showForm ? "outline" : "default"}
             className="gap-1"
           >
@@ -303,7 +389,9 @@ export const BannerManagement = () => {
         {/* ── Création ── */}
         {showForm && (
           <div className="border rounded-xl p-6 bg-muted/30 space-y-5">
-            <h3 className="font-semibold text-lg">Créer un bandeau</h3>
+            <h3 className="font-semibold text-lg flex items-center gap-2">
+              {editingId ? <><Pencil className="h-5 w-5" /> Modifier le bandeau</> : <><Plus className="h-5 w-5" /> Créer un bandeau</>}
+            </h3>
 
             {/* Prévisualisation live */}
             {form.message && (
@@ -496,9 +584,21 @@ export const BannerManagement = () => {
               />
             </div>
 
-            <Button onClick={handleCreate} disabled={loading} className="w-full">
-              {loading ? "Création..." : "Créer le bandeau"}
-            </Button>
+            {editingId ? (
+              <div className="flex gap-3">
+                <Button onClick={handleUpdate} disabled={loading} className="flex-1 gap-2">
+                  <Check className="h-4 w-4" />
+                  {loading ? "Modification..." : "Enregistrer les modifications"}
+                </Button>
+                <Button variant="outline" onClick={handleCancelForm} disabled={loading}>
+                  Annuler
+                </Button>
+              </div>
+            ) : (
+              <Button onClick={handleCreate} disabled={loading} className="w-full">
+                {loading ? "Création..." : "Créer le bandeau"}
+              </Button>
+            )}
           </div>
         )}
 
@@ -572,6 +672,16 @@ export const BannerManagement = () => {
                       </div>
 
                       <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleStartEdit(banner)}
+                          title="Modifier ce bandeau"
+                          className={editingId === banner.id ? "border-primary text-primary" : ""}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+
                         {expired ? (
                           <Button
                             size="sm"

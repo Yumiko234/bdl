@@ -1,10 +1,19 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { roleLabel, getPrimaryRole, type RoleKey } from "@/lib/roles";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Users, Vote, Headphones, Newspaper, TrendingUp, Clock, UserPlus, BarChart2 } from "lucide-react";
+
+const getGreeting = () => {
+  const h = new Date().getHours() + new Date().getMinutes() / 60;
+  if (h >= 5.5 && h < 13) return "Bonjour";
+  if (h >= 13 && h < 18) return "Bon après-midi";
+  return "Bonsoir";
+};
 
 interface Stats {
   members: number;
@@ -27,9 +36,22 @@ interface RecentUser {
 
 export const AdminDashboard = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [stats, setStats] = useState<Stats | null>(null);
   const [recentUsers, setRecentUsers] = useState<RecentUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userGreeting, setUserGreeting] = useState<{ firstName: string; role: RoleKey } | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("profiles").select("first_name").eq("id", user.id).maybeSingle().then(({ data }) => {
+      supabase.from("user_roles").select("role").eq("user_id", user.id).then(({ data: rolesData }) => {
+        const roles = (rolesData ?? []).map((r: { role: string }) => r.role);
+        const primary = getPrimaryRole(roles);
+        setUserGreeting({ firstName: data?.first_name ?? "", role: primary });
+      });
+    });
+  }, [user]);
 
   useEffect(() => {
     const load = async () => {
@@ -131,9 +153,24 @@ export const AdminDashboard = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Tableau de bord</h1>
-        <p className="text-muted-foreground text-sm mt-1">Vue d'ensemble de l'activité BDL</p>
+      {/* Bloc de bienvenue */}
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div>
+          <h1 className="text-2xl font-bold">
+            {getGreeting()}{userGreeting?.firstName ? `, ${userGreeting.firstName}` : ""} 👋
+          </h1>
+          <div className="flex items-center gap-2 mt-1">
+            {userGreeting ? (
+              <Badge variant="secondary">{roleLabel(userGreeting.role)}</Badge>
+            ) : (
+              <Skeleton className="h-5 w-24" />
+            )}
+            {user?.email && (
+              <span className="text-xs text-muted-foreground">{user.email}</span>
+            )}
+          </div>
+        </div>
+        <p className="text-sm text-muted-foreground">Vue d'ensemble de l'activité BDL</p>
       </div>
 
       {/* Stat cards */}

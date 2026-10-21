@@ -139,8 +139,8 @@ const Navigation = () => {
                         <DropdownMenuSeparator />
                       </>
                     )}
-                    <DropdownMenuItem onClick={() => navigate("/intranet")}>
-                      <LayoutDashboard className="h-4 w-4 mr-2" /> Intranet
+                    <DropdownMenuItem onClick={() => navigate("/admin")}>
+                      <LayoutDashboard className="h-4 w-4 mr-2" /> Administration
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate("/profile")}>
                       <User className="h-4 w-4 mr-2" /> Mon profil
@@ -160,9 +160,9 @@ const Navigation = () => {
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <Link to="/intranet">
+                <Link to="/auth">
                   <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-                    Intranet
+                    Se connecter
                   </Button>
                 </Link>
               )}
@@ -206,9 +206,9 @@ const Navigation = () => {
                       <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                     </div>
                   </div>
-                  <Link to="/intranet" onClick={() => setIsMenuOpen(false)}>
+                  <Link to="/admin" onClick={() => setIsMenuOpen(false)}>
                     <Button variant="ghost" className="w-full justify-start gap-2">
-                      <LayoutDashboard className="h-4 w-4" /> Intranet
+                      <LayoutDashboard className="h-4 w-4" /> Administration
                     </Button>
                   </Link>
                   <Link to="/profile" onClick={() => setIsMenuOpen(false)}>
@@ -227,9 +227,9 @@ const Navigation = () => {
                   </Button>
                 </>
               ) : (
-                <Link to="/intranet" onClick={() => setIsMenuOpen(false)}>
+                <Link to="/auth" onClick={() => setIsMenuOpen(false)}>
                   <Button variant="outline" className="w-full justify-start border-primary text-primary">
-                    Intranet
+                    Se connecter
                   </Button>
                 </Link>
               )}

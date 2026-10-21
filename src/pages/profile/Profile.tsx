@@ -20,7 +20,7 @@ import { ProfilePhotoUpload } from "@/components/ProfilePhotoUpload";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { User, Trash, Trash2, AlertTriangle, Info, Download } from "lucide-react";
+import { User, Trash, Trash2, AlertTriangle, Info, Download, BarChart2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
-import { roleLabel } from "@/lib/roles";
+import { roleLabel, rolePrecedence, getPrimaryRole } from "@/lib/roles";
 
 interface UserProfile {
   full_name: string;
@@ -484,6 +484,30 @@ const Profile = () => {
                   ))}
                 </CardContent>
               </Card>
+
+              {/* SUIVI DES ACTIONS (membres BDL uniquement) */}
+              {profile.roles.some(r => r !== "student") && (
+                <Card className="shadow-card">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <BarChart2 className="h-5 w-5" />
+                      Suivi de mes actions
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <p className="text-sm text-muted-foreground">
+                      Consultez vos actions BDL, vos points et vos présences aux réunions.
+                    </p>
+                    <button
+                      onClick={() => navigate("/bdl-profile")}
+                      className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md border hover:bg-muted transition-colors"
+                    >
+                      <BarChart2 className="h-4 w-4" />
+                      Voir mon suivi
+                    </button>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* MES DONNÉES (RGPD) */}
               <Card className="shadow-card">

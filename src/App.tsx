@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+﻿import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,7 +14,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { EventThemeProvider } from "./themes/EventThemeProvider";
 import { EventThemeOverlay } from "./themes/EventThemeOverlay";
 
-// Chargement paresseux de chaque page — le bundle initial ne charge que ce qui est nécessaire
+// Chargement paresseux de chaque page â€” le bundle initial ne charge que ce qui est nÃ©cessaire
 const Index            = lazy(() => import("./pages/Index"));
 const Etablissement    = lazy(() => import("./pages/Etablissement"));
 const BDL              = lazy(() => import("./pages/BDL"));
@@ -30,7 +30,6 @@ const JOBDL            = lazy(() => import("./pages/jobdl/JOBDL"));
 const JobdlArticle     = lazy(() => import("./pages/jobdl/[nor]"));
 const Scrutin          = lazy(() => import("./pages/Scrutin"));
 const Sondage          = lazy(() => import("./pages/Sondage"));
-const Intranet         = lazy(() => import("./pages/Intranet"));
 const Auth             = lazy(() => import("./pages/Auth"));
 const Admin            = lazy(() => import("./pages/Admin"));
 const AdminMemberActionLog = lazy(() => import("./pages/AdminMemberActionLog"));
@@ -85,9 +84,9 @@ const App = () => {
               <Route path="/developers" element={<DevelopersHub />} />
               <Route path="/developers/:slug" element={<DeveloperProfile />} />
 
-              {/* Admin : /admin redirige vers la section par défaut */}
+              {/* Admin : /admin redirige vers la section par dÃ©faut */}
               <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
-              {/* Historique complet d'un membre (qui a fait quoi, quand) — slug = user_id */}
+              {/* Historique complet d'un membre (qui a fait quoi, quand) â€” slug = user_id */}
               <Route path="/admin/actions/:slug" element={<AdminMemberActionLog />} />
               <Route path="/admin/:section" element={<Admin />} />
 
@@ -107,7 +106,7 @@ const App = () => {
               <Route path="/jo" element={<JOBDL />} />
               <Route path="/jo/:nor" element={<JobdlArticle />} />
               <Route path="/auth" element={<Auth />} />
-              <Route path="/intranet" element={<Intranet />} />
+              <Route path="/intranet" element={<Navigate to="/admin" replace />} />
               <Route path="/scrutin" element={<Scrutin />} />
 
               <Route path="/contact" element={<Contact />} />

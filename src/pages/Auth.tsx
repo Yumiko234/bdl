@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useSEO } from "@/hooks/useSEO";
 import Navigation from "@/components/Navigation";
@@ -18,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, Lock, UserPlus } from "lucide-react";
+import { Shield, Lock, UserPlus, Mail } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -51,7 +51,13 @@ const Auth = () => {
     className: ""
   });
   const [acceptedTerms, setAcceptedTerms] = useState(false);
-  
+  const [magicEmail, setMagicEmail] = useState("");
+  const [magicSent, setMagicSent] = useState(false);
+  const [magicOtp, setMagicOtp] = useState("");
+  const [magicLoading, setMagicLoading] = useState(false);
+  const [resendCountdown, setResendCountdown] = useState(0);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
 
@@ -101,6 +107,58 @@ const Auth = () => {
     );
   };
 
+  const startCountdown = () => {
+    setResendCountdown(30);
+    if (countdownRef.current) clearInterval(countdownRef.current);
+    countdownRef.current = setInterval(() => {
+      setResendCountdown((c) => {
+        if (c <= 1) { clearInterval(countdownRef.current!); return 0; }
+        return c - 1;
+      });
+    }, 1000);
+  };
+
+  const handleMagicLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMagicLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: magicEmail,
+        options: {
+          shouldCreateUser: false,
+          emailRedirectTo: `${window.location.origin}/auth`,
+        },
+      });
+      if (error) throw error;
+      setMagicSent(true);
+      startCountdown();
+    } catch (error: any) {
+      toast.error(error.message === "Signups not allowed for otp"
+        ? "Aucun compte trouvé pour cet email."
+        : error.message || "Erreur lors de l'envoi.");
+    } finally {
+      setMagicLoading(false);
+    }
+  };
+
+  const handleMagicOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMagicLoading(true);
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        email: magicEmail,
+        token: magicOtp,
+        type: "email",
+      });
+      if (error) throw error;
+      navigate("/intranet");
+    } catch (error: any) {
+      toast.error("Code incorrect ou expiré.");
+    } finally {
+      setMagicLoading(false);
+    }
+  };
+
   const handleForgotPassword = async () => {
     if (!loginCredentials.email) {
       toast.error("Veuillez saisir votre email dans le champ ci-dessus.");
@@ -139,9 +197,10 @@ const Auth = () => {
             <div className="container mx-auto px-4">
               <div className="max-w-md mx-auto">
                 <Tabs defaultValue="login" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2">
+                  <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="login">Connexion</TabsTrigger>
                     <TabsTrigger value="signup">Inscription</TabsTrigger>
+                    <TabsTrigger value="magic">Lien magique</TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="login">
@@ -338,6 +397,94 @@ const Auth = () => {
                             S'inscrire
                           </Button>
                         </form>
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                  <TabsContent value="magic">
+                    <Card className="shadow-elegant">
+                      <CardContent className="p-8 space-y-6">
+                        <div className="text-center space-y-2">
+                          <div className="w-16 h-16 rounded-full gradient-institutional mx-auto flex items-center justify-center">
+                            <Mail className="h-8 w-8 text-white" />
+                          </div>
+                          <h2 className="text-2xl font-bold">Connexion par lien</h2>
+                          <p className="text-sm text-muted-foreground">
+                            Recevez un lien ou un code à usage unique par email
+                          </p>
+                        </div>
+
+                        {!magicSent ? (
+                          <form onSubmit={handleMagicLink} className="space-y-4">
+                            <div className="space-y-2">
+                              <Label htmlFor="magic-email">Email</Label>
+                              <Input
+                                id="magic-email"
+                                type="email"
+                                required
+                                value={magicEmail}
+                                onChange={(e) => setMagicEmail(e.target.value)}
+                                placeholder="votre.email@exemple.com"
+                              />
+                            </div>
+                            <Button type="submit" className="w-full" size="lg" disabled={magicLoading}>
+                              {magicLoading ? "Envoi…" : "Recevoir un lien"}
+                            </Button>
+                          </form>
+                        ) : (
+                          <div className="space-y-4">
+                            <div className="rounded-md bg-primary/10 border border-primary/30 p-4 text-sm text-center space-y-1">
+                              <p className="font-semibold">Email envoyé à {magicEmail}</p>
+                              <p className="text-muted-foreground">Cliquez le lien dans l'email, ou entrez le code ci-dessous.</p>
+                            </div>
+                            <form onSubmit={handleMagicOtp} className="space-y-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="magic-otp">Code à 6 chiffres</Label>
+                                <Input
+                                  id="magic-otp"
+                                  type="text"
+                                  inputMode="numeric"
+                                  maxLength={6}
+                                  value={magicOtp}
+                                  onChange={(e) => setMagicOtp(e.target.value.replace(/\D/g, ""))}
+                                  placeholder="123456"
+                                  className="text-center text-xl tracking-widest"
+                                  autoFocus
+                                />
+                              </div>
+                              <p className="text-xs text-muted-foreground text-center">
+                                Vérifiez vos spams si vous ne trouvez pas l'email.
+                              </p>
+                              <Button type="submit" className="w-full" size="lg" disabled={magicLoading || magicOtp.length !== 6}>
+                                {magicLoading ? "Vérification…" : "Se connecter"}
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                className="w-full text-sm"
+                                disabled={resendCountdown > 0}
+                                onClick={async () => {
+                                  setMagicOtp("");
+                                  setMagicLoading(true);
+                                  try {
+                                    const { error } = await supabase.auth.signInWithOtp({
+                                      email: magicEmail,
+                                      options: { shouldCreateUser: false, emailRedirectTo: `${window.location.origin}/auth` },
+                                    });
+                                    if (error) throw error;
+                                    toast.success("Nouveau code envoyé !");
+                                    startCountdown();
+                                  } catch {
+                                    toast.error("Erreur lors du renvoi.");
+                                  } finally {
+                                    setMagicLoading(false);
+                                  }
+                                }}
+                              >
+                                {resendCountdown > 0 ? `Renvoyer un code (${resendCountdown}s)` : "Renvoyer un code"}
+                              </Button>
+                            </form>
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   </TabsContent>

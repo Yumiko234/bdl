@@ -43,6 +43,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             }
           });
         }
+
+        // Synchroniser profiles.email après confirmation du changement d'adresse
+        if (event === "USER_UPDATED" && session?.user.email) {
+          supabase.from("profiles")
+            .update({ email: session.user.email })
+            .eq("id", session.user.id)
+            .then(() => toast.success("Adresse email mise à jour avec succès !"));
+        }
       }
     );
 

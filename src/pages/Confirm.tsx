@@ -39,7 +39,7 @@ const Confirm = () => {
         // OTP classic
         const result = await supabase.auth.verifyOtp({
           token_hash: tokenHash,
-          type: type as "signup" | "email" | "recovery" | "invite" | "email_change",
+          type: type as "signup" | "email" | "recovery" | "invite" | "email_change" | "magiclink",
         });
         error = result.error;
       } else {

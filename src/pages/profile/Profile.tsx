@@ -20,7 +20,7 @@ import { ProfilePhotoUpload } from "@/components/ProfilePhotoUpload";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { User, Trash, Trash2, AlertTriangle, Info } from "lucide-react";
+import { User, Trash, Trash2, AlertTriangle, Info, Download } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -77,6 +77,8 @@ const Profile = () => {
     password: "",
     confirmPassword: ""
   });
+
+  const [exportLoading, setExportLoading] = useState(false);
 
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteChecked, setDeleteChecked] = useState(false);
@@ -142,25 +144,32 @@ const Profile = () => {
 
     setSaving(true);
     try {
-      if (formData.email !== profile?.email) {
-        const { error: authError } = await supabase.auth.updateUser({ email: formData.email });
+      const emailChanged = formData.email !== profile?.email;
+
+      if (emailChanged) {
+        const { error: authError } = await supabase.auth.updateUser({
+          email: formData.email,
+          options: { emailRedirectTo: `${window.location.origin}/confirm` },
+        });
         if (authError) throw authError;
+        // Réinitialise le champ email — le changement sera effectif après confirmation
+        setFormData(prev => ({ ...prev, email: profile?.email || "" }));
+        toast.info(`Email de confirmation envoyé à ${formData.email}. Cliquez le lien pour valider.`);
       }
 
       const { error } = await supabase
         .from("profiles")
         .update({
           first_name: formData.first_name,
-          // Le nom de famille est toujours stocké en majuscules
           last_name: formData.last_name.toUpperCase(),
           class_name: formData.class_name,
-          email: formData.email
+          ...(emailChanged ? {} : { email: formData.email }),
         })
         .eq("id", user.id);
 
       if (error) throw error;
 
-      toast.success("Profil mis à jour");
+      if (!emailChanged) toast.success("Profil mis à jour");
       loadProfile();
     } catch (error) {
       console.error(error);
@@ -224,6 +233,45 @@ const Profile = () => {
     } catch (error) {
       console.error(error);
       toast.error("Erreur lors du changement de mot de passe");
+    }
+  };
+
+  /* ===================== EXPORT RGPD ===================== */
+
+  const handleExportData = async () => {
+    if (!user) return;
+    setExportLoading(true);
+    try {
+      const [profileRes, rolesRes, votesRes, deletionRes] = await Promise.all([
+        supabase.from("profiles").select("first_name, last_name, class_name, email, avatar_url, created_at").eq("id", user.id).maybeSingle(),
+        supabase.from("user_roles").select("role").eq("user_id", user.id),
+        supabase.from("scrutin_votes").select("scrutin_id, choice, created_at").eq("user_id", user.id),
+        supabase.from("deletion_requests").select("requested_at, scheduled_deletion_at, cancelled_at").eq("user_id", user.id).maybeSingle(),
+      ]);
+
+      const payload = {
+        exported_at: new Date().toISOString(),
+        profile: profileRes.data,
+        roles: rolesRes.data ?? [],
+        scrutin_votes: votesRes.data ?? [],
+        deletion_request: deletionRes.data ?? null,
+      };
+
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `mes-donnees-bdl-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast.success("Vos données ont été téléchargées.");
+    } catch (err) {
+      console.error(err);
+      toast.error("Erreur lors de l'export.");
+    } finally {
+      setExportLoading(false);
     }
   };
 
@@ -434,6 +482,28 @@ const Profile = () => {
                       {roleLabel(role)}
                     </Badge>
                   ))}
+                </CardContent>
+              </Card>
+
+              {/* MES DONNÉES (RGPD) */}
+              <Card className="shadow-card">
+                <CardHeader>
+                  <CardTitle>Mes données</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    Téléchargez une copie de toutes vos données personnelles (profil, rôles, votes).
+                    Conformément au RGPD, vous disposez d'un droit d'accès et de portabilité.
+                  </p>
+                  <Button
+                    variant="outline"
+                    className="gap-2"
+                    onClick={handleExportData}
+                    disabled={exportLoading}
+                  >
+                    <Download className="h-4 w-4" />
+                    {exportLoading ? "Préparation…" : "Exporter mes données (JSON)"}
+                  </Button>
                 </CardContent>
               </Card>
 

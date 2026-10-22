@@ -45,6 +45,9 @@ interface YearEntry {
 }
 
 const ROLE_LABELS: Record<string, string> = {
+  administrator: "Administrateur système & Consultant",
+  consultante: "Consultante",
+  consultant: "Consultant",
   president: "Président",
   presidente: "Présidente",
   vice_president: "Vice-Président",

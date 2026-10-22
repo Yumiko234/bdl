@@ -73,7 +73,7 @@ const BDLYearDetail = () => {
       if (membersError) throw membersError;
 
       const executive = (members || []).filter((m: Member) => m.is_executive);
-      const regular = (members || []).filter((m: Member) => !m.is_executive);
+      const regular = (members || []).filter((m: Member) => !m.is_executive && !m.is_honorary);
 
       setExecutiveMembers(executive);
       setRegularMembers(regular);

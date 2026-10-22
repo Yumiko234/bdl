@@ -77,7 +77,7 @@ const BDLHistory = () => {
         supabase.from("bdl_years").select("*").order("start_year", { ascending: false }),
         supabase
           .from("bdl_historical_members")
-          .select("full_name, role, avatar_url, bdl_years(start_year, end_year)")
+          .select("full_name, role, avatar_url, year_id")
           .eq("is_honorary", true)
           .order("display_order", { ascending: true }),
       ]);
@@ -85,11 +85,11 @@ const BDLHistory = () => {
       if (yearsRes.error) throw yearsRes.error;
       setYears(yearsRes.data || []);
 
+      // Map des années par id pour résoudre start_year/end_year sans join imbriqué
+      const yearsById: Record<string, { start_year: number; end_year: number }> =
+        Object.fromEntries((yearsRes.data || []).map((y: any) => [y.id, y]));
+
       if (!honoraryRes.error && honoraryRes.data) {
-        // Un membre honorifique peut avoir une ligne par année (ex: 23-24, 24-25, 25-26).
-        // On regroupe donc par personne et on fusionne les années en une seule plage,
-        // au lieu de générer une carte par ligne (ce qui créait des clés React dupliquées
-        // et ne laissait apparaître que la dernière année).
         const grouped: Record<
           string,
           {
@@ -104,8 +104,9 @@ const BDLHistory = () => {
 
         honoraryRes.data.forEach((m: any) => {
           const key = toPersonSlug(m.full_name);
-          const start = m.bdl_years?.start_year;
-          const end = m.bdl_years?.end_year;
+          const yearInfo = yearsById[m.year_id];
+          const start = yearInfo?.start_year;
+          const end = yearInfo?.end_year;
 
           if (!grouped[key]) {
             grouped[key] = {

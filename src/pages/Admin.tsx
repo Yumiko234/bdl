@@ -61,11 +61,12 @@ interface AudienceRequest {
 
 // ─── Nav items definition ─────────────────────────────────────────────────────
 interface NavItem {
-  id:       string;
-  label:    string;
-  icon:     React.ReactNode;
-  group:    string;
-  minRank?: number;
+  id:           string;
+  label:        string;
+  icon:         React.ReactNode;
+  group:        string;
+  minRank?:     number;
+  excludeRoles?: RoleKey[];
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -74,7 +75,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "events",        label: "Événements",          icon: <Calendar     className="h-4 w-4" />, group: "Contenu" },
   { id: "calendar",      label: "Calendrier",          icon: <CalendarDays className="h-4 w-4" />, group: "Contenu" },
   { id: "documents",     label: "Documents",           icon: <FileText     className="h-4 w-4" />, group: "Contenu" },
-  { id: "journal",       label: "Journal Officiel",    icon: <BookMarked   className="h-4 w-4" />, group: "Contenu" },
+  { id: "journal",       label: "Journal Officiel",    icon: <BookMarked   className="h-4 w-4" />, group: "Contenu", minRank: 5 },
   
   { id: "bdl-members",   label: "Membres BDL",         icon: <Users        className="h-4 w-4" />, group: "BDL", minRank: 5 },
   { id: "bdl-profiles",  label: "Profils détaillés",   icon: <UserCircle   className="h-4 w-4" />, group: "BDL", minRank: 5 },
@@ -82,11 +83,11 @@ const NAV_ITEMS: NavItem[] = [
   { id: "bdl-int-notes", label: "Notes Internes",      icon: <BookMarked   className="h-4 w-4" />, group: "BDL", minRank: 5 },
 
   { id: "scrutin",       label: "Scrutins",            icon: <Vote         className="h-4 w-4" />, group: "Participation", minRank: 5 },
-  { id: "surveys",       label: "Sondages",            icon: <BarChart3    className="h-4 w-4" />, group: "Participation" },
+  { id: "surveys",       label: "Sondages",            icon: <BarChart3    className="h-4 w-4" />, group: "Participation", minRank: 5 },
   { id: "actions",       label: "Suivi Actions",       icon: <BarChart3    className="h-4 w-4" />, group: "Participation", minRank: 5 },
   { id: "certificat",    label: "Certificat BDL",      icon: <BookUser     className="h-4 w-4" />, group: "Participation", minRank: 5 },
 
-  { id: "support",       label: "Support & Audiences", icon: <Headphones   className="h-4 w-4" />, group: "Assistance" },
+  { id: "support",       label: "Support & Audiences", icon: <Headphones   className="h-4 w-4" />, group: "Assistance", minRank: 5 },
   { id: "conference",    label: "Conférence",          icon: <Headphones   className="h-4" />,    group: "Assistance", minRank: 5 },
 
   { id: "president-msg", label: "Message Présidence",   icon: <MessageSquare className="h-4 w-4" />, group: "Site", minRank: 5 },
@@ -95,7 +96,7 @@ const NAV_ITEMS: NavItem[] = [
 
   { id: "users",         label: "Utilisateurs",        icon: <Shield       className="h-4 w-4" />, group: "Administration", minRank: 5 },
 
-  { id: "banner",        label: "Bandeau global",      icon: <Megaphone    className="h-4 w-4" />, group: "Gestion", minRank: 5 },
+  { id: "banner",        label: "Bandeau global",      icon: <Megaphone    className="h-4 w-4" />, group: "Gestion", minRank: 5, excludeRoles: ["consultant", "consultante"] },
   { id: "maintenance",   label: "Maintenance",         icon: <Wrench       className="h-4 w-4" />, group: "Gestion", minRank: 1 },
   { id: "admin-user",    label: "Gestion User",        icon: <Wrench       className="h-4 w-4" />, group: "Gestion", minRank: 1},
   { id: "event-themes",  label: "Thèmes événementiels",icon: <Palette      className="h-4 w-4" />, group: "Gestion", minRank: 1 },
@@ -272,7 +273,11 @@ const Admin = () => {
   // L'administrateur a accès à tout (rang 0 ≤ toutes les minRank)
   const isPresident = primaryRole === "president" || primaryRole === "presidente" || primaryRole === "administrator";
   const userRank    = rolePrecedence[primaryRole] ?? 99;
-  const visibleItems = NAV_ITEMS.filter((item) => !item.minRank || userRank <= item.minRank);
+  const visibleItems = NAV_ITEMS.filter((item) => {
+    if (item.minRank && userRank > item.minRank) return false;
+    if (item.excludeRoles?.includes(primaryRole)) return false;
+    return true;
+  });
   const groups = Array.from(new Set(visibleItems.map((i) => i.group)));
   const activeItem = visibleItems.find((i) => i.id === activeSection) ?? visibleItems[0];
 
@@ -379,7 +384,9 @@ const Admin = () => {
 
   const renderSection = () => {
     const requestedItem = NAV_ITEMS.find((i) => i.id === activeSection);
-    if (requestedItem?.minRank && userRank > requestedItem.minRank) return (
+    const isBlocked = (requestedItem?.minRank && userRank > requestedItem.minRank)
+      || requestedItem?.excludeRoles?.includes(primaryRole);
+    if (isBlocked) return (
       <div className="flex flex-col items-center justify-center py-24 text-center gap-4">
         <Shield className="h-12 w-12 text-muted-foreground/40" />
         <h2 className="text-xl font-semibold">Accès non autorisé</h2>

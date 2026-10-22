@@ -401,7 +401,7 @@ export const UserManagement = () => {
             const anciens   = users.filter((u) => u.primaryRole === "ancien_eleve");
 
             const renderUser = (u: UserProfile, isAncien = false) => {
-              const editable = !isAncien && canEditUser(u.primaryRole);
+              const editable = canEditUser(u.primaryRole);
               return (
                 <Card
                   key={u.id}

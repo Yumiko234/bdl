@@ -24,7 +24,8 @@ const ROLE_KEYS = [
   "communication_manager2",
   "bdl_member",
   "vie_scolaire",
-  "student"
+  "student",
+  "ancien_eleve"
 ] as const;
 type RoleKey = typeof ROLE_KEYS[number];
 
@@ -42,7 +43,8 @@ const rolePrecedence: Record<RoleKey, number> = {
   communication_manager2: 5,
   bdl_member: 6,
   vie_scolaire: 7,
-  student: 8
+  student: 8,
+  ancien_eleve: 9
 };
 
 const roleLabel = (r: RoleKey | string) =>
@@ -59,6 +61,7 @@ const roleLabel = (r: RoleKey | string) =>
   r === "communication_manager2" ? "Directrice de la Communauté et de la Communication" :
   r === "vie_scolaire"           ? "Vie Scolaire" :
   r === "bdl_member"             ? "Membre BDL" :
+  r === "ancien_eleve"           ? "Ancien Élève" :
   "Étudiant";
 
 interface UserProfile {
@@ -393,56 +396,83 @@ export const UserManagement = () => {
             Liste des utilisateurs
           </h3>
 
-          {users.map((u) => {
-            const editable = canEditUser(u.primaryRole);
-            return (
-              <Card key={u.id} className="bg-muted/30">
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <p className="font-medium">{u.full_name}</p>
-                      <p className="text-sm text-muted-foreground">{u.email}</p>
-                      <div className="flex gap-2 mt-2">
-                        {u.roles.map((r) => (
-                          <Badge
-                            key={r}
-                            variant={r === "administrator" ? "default" : "secondary"}
-                            className={r === "administrator" ? "bg-red-600 text-white" : ""}
+          {(() => {
+            const actifs    = users.filter((u) => u.primaryRole !== "ancien_eleve");
+            const anciens   = users.filter((u) => u.primaryRole === "ancien_eleve");
+
+            const renderUser = (u: UserProfile, isAncien = false) => {
+              const editable = canEditUser(u.primaryRole);
+              return (
+                <Card
+                  key={u.id}
+                  className={isAncien ? "border-dashed opacity-60" : "bg-muted/30"}
+                  style={isAncien ? {
+                    backgroundImage: "repeating-linear-gradient(45deg, transparent, transparent 6px, rgba(128,128,128,0.08) 6px, rgba(128,128,128,0.08) 12px)",
+                  } : undefined}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-1">
+                        <p className={`font-medium ${isAncien ? "text-muted-foreground" : ""}`}>{u.full_name}</p>
+                        <p className="text-sm text-muted-foreground">{u.email}</p>
+                        <div className="flex gap-2 mt-2">
+                          {u.roles.map((r) => (
+                            <Badge
+                              key={r}
+                              variant={r === "administrator" ? "default" : "secondary"}
+                              className={r === "administrator" ? "bg-red-600 text-white" : ""}
+                            >
+                              {r === "administrator" && "👑 "}{roleLabel(r)}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="w-56">
+                        {editable && !readOnly ? (
+                          <Select
+                            value={u.primaryRole ?? "student"}
+                            onValueChange={(value) => handleChangeRole(u.id, value as RoleKey, u.primaryRole)}
                           >
-                            {r === "administrator" && "👑 "}{roleLabel(r)}
-                          </Badge>
-                        ))}
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availableRolesOrdered
+                                .filter((r) => canAssignRole(r))
+                                .map((r) => (
+                                  <SelectItem key={r} value={r}>{roleLabel(r)}</SelectItem>
+                                ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <span className="text-xs text-muted-foreground italic px-2">
+                            Rôle non modifiable
+                          </span>
+                        )}
                       </div>
                     </div>
+                  </CardContent>
+                </Card>
+              );
+            };
 
-                    <div className="w-56">
-                      {editable && !readOnly ? (
-                        <Select
-                          value={u.primaryRole ?? "student"}
-                          onValueChange={(value) => handleChangeRole(u.id, value as RoleKey, u.primaryRole)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {availableRolesOrdered
-                              .filter((r) => canAssignRole(r))
-                              .map((r) => (
-                                <SelectItem key={r} value={r}>{roleLabel(r)}</SelectItem>
-                              ))}
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <span className="text-xs text-muted-foreground italic px-2">
-                          Rôle non modifiable
-                        </span>
-                      )}
+            return (
+              <>
+                {actifs.map((u) => renderUser(u, false))}
+                {anciens.length > 0 && (
+                  <>
+                    <div className="flex items-center gap-3 pt-2">
+                      <div className="flex-1 border-t border-dashed border-muted-foreground/30" />
+                      <span className="text-xs text-muted-foreground/60 italic">Anciens élèves ({anciens.length})</span>
+                      <div className="flex-1 border-t border-dashed border-muted-foreground/30" />
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                    {anciens.map((u) => renderUser(u, true))}
+                  </>
+                )}
+              </>
             );
-          })}
+          })()}
         </div>
       </CardContent>
     </Card>

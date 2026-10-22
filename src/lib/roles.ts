@@ -16,6 +16,7 @@ export const ROLE_KEYS = [
   "bdl_member",
   "vie_scolaire",
   "student",
+  "ancien_eleve",
 ] as const;
 
 export type RoleKey = typeof ROLE_KEYS[number];
@@ -36,6 +37,7 @@ export const rolePrecedence: Record<RoleKey, number> = {
   bdl_member: 6,
   vie_scolaire: 7,
   student: 8,
+  ancien_eleve: 9,
 };
 
 export const roleLabel = (r: string): string =>
@@ -51,7 +53,8 @@ export const roleLabel = (r: string): string =>
   r === "communication_manager"  ? "Directeur ComCom"      :
   r === "communication_manager2" ? "Directrice ComCom"     :
   r === "vie_scolaire"           ? "Vie Scolaire"          :
-  r === "bdl_member"             ? "Membre BDL"            : "Étudiant";
+  r === "bdl_member"             ? "Membre BDL"            :
+  r === "ancien_eleve"           ? "Ancien Élève"          : "Étudiant";
 
 export const getPrimaryRole = (roles: string[]): RoleKey => {
   if (!roles.length) return "student";

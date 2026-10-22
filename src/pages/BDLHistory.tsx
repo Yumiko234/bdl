@@ -40,6 +40,7 @@ const ROLE_LABELS: Record<string, string> = {
   communication_manager: "Directeur ComCom",
   communication_manager2: "Directrice ComCom",
   bdl_member: "Membre BDL",
+  ancien_eleve: "Ancien Élève",
 };
 
 const getInitials = (name: string) =>
@@ -85,6 +86,18 @@ const BDLHistory = () => {
       if (yearsRes.error) throw yearsRes.error;
       setYears(yearsRes.data || []);
 
+      // Slugs des membres actifs cette année → exclus de la section honorifique
+      const currentYearId = (yearsRes.data || []).find((y: any) => y.is_current)?.id;
+      let currentActiveSlugs = new Set<string>();
+      if (currentYearId) {
+        const { data: activeNow } = await supabase
+          .from("bdl_historical_members")
+          .select("full_name")
+          .eq("year_id", currentYearId)
+          .eq("is_honorary", false);
+        currentActiveSlugs = new Set((activeNow || []).map((m: any) => toPersonSlug(m.full_name)));
+      }
+
       // Map des années par id pour résoudre start_year/end_year sans join imbriqué
       const yearsById: Record<string, { start_year: number; end_year: number }> =
         Object.fromEntries((yearsRes.data || []).map((y: any) => [y.id, y]));
@@ -104,6 +117,7 @@ const BDLHistory = () => {
 
         honoraryRes.data.forEach((m: any) => {
           const key = toPersonSlug(m.full_name);
+          if (currentActiveSlugs.has(key)) return; // membre actif cette année → pas dans honorifiques
           const yearInfo = yearsById[m.year_id];
           const start = yearInfo?.start_year;
           const end = yearInfo?.end_year;

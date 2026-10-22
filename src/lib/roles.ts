@@ -37,7 +37,7 @@ export const rolePrecedence: Record<RoleKey, number> = {
   bdl_member: 6,
   vie_scolaire: 7,
   student: 8,
-  ancien_eleve: 9,
+  ancien_eleve: 8,
 };
 
 export const roleLabel = (r: string): string =>

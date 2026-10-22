@@ -44,7 +44,7 @@ const rolePrecedence: Record<RoleKey, number> = {
   bdl_member: 6,
   vie_scolaire: 7,
   student: 8,
-  ancien_eleve: 9
+  ancien_eleve: 8
 };
 
 const roleLabel = (r: RoleKey | string) =>
@@ -401,7 +401,7 @@ export const UserManagement = () => {
             const anciens   = users.filter((u) => u.primaryRole === "ancien_eleve");
 
             const renderUser = (u: UserProfile, isAncien = false) => {
-              const editable = canEditUser(u.primaryRole);
+              const editable = !isAncien && canEditUser(u.primaryRole);
               return (
                 <Card
                   key={u.id}

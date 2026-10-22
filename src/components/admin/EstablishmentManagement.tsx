@@ -38,8 +38,9 @@ export const EstablishmentManagement = () => {
   const loadSections = async () => {
     try {
       const { data, error } = await supabase
-        .from('establishment_info')
+        .from('site_content')
         .select('*')
+        .eq('category', 'establishment')
         .order('display_order', { ascending: true });
 
       if (error) throw error;
@@ -68,7 +69,7 @@ export const EstablishmentManagement = () => {
 
       if (editingSection) {
         const { error } = await supabase
-          .from('establishment_info')
+          .from('site_content')
           .update({
             title: formData.title,
             content: formData.content,
@@ -81,13 +82,14 @@ export const EstablishmentManagement = () => {
         toast.success("Section mise à jour avec succès");
       } else {
         const { error } = await supabase
-          .from('establishment_info')
+          .from('site_content')
           .insert({
             section_key: formData.section_key,
             title: formData.title,
             content: formData.content,
             display_order: formData.display_order,
             updated_by: user.id,
+            category: 'establishment',
           });
 
         if (error) throw error;
@@ -115,7 +117,7 @@ export const EstablishmentManagement = () => {
   const handleDelete = (id: string) => {
     setConfirmDelete(() => async () => {
       try {
-        const { error } = await supabase.from('establishment_info').delete().eq('id', id);
+        const { error } = await supabase.from('site_content').delete().eq('id', id);
         if (error) throw error;
         toast.success("Section supprimée avec succès");
         loadSections();

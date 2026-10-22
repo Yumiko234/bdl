@@ -37,8 +37,9 @@ export const ContactManagement = () => {
 
   const loadContactInfos = async () => {
     const { data, error } = await supabase
-      .from('contact_info')
+      .from('site_content')
       .select('*')
+      .eq('category', 'contact')
       .order('display_order');
 
     if (error) {
@@ -80,9 +81,10 @@ export const ContactManagement = () => {
 
     if (isCreating) {
       const { error } = await supabase
-        .from('contact_info')
+        .from('site_content')
         .insert({
           ...formData,
+          category: 'contact',
           updated_by: user?.id
         });
 
@@ -95,7 +97,7 @@ export const ContactManagement = () => {
       }
     } else if (editingId) {
       const { error } = await supabase
-        .from('contact_info')
+        .from('site_content')
         .update({
           title: formData.title,
           content: formData.content,
@@ -116,7 +118,7 @@ export const ContactManagement = () => {
 
   const handleDelete = (id: string) => {
     setConfirmDelete(() => async () => {
-      const { error } = await supabase.from('contact_info').delete().eq('id', id);
+      const { error } = await supabase.from('site_content').delete().eq('id', id);
       if (error) toast.error("Erreur lors de la suppression");
       else { toast.success("Information supprimée avec succès"); loadContactInfos(); }
     });

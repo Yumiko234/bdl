@@ -31,8 +31,9 @@ const Etablissement = () => {
   const loadSections = async () => {
     try {
       const { data, error } = await supabase
-        .from('establishment_info')
+        .from('site_content')
         .select('*')
+        .eq('category', 'establishment')
         .order('display_order', { ascending: true });
 
       if (error) throw error;

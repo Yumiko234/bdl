@@ -28,8 +28,9 @@ export const FooterManagement = () => {
 
   const loadContents = async () => {
     const { data, error } = await supabase
-      .from("footer_content")
+      .from("site_content")
       .select("*")
+      .eq("category", "footer")
       .order("display_order");
 
     if (error) {
@@ -53,7 +54,7 @@ export const FooterManagement = () => {
   const saveContent = async (id: string) => {
     setLoading(true);
     const { error } = await supabase
-      .from("footer_content")
+      .from("site_content")
       .update({
         content: editForm.content,
       })

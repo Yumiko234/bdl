@@ -45,8 +45,9 @@ const Contact = () => {
 
   const loadContactInfos = async () => {
     const { data, error } = await supabase
-      .from('contact_info')
+      .from('site_content')
       .select('section_key, title, content')
+      .eq('category', 'contact')
       .order('display_order');
 
     if (error) {

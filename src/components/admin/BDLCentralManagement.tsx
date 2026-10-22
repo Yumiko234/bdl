@@ -584,7 +584,7 @@ const BDLByPerson = () => {
                 <div className="space-y-1 sm:col-span-2">
                   <Label className="text-xs">Année scolaire *</Label>
                   <Select value={fd.year_id}
-                    onValueChange={(v) => setFd((f) => ({ ...f, year_id: v, slug: slugify(f.full_name) }))}>
+                    onValueChange={(v) => setFd((f) => ({ ...f, year_id: v, slug: suggestSlug(f.full_name, v) }))}>
                     <SelectTrigger className="text-sm"><SelectValue placeholder="Sélectionner une année…" /></SelectTrigger>
                     <SelectContent>
                       {years.map((y) => <SelectItem key={y.id} value={y.id}>{y.year_label}</SelectItem>)}
@@ -651,7 +651,7 @@ const BDLByPerson = () => {
               <h3 className="font-semibold">{selPerson?.full_name}</h3>
               {!readOnly && (
                 <Button size="sm" onClick={() => {
-                  setFd({ ...emptyProfileForm, full_name: selPerson?.full_name ?? "", slug: slugify(selPerson?.full_name ?? "") });
+                  setFd({ ...emptyProfileForm, full_name: selPerson?.full_name ?? "", slug: "" });
                   setShowForm(true);
                 }}>
                   <Plus className="h-4 w-4 mr-1" />Ajouter une fiche

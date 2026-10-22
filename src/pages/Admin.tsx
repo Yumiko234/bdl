@@ -15,9 +15,7 @@ import { AdminInternalNotes } from "@/components/admin/AdminInternalNotes";
 import { NewsManagement }           from "@/components/admin/NewsManagement";
 import { EventManagement }          from "@/components/admin/EventManagement";
 import { DocumentManagement }       from "@/components/admin/DocumentManagement";
-import { BDLMembersManagement }     from "@/components/admin/BDLMembersManagement";
-import { BDLHistoryManagement }     from "@/components/admin/BDLHistoryManagement";
-import { BDLProfileManagement }     from "@/components/admin/BDLProfileManagement";
+import { BDLCentralManagement }     from "@/components/admin/BDLCentralManagement";
 import { ContactManagement }        from "@/components/admin/ContactManagement";
 import { EstablishmentManagement }  from "@/components/admin/EstablishmentManagement";
 import { CalendarManagement }       from "@/components/admin/CalendarManagement";
@@ -79,9 +77,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "documents",     label: "Documents",           icon: <FileText     className="h-4 w-4" />, group: "Contenu" },
   { id: "journal",       label: "Journal Officiel",    icon: <BookMarked   className="h-4 w-4" />, group: "Contenu", minRank: 5, allowRoles: ["vie_scolaire"] },
   
-  { id: "bdl-members",   label: "Membres BDL",         icon: <Users        className="h-4 w-4" />, group: "BDL", minRank: 5 },
-  { id: "bdl-profiles",  label: "Profils détaillés",   icon: <UserCircle   className="h-4 w-4" />, group: "BDL", minRank: 5 },
-  { id: "bdl-history",   label: "Historique BDL",      icon: <History      className="h-4 w-4" />, group: "BDL", minRank: 5 },
+  { id: "bdl",            label: "Gestion BDL",         icon: <History      className="h-4 w-4" />, group: "BDL", minRank: 5 },
   { id: "bdl-int-notes", label: "Notes Internes",      icon: <BookMarked   className="h-4 w-4" />, group: "BDL", minRank: 5 },
 
   { id: "scrutin",       label: "Scrutins",            icon: <Vote         className="h-4 w-4" />, group: "Participation", minRank: 5 },
@@ -414,10 +410,8 @@ const Admin = () => {
       case "calendar":      return <CalendarManagement />;
       case "documents":     return <DocumentManagement />;
       case "journal":       return <OfficialJournalManagement />;
-      case "bdl-members":   return <BDLMembersManagement />;
-      case "bdl-profiles":  return <BDLProfileManagement />;
+      case "bdl":           return <BDLCentralManagement />;
       case "dashboard":     return <AdminDashboard />;
-      case "bdl-history":   return <BDLHistoryManagement />;
       case "bdl-int-notes": return <AdminInternalNotes />;
       case "scrutin":       return <ScrutinManagement />;
       case "surveys":       return <SurveyManagement />;

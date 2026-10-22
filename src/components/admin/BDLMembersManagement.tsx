@@ -212,6 +212,31 @@ export const BDLMembersManagement = () => {
           if (roleErr) throw roleErr;
         }
 
+        // Auto-create a profile entry for the current year if none exists yet
+        const { data: currentYear } = await supabase
+          .from("bdl_years").select("id").eq("is_current", true).maybeSingle();
+        if (currentYear) {
+          const personSlug = form.full_name.trim().toLowerCase()
+            .normalize("NFD").replace(/[̀-ͯ]/g, "")
+            .replace(/[^a-z0-9\s]/g, "").trim().replace(/\s+/g, "_");
+          const { data: existing } = await supabase
+            .from("bdl_member_profiles")
+            .select("id").eq("person_slug", personSlug).eq("year_id", currentYear.id)
+            .maybeSingle();
+          if (!existing) {
+            await supabase.from("bdl_member_profiles").insert({
+              full_name: form.full_name.trim(),
+              slug: personSlug,
+              person_slug: personSlug,
+              year_id: currentYear.id,
+              role: form.role_label,
+              photo_url: form.avatar_url.trim() || null,
+              is_published: false,
+              display_order: form.display_order,
+            });
+          }
+        }
+
         toast.success("Membre ajouté avec succès");
       } else if (editingId) {
         const { error } = await supabase

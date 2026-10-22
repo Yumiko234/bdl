@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { Newspaper, Pin, Edit, Trash2 } from "lucide-react";
 import { safeHtml } from "@/lib/sanitize";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useAdminReadOnly } from "@/contexts/AdminReadOnlyContext";
 
 interface NewsArticle {
   id: string;
@@ -31,6 +32,7 @@ interface NewsManagementProps {
 }
 
 export const NewsManagement = ({ isPresident }: NewsManagementProps) => {
+  const readOnly = useAdminReadOnly();
   const formRef = useRef<HTMLDivElement>(null);
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [editingArticle, setEditingArticle] = useState<string | null>(null);
@@ -182,7 +184,7 @@ export const NewsManagement = ({ isPresident }: NewsManagementProps) => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div ref={formRef} className="border rounded-lg p-6 space-y-4 bg-muted/30">
+        {!readOnly && <div ref={formRef} className="border rounded-lg p-6 space-y-4 bg-muted/30">
           <h3 className="font-semibold">
             {editingArticle ? "Modifier l'article" : "Nouvel article"}
           </h3>
@@ -257,7 +259,7 @@ export const NewsManagement = ({ isPresident }: NewsManagementProps) => {
               )}
             </div>
           </div>
-        </div>
+        </div>}
 
         <div className="space-y-4">
           <h3 className="font-semibold">Articles publiés</h3>
@@ -288,31 +290,31 @@ export const NewsManagement = ({ isPresident }: NewsManagementProps) => {
                       </p>
                     </div>
                   
-                  <div className="flex gap-2">
+                  {!readOnly && <div className="flex gap-2">
                     {isPresident && (
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="sm"
                         variant={article.is_pinned ? "default" : "outline"}
                         onClick={() => handlePin(article.id, article.is_pinned)}
                       >
                         <Pin className="h-4 w-4" />
                       </Button>
                     )}
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       variant="outline"
                       onClick={() => handleEdit(article)}
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       variant="destructive"
                       onClick={() => handleDelete(article.id)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
-                  </div>
+                  </div>}
                 </div>
               </CardContent>
             </Card>

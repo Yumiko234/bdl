@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAdminReadOnly } from "@/contexts/AdminReadOnlyContext";
 import { Users, UserPlus, Shield } from "lucide-react";
 
 const ROLE_KEYS = [
@@ -69,6 +70,7 @@ interface UserProfile {
 }
 
 export const UserManagement = () => {
+  const readOnly = useAdminReadOnly();
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(false);
   const [newUser, setNewUser] = useState({
@@ -318,7 +320,7 @@ export const UserManagement = () => {
 
       <CardContent className="space-y-6">
         {/* Création d'utilisateur */}
-        <div className="border rounded-lg p-6 space-y-4 bg-muted/30">
+        {!readOnly && <div className="border rounded-lg p-6 space-y-4 bg-muted/30">
           <div className="flex items-center gap-2 mb-4">
             <UserPlus className="h-5 w-5" />
             <h3 className="font-semibold">Créer un nouvel utilisateur</h3>
@@ -382,7 +384,7 @@ export const UserManagement = () => {
           <Button onClick={handleCreateUser} disabled={loading}>
             {loading ? "Création..." : "Créer l'utilisateur"}
           </Button>
-        </div>
+        </div>}
 
         {/* Liste des utilisateurs triée par préséance */}
         <div className="space-y-4">
@@ -414,7 +416,7 @@ export const UserManagement = () => {
                     </div>
 
                     <div className="w-56">
-                      {editable ? (
+                      {editable && !readOnly ? (
                         <Select
                           value={u.primaryRole ?? "student"}
                           onValueChange={(value) => handleChangeRole(u.id, value as RoleKey, u.primaryRole)}

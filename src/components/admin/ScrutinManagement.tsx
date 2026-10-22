@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Vote, Plus, Trash2, Lock, Unlock, EyeOff, Download, Calendar } from "lucide-react";
+import { useAdminReadOnly } from "@/contexts/AdminReadOnlyContext";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,6 +41,7 @@ interface VoteCount {
 }
 
 export const ScrutinManagement = () => {
+  const readOnly = useAdminReadOnly();
   const [scrutins, setScrutins] = useState<Scrutin[]>([]);
   const [formData, setFormData] = useState({
     title: "",
@@ -270,7 +272,7 @@ export const ScrutinManagement = () => {
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="border rounded-lg p-6 space-y-4 bg-muted/30">
+        {!readOnly && <div className="border rounded-lg p-6 space-y-4 bg-muted/30">
           <div className="flex items-center gap-2">
             <Plus className="h-5 w-5" />
             <h3 className="font-semibold">Créer un nouveau scrutin</h3>
@@ -342,7 +344,7 @@ export const ScrutinManagement = () => {
               Créer le scrutin
             </Button>
           </div>
-        </div>
+        </div>}
 
         <div className="space-y-4">
           <h3 className="font-semibold">Scrutins existants</h3>
@@ -423,7 +425,7 @@ export const ScrutinManagement = () => {
                       })()}
                     </div>
 
-                    <div className="flex gap-2">
+                    {!readOnly && <div className="flex gap-2">
                       {scrutin.status === "closed" ? (
                         <>
                           <Button
@@ -478,7 +480,7 @@ export const ScrutinManagement = () => {
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
-                    </div>
+                    </div>}
                   </div>
                 </CardContent>
               </Card>

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAdminReadOnly } from "@/contexts/AdminReadOnlyContext";
 import {
   Headphones, ChevronLeft, Send, Clock, CheckCircle2, XCircle,
   Loader2, User, Filter, RefreshCw, MessageCircle, Calendar,
@@ -83,6 +84,7 @@ export const SupportManagement = ({
   currentUserId = "",
   currentUserName = "Staff BDL",
 }: SupportManagementProps) => {
+  const readOnly = useAdminReadOnly();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -296,7 +298,7 @@ export const SupportManagement = ({
         </Card>
 
         {/* Status actions */}
-        {canHandleThis && (
+        {canHandleThis && !readOnly && (
           <Card className="bg-muted/20">
             <CardContent className="p-4">
               <p className="text-sm font-semibold mb-3">Changer le statut :</p>
@@ -422,7 +424,7 @@ export const SupportManagement = ({
               <div ref={messagesEndRef} />
             </div>
 
-            {!closed ? (
+            {!closed && !readOnly ? (
               <div className="px-6 pb-6 pt-3 border-t mt-2">
                 <div className="flex gap-2">
                   <Textarea

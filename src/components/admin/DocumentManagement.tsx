@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { FileText, Upload, Trash2, Download } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useAdminReadOnly } from "@/contexts/AdminReadOnlyContext";
 
 interface Document {
   id: string;
@@ -31,6 +32,7 @@ const categoryLabels: Record<string, string> = {
 };
 
 export const DocumentManagement = () => {
+  const readOnly = useAdminReadOnly();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [uploading, setUploading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<(() => Promise<void>) | null>(null);
@@ -155,7 +157,7 @@ export const DocumentManagement = () => {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Formulaire ajout document */}
-        <div className="border rounded-lg p-6 space-y-4 bg-muted/30">
+        {!readOnly && <div className="border rounded-lg p-6 space-y-4 bg-muted/30">
           <div className="flex items-center gap-2">
             <Upload className="h-5 w-5" />
             <h3 className="font-semibold">Ajouter un document</h3>
@@ -244,7 +246,7 @@ export const DocumentManagement = () => {
               {uploading ? "Ajout en cours..." : "Ajouter le document"}
             </Button>
           </div>
-        </div>
+        </div>}
 
         {/* Liste des documents */}
         <div className="space-y-4">
@@ -282,13 +284,13 @@ export const DocumentManagement = () => {
                         <Download className="h-4 w-4" />
                       </Button>
                     )}
-                    <Button
+                    {!readOnly && <Button
                       size="sm"
                       variant="destructive"
                       onClick={() => handleDelete(doc.id, doc.file_url)}
                     >
                       <Trash2 className="h-4 w-4" />
-                    </Button>
+                    </Button>}
                   </div>
                 </div>
               </CardContent>

@@ -15,6 +15,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Plus, Pin, Pencil, Trash2, Loader2, Megaphone, Lock, EyeOff, Eye, Clock } from "lucide-react";
+import { useAdminReadOnly } from "@/contexts/AdminReadOnlyContext";
 
 interface InternalNote {
   id: string;
@@ -37,6 +38,7 @@ interface InternalNote {
  * Les notes publiées apparaissent ensuite dans l'Intranet (voir Intranet.tsx).
  */
 export const AdminInternalNotes = () => {
+  const readOnly = useAdminReadOnly();
   const { user, loading: authLoading } = useAuth();
 
   const [notes, setNotes] = useState<InternalNote[]>([]);
@@ -342,7 +344,7 @@ export const AdminInternalNotes = () => {
       )}
 
       {/* ── Form modal ── */}
-      {showForm && (
+      {showForm && !readOnly && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-background border rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b">

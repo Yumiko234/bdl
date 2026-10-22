@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAdminReadOnly } from "@/contexts/AdminReadOnlyContext";
 import { Pencil, Trash2, Plus } from "lucide-react";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
@@ -18,6 +19,7 @@ interface ContactInfo {
 }
 
 export const ContactManagement = () => {
+  const readOnly = useAdminReadOnly();
   const [contactInfos, setContactInfos] = useState<ContactInfo[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<(() => Promise<void>) | null>(null);
@@ -130,14 +132,14 @@ export const ContactManagement = () => {
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Gestion des Informations de Contact</CardTitle>
-          <Button onClick={handleCreate} size="sm">
+          {!readOnly && <Button onClick={handleCreate} size="sm">
             <Plus className="h-4 w-4 mr-2" />
             Ajouter une section
-          </Button>
+          </Button>}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {(isCreating || editingId) && (
+        {!readOnly && (isCreating || editingId) && (
           <Card className="bg-muted/30">
             <CardContent className="p-6 space-y-4">
               <h3 className="font-bold">
@@ -213,7 +215,7 @@ export const ContactManagement = () => {
                       Clé: {info.section_key} | Ordre: {info.display_order}
                     </p>
                   </div>
-                  <div className="flex gap-2">
+                  {!readOnly && <div className="flex gap-2">
                     <Button
                       size="sm"
                       variant="outline"
@@ -228,7 +230,7 @@ export const ContactManagement = () => {
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
-                  </div>
+                  </div>}
                 </div>
               </CardContent>
             </Card>

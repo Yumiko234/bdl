@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { UserCircle, Plus, Trash2, Edit, Eye, Upload } from "lucide-react";
+import { useAdminReadOnly } from "@/contexts/AdminReadOnlyContext";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,6 +52,7 @@ interface BDLYearOption {
 const GLOBAL_YEAR_VALUE = "global";
 
 export const BDLProfileManagement = () => {
+  const readOnly = useAdminReadOnly();
   const [profiles, setProfiles] = useState<MemberProfile[]>([]);
   const [years, setYears] = useState<BDLYearOption[]>([]);
   const [editingProfile, setEditingProfile] = useState<string | null>(null);
@@ -319,7 +321,7 @@ export const BDLProfileManagement = () => {
 
       <CardContent className="space-y-8">
         {/* Formulaire */}
-        <div className="border rounded-lg p-6 space-y-4 bg-muted/30">
+        {!readOnly && <div className="border rounded-lg p-6 space-y-4 bg-muted/30">
           <div className="flex items-center gap-2">
             <Plus className="h-5 w-5" />
             <h3 className="font-semibold">
@@ -507,7 +509,7 @@ export const BDLProfileManagement = () => {
               </Button>
             )}
           </div>
-        </div>
+        </div>}
 
         {/* Liste des profils */}
         <div className="space-y-4">
@@ -572,10 +574,10 @@ export const BDLProfileManagement = () => {
                           <Eye className="h-4 w-4" />
                         </Button>
                       )}
-                      <Button size="sm" variant="outline" onClick={() => handleEdit(profile)}>
+                      {!readOnly && <Button size="sm" variant="outline" onClick={() => handleEdit(profile)}>
                         <Edit className="h-4 w-4" />
-                      </Button>
-                      <AlertDialog>
+                      </Button>}
+                      {!readOnly && <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button size="sm" variant="destructive">
                             <Trash2 className="h-4 w-4" />
@@ -595,7 +597,7 @@ export const BDLProfileManagement = () => {
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
-                      </AlertDialog>
+                      </AlertDialog>}
                     </div>
                   </div>
                 </CardContent>

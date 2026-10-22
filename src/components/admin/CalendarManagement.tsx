@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { CalendarDays, Plus, Trash2, Pencil, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdminReadOnly } from "@/contexts/AdminReadOnlyContext";
 import { toast } from "sonner";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { safeHtml } from "@/lib/sanitize";
@@ -57,6 +58,7 @@ const fmtDate = (iso: string) => {
 // Component
 // ---------------------------------------------------------------------------
 export const CalendarManagement = () => {
+  const readOnly = useAdminReadOnly();
   const { user } = useAuth();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -207,9 +209,9 @@ export const CalendarManagement = () => {
             <CalendarDays className="h-6 w-6" />
             Gestion Calendrier ({events.length})
           </CardTitle>
-          <Button onClick={openCreate} className="gap-1">
+          {!readOnly && <Button onClick={openCreate} className="gap-1">
             <Plus className="h-4 w-4" /> Nouvel événement
-          </Button>
+          </Button>}
         </div>
       </CardHeader>
 
@@ -253,14 +255,14 @@ export const CalendarManagement = () => {
                   </div>
 
                   {/* actions */}
-                  <div className="flex items-center gap-2 flex-shrink-0">
+                  {!readOnly && <div className="flex items-center gap-2 flex-shrink-0">
                     <Button size="sm" variant="outline" onClick={() => openEdit(evt)}>
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button size="sm" variant="destructive" onClick={() => handleDelete(evt.id)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
-                  </div>
+                  </div>}
                 </div>
               </CardContent>
             </Card>
@@ -276,7 +278,7 @@ export const CalendarManagement = () => {
       />
 
       {/* ---- Modal (create / edit) ---- */}
-      {isOpen && (
+      {isOpen && !readOnly && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-background border rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             {/* modal header */}

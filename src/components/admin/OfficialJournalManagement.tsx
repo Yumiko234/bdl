@@ -14,6 +14,7 @@ import { diffWords } from "diff";
 import "@/styles/journal.css";
 import { safeHtml } from "@/lib/sanitize";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useAdminReadOnly } from "@/contexts/AdminReadOnlyContext";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -474,6 +475,7 @@ const ArticleRenderer = ({ entry }: { entry: JournalEntry }) => {
 // ─── Composant principal ──────────────────────────────────────────────────────
 
 export const OfficialJournalManagement = () => {
+  const readOnly = useAdminReadOnly();
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [editingEntry, setEditingEntry] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<(() => Promise<void>) | null>(null);
@@ -571,7 +573,7 @@ export const OfficialJournalManagement = () => {
         <CardContent className="p-8 space-y-8">
 
           {/* ── Formulaire ── */}
-          <section className="border rounded-xl p-6 bg-card shadow-inner">
+          {!readOnly && <section className="border rounded-xl p-6 bg-card shadow-inner">
             <h3 className="font-semibold text-lg mb-4 text-center font-serif">
               {editingEntry ? "Modification d'une publication" : "Nouvelle publication officielle"}
             </h3>
@@ -613,7 +615,7 @@ export const OfficialJournalManagement = () => {
               {editingEntry && <Button variant="outline" onClick={resetForm}>Annuler</Button>}
               {formData.content && <Button variant="secondary" onClick={handlePreview}>Prévisualiser</Button>}
             </div>
-          </section>
+          </section>}
 
           {/* ── Prévisualisation ── */}
           {previewEntry && (
@@ -656,9 +658,9 @@ export const OfficialJournalManagement = () => {
                           )}
                         </div>
                         <div className="flex gap-2">
-                          <Button size="sm" variant="outline" onClick={() => handleEdit(entry)}><Edit className="h-4 w-4" /></Button>
+                          {!readOnly && <Button size="sm" variant="outline" onClick={() => handleEdit(entry)}><Edit className="h-4 w-4" /></Button>}
                           <Button size="sm" variant="outline" onClick={() => setPreviewEntry(entry)}><FileText className="h-4 w-4" /></Button>
-                          <Button size="sm" variant="destructive" onClick={() => handleDelete(entry.id)}><Trash2 className="h-4 w-4" /></Button>
+                          {!readOnly && <Button size="sm" variant="destructive" onClick={() => handleDelete(entry.id)}><Trash2 className="h-4 w-4" /></Button>}
                         </div>
                       </div>
                     </CardContent>

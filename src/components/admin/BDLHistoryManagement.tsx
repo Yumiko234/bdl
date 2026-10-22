@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { History, Plus, Trash2, Users, Edit } from "lucide-react";
+import { useAdminReadOnly } from "@/contexts/AdminReadOnlyContext";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,6 +43,7 @@ interface Member {
 }
 
 export const BDLHistoryManagement = () => {
+  const readOnly = useAdminReadOnly();
   const [years, setYears] = useState<Year[]>([]);
   const [members, setMembers] = useState<Record<string, Member[]>>({});
   const [selectedYear, setSelectedYear] = useState<string | null>(null);
@@ -234,7 +236,7 @@ export const BDLHistoryManagement = () => {
 
       <CardContent className="space-y-8">
         {/* Création d'année */}
-        <div className="border rounded-lg p-6 space-y-4 bg-muted/30">
+        {!readOnly && <div className="border rounded-lg p-6 space-y-4 bg-muted/30">
           <div className="flex items-center gap-2">
             <Plus className="h-5 w-5" />
             <h3 className="font-semibold">Créer une nouvelle année scolaire</h3>
@@ -277,7 +279,7 @@ export const BDLHistoryManagement = () => {
             <Plus className="h-4 w-4 mr-2" />
             Créer l'année
           </Button>
-        </div>
+        </div>}
 
         {/* Liste des années */}
         <div className="space-y-4">
@@ -327,7 +329,7 @@ export const BDLHistoryManagement = () => {
                                   </div>
                                 </div>
 
-                                <AlertDialog>
+                                {!readOnly && <AlertDialog>
                                   <AlertDialogTrigger asChild>
                                     <Button size="sm" variant="ghost">
                                       <Trash2 className="h-4 w-4" />
@@ -349,7 +351,7 @@ export const BDLHistoryManagement = () => {
                                       </AlertDialogAction>
                                     </AlertDialogFooter>
                                   </AlertDialogContent>
-                                </AlertDialog>
+                                </AlertDialog>}
                               </div>
                             ))}
                           </div>
@@ -357,7 +359,7 @@ export const BDLHistoryManagement = () => {
                       )}
                     </div>
 
-                    <div className="flex gap-2 ml-4">
+                    {!readOnly && <div className="flex gap-2 ml-4">
                       <Button
                         size="sm"
                         variant="outline"
@@ -387,11 +389,11 @@ export const BDLHistoryManagement = () => {
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
-                    </div>
+                    </div>}
                   </div>
 
                   {/* Add member form for selected year */}
-                  {selectedYear === year.id && (
+                  {!readOnly && selectedYear === year.id && (
                     <div className="mt-4 p-4 border rounded-lg bg-background space-y-4">
                       <h4 className="font-semibold flex items-center gap-2">
                         <Plus className="h-4 w-4" />

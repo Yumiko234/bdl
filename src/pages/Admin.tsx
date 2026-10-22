@@ -7,6 +7,7 @@ import { useSEO } from "@/hooks/useSEO";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ROLE_KEYS, type RoleKey, rolePrecedence, roleLabel, getPrimaryRole } from "@/lib/roles";
+import { AdminReadOnlyContext } from "@/contexts/AdminReadOnlyContext";
 
 // ─── Admin sub-components ─────────────────────────────────────────────────────
 import { AdminDashboard }          from "@/components/admin/AdminDashboard";
@@ -273,6 +274,7 @@ const Admin = () => {
 
   // L'administrateur a accès à tout (rang 0 ≤ toutes les minRank)
   const isPresident = primaryRole === "president" || primaryRole === "presidente" || primaryRole === "administrator";
+  const isReadOnly  = primaryRole === "consultant" || primaryRole === "consultante" || primaryRole === "vie_scolaire";
   const userRank    = rolePrecedence[primaryRole] ?? 99;
   const visibleItems = NAV_ITEMS.filter((item) => {
     if (item.allowRoles?.includes(primaryRole)) return true;
@@ -531,7 +533,9 @@ const Admin = () => {
         )}
         <main ref={mainRef} className="flex-1 overflow-y-auto p-4 lg:p-8">
           <div key={activeSection}>
-            {renderSection()}
+            <AdminReadOnlyContext.Provider value={isReadOnly}>
+              {renderSection()}
+            </AdminReadOnlyContext.Provider>
             <Footer />
           </div>
         </main>

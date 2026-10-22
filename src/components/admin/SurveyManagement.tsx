@@ -27,6 +27,7 @@ import {
   Info,
   ShieldCheck,
 } from "lucide-react";
+import { useAdminReadOnly } from "@/contexts/AdminReadOnlyContext";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -271,6 +272,7 @@ const ResponsesView = ({
 // ─── Main component ──────────────────────────────────────────────────────────
 
 export const SurveyManagement = () => {
+  const readOnly = useAdminReadOnly();
   // ── state ───────────────────────────────────────────────────────────────────
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [loading, setLoading] = useState(false);
@@ -656,7 +658,7 @@ export const SurveyManagement = () => {
 
       <CardContent className="space-y-6">
         {/* ── Create button / form ── */}
-        {!showCreateForm ? (
+        {!readOnly && (!showCreateForm ? (
           <Button
             variant="outline"
             onClick={() => setShowCreateForm(true)}
@@ -774,7 +776,7 @@ export const SurveyManagement = () => {
               Créer le sondage
             </Button>
           </div>
-        )}
+        ))}
 
         {/* ── Survey list ── */}
         <div className="space-y-4">
@@ -838,7 +840,7 @@ export const SurveyManagement = () => {
 
                     {/* action buttons */}
                     <div className="flex gap-1 flex-shrink-0">
-                      {survey.status === "draft" && (
+                      {!readOnly && survey.status === "draft" && (
                         <Button
                           size="sm"
                           variant="outline"
@@ -850,7 +852,7 @@ export const SurveyManagement = () => {
                           <Unlock className="h-4 w-4 mr-1" /> Ouvrir
                         </Button>
                       )}
-                      {survey.status === "open" && (
+                      {!readOnly && survey.status === "open" && (
                         <Button
                           size="sm"
                           variant="outline"
@@ -872,7 +874,7 @@ export const SurveyManagement = () => {
                         <Eye className="h-4 w-4" />
                       </Button>
 
-                      <Button
+                      {!readOnly && <Button
                         size="sm"
                         variant={isEditing ? "default" : "outline"}
                         onClick={() => {
@@ -886,9 +888,9 @@ export const SurveyManagement = () => {
                         title="Éditer"
                       >
                         <Edit2 className="h-4 w-4" />
-                      </Button>
+                      </Button>}
 
-                      <AlertDialog>
+                      {!readOnly && <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button
                             size="sm"
@@ -918,12 +920,12 @@ export const SurveyManagement = () => {
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
-                      </AlertDialog>
+                      </AlertDialog>}
                     </div>
                   </div>
 
                   {/* ════ EDITING PANEL ════ */}
-                  {isEditing && (
+                  {!readOnly && isEditing && (
                     <div className="mt-5 border-t pt-5 space-y-5">
                       {/* toggles */}
                       <div className="flex flex-wrap gap-6">

@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAdminReadOnly } from "@/contexts/AdminReadOnlyContext";
 import {
   Plus, Trash2, Edit2, CheckCircle2, Clock, AlertCircle,
   Star, TrendingUp, Users, Target, StickyNote, X, Save,
@@ -153,6 +154,7 @@ function CategoryBadge({ category }: { category: Action["category"] }) {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export const SuiviActionsManagement = () => {
+  const readOnly = useAdminReadOnly();
   const [members, setMembers] = useState<BDLMember[]>([]);
   const [actions, setActions] = useState<Action[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
@@ -667,10 +669,10 @@ export const SuiviActionsManagement = () => {
             <CalendarClock className="h-5 w-5 text-primary" />
             Présence aux réunions
           </h3>
-          <Button size="sm" onClick={openCreateMeeting} className="gap-2">
+          {!readOnly && <Button size="sm" onClick={openCreateMeeting} className="gap-2">
             <Plus className="h-4 w-4" />
             Nouvelle réunion
-          </Button>
+          </Button>}
         </div>
 
         {meetings.length === 0 ? (
@@ -722,7 +724,7 @@ export const SuiviActionsManagement = () => {
                           <span>{presentCount}/{members.length} présent(s)</span>
                         </div>
                       </div>
-                      <AlertDialog>
+                      {!readOnly && <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button
                             size="sm" variant="ghost"
@@ -744,7 +746,7 @@ export const SuiviActionsManagement = () => {
                             <AlertDialogAction onClick={() => handleDeleteMeeting(meeting.id)}>Supprimer</AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
-                      </AlertDialog>
+                      </AlertDialog>}
                       {isOpen
                         ? <ChevronUp className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                         : <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />}
@@ -780,6 +782,15 @@ export const SuiviActionsManagement = () => {
                               <div className="flex items-center gap-1 flex-shrink-0 flex-wrap justify-end">
                                 {!member.hasAccount ? (
                                   <span className="text-xs text-muted-foreground italic">Pas de compte</span>
+                                ) : readOnly ? (
+                                  current ? (
+                                    <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs font-semibold ${ATTENDANCE_CONFIG[current].color}`}>
+                                      {ATTENDANCE_CONFIG[current].icon}
+                                      <span className="hidden sm:inline">{ATTENDANCE_CONFIG[current].label}</span>
+                                    </span>
+                                  ) : (
+                                    <span className="text-xs text-muted-foreground italic">—</span>
+                                  )
                                 ) : BUTTONS.map(({ status, label }) => (
                                   <button
                                     key={status}
@@ -867,7 +878,7 @@ export const SuiviActionsManagement = () => {
                     >
                       <History className="h-3 w-3" /> <span className="hidden sm:inline">Historique</span>
                     </Button>
-                    <Button
+                    {!readOnly && <Button
                       size="sm"
                       variant="outline"
                       className="gap-1 text-xs"
@@ -876,7 +887,7 @@ export const SuiviActionsManagement = () => {
                       onClick={(e) => { e.stopPropagation(); openCreateAction(s.member.id); }}
                     >
                       <Plus className="h-3 w-3" /> Action
-                    </Button>
+                    </Button>}
                     {isExpanded
                       ? <ChevronUp className="h-4 w-4 text-muted-foreground" />
                       : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
@@ -951,7 +962,7 @@ export const SuiviActionsManagement = () => {
                               <span>Créée le {fmtDate(action.created_at)}</span>
                             </div>
                           </div>
-                          <div className="flex items-center gap-1 flex-shrink-0">
+                          {!readOnly && <div className="flex items-center gap-1 flex-shrink-0">
                             {/* Quick status change */}
                             <Select
                               value={action.status}
@@ -986,7 +997,7 @@ export const SuiviActionsManagement = () => {
                                 </AlertDialogFooter>
                               </AlertDialogContent>
                             </AlertDialog>
-                          </div>
+                          </div>}
                         </div>
                       ))
                     )}
@@ -998,7 +1009,7 @@ export const SuiviActionsManagement = () => {
                       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                         Notes ({s.notes.length})
                       </p>
-                      <Button
+                      {!readOnly && <Button
                         size="sm"
                         variant="ghost"
                         className="h-7 text-xs gap-1"
@@ -1006,10 +1017,10 @@ export const SuiviActionsManagement = () => {
                       >
                         <StickyNote className="h-3 w-3" />
                         {showNoteForm === s.member.id ? "Annuler" : "Ajouter une note"}
-                      </Button>
+                      </Button>}
                     </div>
 
-                    {showNoteForm === s.member.id && (
+                    {!readOnly && showNoteForm === s.member.id && (
                       <div className="space-y-2 p-3 rounded-lg border bg-yellow-50/50 border-yellow-200">
                         <Textarea
                           rows={3}
@@ -1039,7 +1050,7 @@ export const SuiviActionsManagement = () => {
                       <div key={note.id} className={`p-3 rounded-lg border text-sm space-y-1 ${note.is_private ? "bg-yellow-50 border-yellow-200" : "bg-muted/20"}`}>
                         <div className="flex items-start justify-between gap-2">
                           <p className="flex-1">{note.content}</p>
-                          <AlertDialog>
+                          {!readOnly && <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button size="sm" variant="ghost" className="h-6 w-6 p-0 flex-shrink-0 text-muted-foreground hover:text-destructive">
                                 <X className="h-3 w-3" />
@@ -1054,7 +1065,7 @@ export const SuiviActionsManagement = () => {
                                 <AlertDialogAction onClick={() => handleDeleteNote(note.id)}>Supprimer</AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
-                          </AlertDialog>
+                          </AlertDialog>}
                         </div>
                         <div className="flex items-center gap-3 text-xs text-muted-foreground">
                           <span>Par {note.author_name}</span>
@@ -1079,7 +1090,7 @@ export const SuiviActionsManagement = () => {
       />
 
       {/* ── Action Form Modal ── */}
-      {showActionForm && (
+      {showActionForm && !readOnly && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-background border rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b">
@@ -1199,7 +1210,7 @@ export const SuiviActionsManagement = () => {
       )}
 
       {/* ── Meeting Form Modal ── */}
-      {showMeetingForm && (
+      {showMeetingForm && !readOnly && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-background border rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b">

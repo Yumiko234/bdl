@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Calendar, Pin, Edit, Trash2 } from "lucide-react";
 import { safeHtml } from "@/lib/sanitize";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useAdminReadOnly } from "@/contexts/AdminReadOnlyContext";
 
 interface Event {
   id: string;
@@ -31,6 +32,7 @@ interface EventManagementProps {
 }
 
 export const EventManagement = ({ isPresident }: EventManagementProps) => {
+  const readOnly = useAdminReadOnly();
   const formRef = useRef<HTMLDivElement>(null);
   const [events, setEvents] = useState<Event[]>([]);
   const [editingEvent, setEditingEvent] = useState<string | null>(null);
@@ -187,7 +189,7 @@ export const EventManagement = ({ isPresident }: EventManagementProps) => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div ref={formRef} className="border rounded-lg p-6 space-y-4 bg-muted/30">
+        {!readOnly && <div ref={formRef} className="border rounded-lg p-6 space-y-4 bg-muted/30">
           <h3 className="font-semibold">
             {editingEvent ? "Modifier l'événement" : "Nouvel événement"}
           </h3>
@@ -265,7 +267,7 @@ export const EventManagement = ({ isPresident }: EventManagementProps) => {
               )}
             </div>
           </div>
-        </div>
+        </div>}
 
         <div className="space-y-4">
           <h3 className="font-semibold">Événements publiés</h3>
@@ -300,31 +302,31 @@ export const EventManagement = ({ isPresident }: EventManagementProps) => {
                       </div>
                     </div>
                   
-                  <div className="flex gap-2">
+                  {!readOnly && <div className="flex gap-2">
                     {isPresident && (
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="sm"
                         variant={event.is_pinned ? "default" : "outline"}
                         onClick={() => handlePin(event.id, event.is_pinned)}
                       >
                         <Pin className="h-4 w-4" />
                       </Button>
                     )}
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       variant="outline"
                       onClick={() => handleEdit(event)}
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       variant="destructive"
                       onClick={() => handleDelete(event.id)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
-                  </div>
+                  </div>}
                 </div>
               </CardContent>
             </Card>

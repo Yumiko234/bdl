@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAdminReadOnly } from "@/contexts/AdminReadOnlyContext";
 import {
   Radio, Crown, Clock, Users, Trash2, StopCircle,
   RefreshCw, Calendar, CheckCircle2, XCircle, Loader2,
@@ -85,6 +86,7 @@ function StatCard({ label, value, icon }: { label: string; value: string | numbe
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export const AdminConference = () => {
+  const readOnly = useAdminReadOnly();
   const [conferences, setConferences] = useState<DBConference[]>([]);
   const [loading, setLoading] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState<(() => Promise<void>) | null>(null);
@@ -209,7 +211,7 @@ export const AdminConference = () => {
       </div>
 
       {/* ── Create from admin ──────────────────────────────────────────────────── */}
-      <Card className="shadow-card border-2 border-primary/15">
+      {!readOnly && <Card className="shadow-card border-2 border-primary/15">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-xl">
             <Crown className="h-5 w-5 text-amber-500" />
@@ -237,7 +239,7 @@ export const AdminConference = () => {
             </Button>
           </div>
         </CardContent>
-      </Card>
+      </Card>}
 
       {/* ── Conference list ────────────────────────────────────────────────────── */}
       <Card className="shadow-card">
@@ -331,7 +333,7 @@ export const AdminConference = () => {
                       </div>
 
                       {/* Right: actions */}
-                      <div className="flex gap-2 flex-shrink-0 flex-wrap">
+                      {!readOnly && <div className="flex gap-2 flex-shrink-0 flex-wrap">
                         {conf.status === "live" && (
                           <Button
                             size="sm"
@@ -351,7 +353,7 @@ export const AdminConference = () => {
                           <Trash2 className="h-4 w-4 mr-1.5" />
                           Supprimer
                         </Button>
-                      </div>
+                      </div>}
                     </div>
                   </CardContent>
                 </Card>

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { toast } from "sonner";
+import { useAdminReadOnly } from "@/contexts/AdminReadOnlyContext";
 import { Pencil, Trash2 } from "lucide-react";
 import { safeHtml } from "@/lib/sanitize";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -19,6 +20,7 @@ interface EstablishmentSection {
 }
 
 export const EstablishmentManagement = () => {
+  const readOnly = useAdminReadOnly();
   const [sections, setSections] = useState<EstablishmentSection[]>([]);
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<(() => Promise<void>) | null>(null);
@@ -136,7 +138,7 @@ export const EstablishmentManagement = () => {
 
   return (
     <div className="space-y-6">
-      <Card>
+      {!readOnly && <Card>
         <CardHeader>
           <CardTitle>
             {editingSection ? "Modifier une section" : "Ajouter une section"}
@@ -159,7 +161,7 @@ export const EstablishmentManagement = () => {
                 />
               </div>
             )}
-            
+
             <div className="space-y-2">
               <Label htmlFor="title">Titre</Label>
               <Input
@@ -204,7 +206,7 @@ export const EstablishmentManagement = () => {
             </div>
           </form>
         </CardContent>
-      </Card>
+      </Card>}
 
       <Card>
         <CardHeader>
@@ -220,7 +222,7 @@ export const EstablishmentManagement = () => {
                       <CardTitle className="text-lg">{section.title}</CardTitle>
                       <CardDescription>Ordre: {section.display_order}</CardDescription>
                     </div>
-                    <div className="flex gap-2">
+                    {!readOnly && <div className="flex gap-2">
                       <Button
                         variant="ghost"
                         size="icon"
@@ -235,7 +237,7 @@ export const EstablishmentManagement = () => {
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
-                    </div>
+                    </div>}
                   </div>
                 </CardHeader>
                 <CardContent>

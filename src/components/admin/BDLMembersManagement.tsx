@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useAdminReadOnly } from "@/contexts/AdminReadOnlyContext";
 import {
   Users,
   UserPlus,
@@ -96,6 +97,7 @@ const emptyForm = {
 /* ------------------------------------------------------------------ */
 
 export const BDLMembersManagement = () => {
+  const readOnly = useAdminReadOnly();
   const [members, setMembers] = useState<BDLMember[]>([]);
   const [profiles, setProfiles] = useState<ProfileOption[]>([]);
   const [confirmDelete, setConfirmDelete] = useState<(() => Promise<void>) | null>(null);
@@ -302,10 +304,10 @@ export const BDLMembersManagement = () => {
                     Export CSV
                   </Button>
                 )}
-                <Button size="sm" onClick={openCreate}>
+                {!readOnly && <Button size="sm" onClick={openCreate}>
                   <UserPlus className="h-4 w-4 mr-2" />
                   Ajouter un membre
-                </Button>
+                </Button>}
               </div>
             )}
           </div>
@@ -326,7 +328,7 @@ export const BDLMembersManagement = () => {
       <CardContent className="space-y-6">
 
         {/* ---- Form ---- */}
-        {(isCreating || editingId) && (
+        {!readOnly && (isCreating || editingId) && (
           <Card className="border-primary/40 bg-muted/30">
             <CardContent className="p-6 space-y-5">
               <h3 className="font-bold text-lg">
@@ -559,7 +561,9 @@ interface MemberRowProps {
   isEditing: boolean;
 }
 
-const MemberRow = ({ member, onEdit, onDelete, isEditing }: MemberRowProps) => (
+const MemberRow = ({ member, onEdit, onDelete, isEditing }: MemberRowProps) => {
+  const readOnly = useAdminReadOnly();
+  return (
   <Card className={`bg-muted/30 ${isEditing ? "ring-2 ring-primary" : ""}`}>
     <CardContent className="p-4">
       <div className="flex items-center justify-between gap-4">
@@ -594,15 +598,16 @@ const MemberRow = ({ member, onEdit, onDelete, isEditing }: MemberRowProps) => (
           )}
         </div>
 
-        <div className="flex gap-2 shrink-0">
+        {!readOnly && <div className="flex gap-2 shrink-0">
           <Button size="sm" variant="outline" onClick={() => onEdit(member)}>
             <Pencil className="h-4 w-4" />
           </Button>
           <Button size="sm" variant="destructive" onClick={() => onDelete(member.id)}>
             <Trash2 className="h-4 w-4" />
           </Button>
-        </div>
+        </div>}
       </div>
     </CardContent>
   </Card>
-);
+  );
+};

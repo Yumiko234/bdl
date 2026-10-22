@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAdminReadOnly } from "@/contexts/AdminReadOnlyContext";
 import { BdlQRCode } from "@/components/BdlQRCode";
 import {
   Award, Plus, Trash2, RefreshCw, Search,
@@ -191,6 +192,7 @@ const QrModal = ({ cert, onClose }: QrModalProps) => {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export const CertificateManagement = () => {
+  const readOnly = useAdminReadOnly();
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -329,7 +331,7 @@ export const CertificateManagement = () => {
       <QrModal cert={qrCert} onClose={() => setQrCert(null)} />
 
       {/* ── Create form ── */}
-      <Card className="shadow-card border-2 border-primary/15">
+      {!readOnly && <Card className="shadow-card border-2 border-primary/15">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-xl">
             <Award className="h-5 w-5 text-amber-500" />
@@ -432,7 +434,7 @@ export const CertificateManagement = () => {
             Émettre le certificat
           </Button>
         </CardContent>
-      </Card>
+      </Card>}
 
       {/* ── Legend ── */}
       <Card className="bg-muted/30 border-dashed">
@@ -576,7 +578,7 @@ export const CertificateManagement = () => {
                         </Button>
 
                         {/* Delete */}
-                        <AlertDialog>
+                        {!readOnly && <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button size="sm" variant="destructive">
                               <Trash2 className="h-4 w-4" />
@@ -599,7 +601,7 @@ export const CertificateManagement = () => {
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
-                        </AlertDialog>
+                        </AlertDialog>}
                       </div>
 
                     </div>

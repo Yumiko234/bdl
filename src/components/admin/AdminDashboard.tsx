@@ -350,13 +350,29 @@ export const AdminDashboard = () => {
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
-            {[
-              { label: "Publier une actu", section: "news" },
-              { label: "Ouvrir un scrutin", section: "scrutin" },
-              { label: "Gérer les membres", section: "bdl-members" },
-              { label: "Voir le support", section: "support" },
-              { label: "Documents", section: "documents" },
-            ].map((a) => (
+            {(() => {
+              const role = userGreeting?.role;
+              const rank = role ? rolePrecedence[role] : 99;
+              if (role === "vie_scolaire") return [
+                { label: "Actualités", section: "news" },
+                { label: "Événements", section: "events" },
+                { label: "Calendrier", section: "calendar" },
+                { label: "Journal Officiel", section: "journal" },
+              ];
+              if (rank > 5) return [
+                { label: "Actualités", section: "news" },
+                { label: "Événements", section: "events" },
+                { label: "Calendrier", section: "calendar" },
+                { label: "Documents", section: "documents" },
+              ];
+              return [
+                { label: rank <= 1.5 ? "Actualités" : "Publier une actu", section: "news" },
+                { label: "Scrutins", section: "scrutin" },
+                { label: "Membres BDL", section: "bdl-members" },
+                { label: "Support", section: "support" },
+                { label: "Documents", section: "documents" },
+              ];
+            })().map((a) => (
               <button
                 key={a.section}
                 onClick={() => navigate(`/admin/${a.section}`)}

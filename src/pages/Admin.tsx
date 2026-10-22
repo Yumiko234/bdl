@@ -67,15 +67,16 @@ interface NavItem {
   group:        string;
   minRank?:     number;
   excludeRoles?: RoleKey[];
+  allowRoles?:   RoleKey[]; // accès explicite indépendamment du minRank
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { id: "dashboard",     label: "Tableau de bord",     icon: <LayoutDashboard className="h-4 w-4" />, group: "Général" },
-  { id: "news",          label: "Actualités",          icon:  <Newspaper    className="h-4 w-4" />, group: "Contenu" },
-  { id: "events",        label: "Événements",          icon: <Calendar     className="h-4 w-4" />, group: "Contenu" },
-  { id: "calendar",      label: "Calendrier",          icon: <CalendarDays className="h-4 w-4" />, group: "Contenu" },
+  { id: "dashboard",     label: "Tableau de bord",     icon: <LayoutDashboard className="h-4 w-4" />, group: "Général", allowRoles: ["vie_scolaire"] },
+  { id: "news",          label: "Actualités",          icon:  <Newspaper    className="h-4 w-4" />, group: "Contenu", allowRoles: ["vie_scolaire"] },
+  { id: "events",        label: "Événements",          icon: <Calendar     className="h-4 w-4" />, group: "Contenu", allowRoles: ["vie_scolaire"] },
+  { id: "calendar",      label: "Calendrier",          icon: <CalendarDays className="h-4 w-4" />, group: "Contenu", allowRoles: ["vie_scolaire"] },
   { id: "documents",     label: "Documents",           icon: <FileText     className="h-4 w-4" />, group: "Contenu" },
-  { id: "journal",       label: "Journal Officiel",    icon: <BookMarked   className="h-4 w-4" />, group: "Contenu", minRank: 5 },
+  { id: "journal",       label: "Journal Officiel",    icon: <BookMarked   className="h-4 w-4" />, group: "Contenu", minRank: 5, allowRoles: ["vie_scolaire"] },
   
   { id: "bdl-members",   label: "Membres BDL",         icon: <Users        className="h-4 w-4" />, group: "BDL", minRank: 5 },
   { id: "bdl-profiles",  label: "Profils détaillés",   icon: <UserCircle   className="h-4 w-4" />, group: "BDL", minRank: 5 },
@@ -175,7 +176,7 @@ const Admin = () => {
 
       // administrator + tous les rôles BDL ont accès
       const isBDLStaff = roles.some((r) =>
-        ['administrator', 'consultante', 'consultant','president', 'presidente', 'vice_president', 'vice_presidente', 'secretary_general', 'secretary_general2', 'communication_manager', 'communication_manager2', 'bdl_member'].includes(r)
+        ['administrator', 'consultante', 'consultant','president', 'presidente', 'vice_president', 'vice_presidente', 'secretary_general', 'secretary_general2', 'communication_manager', 'communication_manager2', 'bdl_member', 'vie_scolaire'].includes(r)
       );
 
       if (!isBDLStaff) {
@@ -274,6 +275,8 @@ const Admin = () => {
   const isPresident = primaryRole === "president" || primaryRole === "presidente" || primaryRole === "administrator";
   const userRank    = rolePrecedence[primaryRole] ?? 99;
   const visibleItems = NAV_ITEMS.filter((item) => {
+    if (item.allowRoles?.includes(primaryRole)) return true;
+    if (primaryRole === "vie_scolaire") return false; // whitelist uniquement
     if (item.minRank && userRank > item.minRank) return false;
     if (item.excludeRoles?.includes(primaryRole)) return false;
     return true;
@@ -384,8 +387,12 @@ const Admin = () => {
 
   const renderSection = () => {
     const requestedItem = NAV_ITEMS.find((i) => i.id === activeSection);
-    const isBlocked = (requestedItem?.minRank && userRank > requestedItem.minRank)
-      || requestedItem?.excludeRoles?.includes(primaryRole);
+    const isAllowed = requestedItem?.allowRoles?.includes(primaryRole);
+    const isBlocked = !isAllowed && (
+      (primaryRole === "vie_scolaire") ||
+      (requestedItem?.minRank && userRank > requestedItem.minRank) ||
+      requestedItem?.excludeRoles?.includes(primaryRole)
+    );
     if (isBlocked) return (
       <div className="flex flex-col items-center justify-center py-24 text-center gap-4">
         <Shield className="h-12 w-12 text-muted-foreground/40" />

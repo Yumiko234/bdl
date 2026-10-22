@@ -5,58 +5,28 @@ import Footer from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
 import { useSEO } from "@/hooks/useSEO";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { ROLE_KEYS, type RoleKey, rolePrecedence, roleLabel, getPrimaryRole } from "@/lib/roles";
+import { type RoleKey, rolePrecedence, roleLabel, getPrimaryRole } from "@/lib/roles";
 import { AdminReadOnlyContext } from "@/contexts/AdminReadOnlyContext";
 
 // ─── Admin sub-components ─────────────────────────────────────────────────────
-import { AdminDashboard }          from "@/components/admin/AdminDashboard";
-import { AdminInternalNotes } from "@/components/admin/AdminInternalNotes";
-import { NewsManagement }           from "@/components/admin/NewsManagement";
-import { EventManagement }          from "@/components/admin/EventManagement";
-import { DocumentManagement }       from "@/components/admin/DocumentManagement";
-import { BDLCentralManagement }     from "@/components/admin/BDLCentralManagement";
-import { ContactManagement }        from "@/components/admin/ContactManagement";
-import { EstablishmentManagement }  from "@/components/admin/EstablishmentManagement";
-import { CalendarManagement }       from "@/components/admin/CalendarManagement";
-import { ScrutinManagement }        from "@/components/admin/ScrutinManagement";
-import { SurveyManagement }         from "@/components/admin/SurveyManagement";
-import { OfficialJournalManagement} from "@/components/admin/OfficialJournalManagement";
-import { BannerManagement }         from "@/components/admin/BannerManagement";
-import { MaintenanceManagement }    from "@/components/admin/MaintenanceManagement";
-import { UserManagement }           from "@/components/admin/UserManagement";
-import { AdminManagement } from "@/components/admin/AdminManagament";
-import { SupportManagement }        from "@/components/admin/SupportManagement";
-import { SuiviActionsManagement } from "@/components/admin/AdminSuiviActions";
-import { CertificateManagement } from "@/components/admin/CertificatManagement";
-import { AdminConference }     from "@/components/admin/AdminConference";
-import { EventThemesManagement } from "@/components/admin/EventThemesManagement";
-import { RichTextEditor }           from "@/components/RichTextEditor";
+import { AdminDashboard }        from "@/components/admin/AdminDashboard";
+import { AdminInternalNotes }    from "@/components/admin/AdminInternalNotes";
+import { BDLCentralManagement }  from "@/components/admin/BDLCentralManagement";
+import { ContentCentral }        from "@/components/admin/ContentCentral";
+import { ParticipationCentral }  from "@/components/admin/ParticipationCentral";
+import { AssistanceCentral }     from "@/components/admin/AssistanceCentral";
+import { SiteCentral }           from "@/components/admin/SiteCentral";
+import { GestionCentral }        from "@/components/admin/GestionCentral";
+import { UserManagement }        from "@/components/admin/UserManagement";
 
 // ─── UI ───────────────────────────────────────────────────────────────────────
 import { Button } from "@/components/ui/button";
 import { Badge }  from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { 
-  Loader2, Newspaper, Calendar, FileText, Users,
-  History, Phone, Building2, CalendarDays, Vote,
-  BarChart3, BookMarked, BookUser,  Megaphone,
-  Wrench, Shield, Headphones, UserCircle,
-  ChevronRight, LayoutDashboard, MessageSquare, Palette
+import {
+  Loader2, Newspaper, Vote, History, BookMarked,
+  Headphones, Building2, Wrench, Shield, Users,
+  ChevronRight, LayoutDashboard,
 } from "lucide-react";
-
-// ─── Audience request type ────────────────────────────────────────────────────
-interface AudienceRequest {
-  id: string;
-  subject: string;
-  message: string;
-  requester_name: string;
-  requester_email: string;
-  status: "pending" | "approved" | "rejected";
-}
 
 // ─── Nav items definition ─────────────────────────────────────────────────────
 interface NavItem {
@@ -70,35 +40,22 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { id: "dashboard",     label: "Tableau de bord",     icon: <LayoutDashboard className="h-4 w-4" />, group: "Général", allowRoles: ["vie_scolaire"] },
-  { id: "news",          label: "Actualités",          icon:  <Newspaper    className="h-4 w-4" />, group: "Contenu", allowRoles: ["vie_scolaire"] },
-  { id: "events",        label: "Événements",          icon: <Calendar     className="h-4 w-4" />, group: "Contenu", allowRoles: ["vie_scolaire"] },
-  { id: "calendar",      label: "Calendrier",          icon: <CalendarDays className="h-4 w-4" />, group: "Contenu", allowRoles: ["vie_scolaire"] },
-  { id: "documents",     label: "Documents",           icon: <FileText     className="h-4 w-4" />, group: "Contenu" },
-  { id: "journal",       label: "Journal Officiel",    icon: <BookMarked   className="h-4 w-4" />, group: "Contenu", minRank: 5, allowRoles: ["vie_scolaire"] },
-  
-  { id: "bdl",            label: "Gestion BDL",         icon: <History      className="h-4 w-4" />, group: "BDL", minRank: 5 },
-  { id: "bdl-int-notes", label: "Notes Internes",      icon: <BookMarked   className="h-4 w-4" />, group: "BDL", minRank: 5 },
+  { id: "dashboard",     label: "Tableau de bord",  icon: <LayoutDashboard className="h-4 w-4" />, group: "Général",        allowRoles: ["vie_scolaire"] },
 
-  { id: "scrutin",       label: "Scrutins",            icon: <Vote         className="h-4 w-4" />, group: "Participation", minRank: 5 },
-  { id: "surveys",       label: "Sondages",            icon: <BarChart3    className="h-4 w-4" />, group: "Participation", minRank: 5 },
-  { id: "actions",       label: "Suivi Actions",       icon: <BarChart3    className="h-4 w-4" />, group: "Participation", minRank: 5 },
-  { id: "certificat",    label: "Certificat BDL",      icon: <BookUser     className="h-4 w-4" />, group: "Participation", minRank: 5 },
+  { id: "content",       label: "Contenu",          icon: <Newspaper       className="h-4 w-4" />, group: "Contenu",        allowRoles: ["vie_scolaire"] },
 
-  { id: "support",       label: "Support & Audiences", icon: <Headphones   className="h-4 w-4" />, group: "Assistance", minRank: 5 },
-  { id: "conference",    label: "Conférence",          icon: <Headphones   className="h-4" />,    group: "Assistance", minRank: 5 },
+  { id: "bdl",           label: "Gestion BDL",      icon: <History         className="h-4 w-4" />, group: "BDL",            minRank: 5 },
+  { id: "bdl-int-notes", label: "Notes Internes",   icon: <BookMarked      className="h-4 w-4" />, group: "BDL",            minRank: 5 },
 
-  { id: "president-msg", label: "Message Présidence",   icon: <MessageSquare className="h-4 w-4" />, group: "Site", minRank: 5 },
-  { id: "establishment", label: "Établissement",       icon: <Building2    className="h-4 w-4" />, group: "Site", minRank: 5 },
-  { id: "contact",       label: "Contact",             icon: <Phone        className="h-4 w-4" />, group: "Site", minRank: 5 },
+  { id: "participation", label: "Participation",    icon: <Vote            className="h-4 w-4" />, group: "Participation",  minRank: 5 },
 
-  { id: "users",         label: "Utilisateurs",        icon: <Shield       className="h-4 w-4" />, group: "Administration", minRank: 5 },
+  { id: "assistance",    label: "Assistance",       icon: <Headphones      className="h-4 w-4" />, group: "Assistance",     minRank: 5 },
 
-  { id: "banner",        label: "Bandeau global",      icon: <Megaphone    className="h-4 w-4" />, group: "Gestion", minRank: 5, excludeRoles: ["consultant", "consultante"] },
-  { id: "maintenance",   label: "Maintenance",         icon: <Wrench       className="h-4 w-4" />, group: "Gestion", minRank: 1 },
-  { id: "admin-user",    label: "Gestion User",        icon: <Wrench       className="h-4 w-4" />, group: "Gestion", minRank: 1},
-  { id: "event-themes",  label: "Thèmes événementiels",icon: <Palette      className="h-4 w-4" />, group: "Gestion", minRank: 1 },
+  { id: "site",          label: "Site",             icon: <Building2       className="h-4 w-4" />, group: "Site",           minRank: 5 },
 
+  { id: "users",         label: "Utilisateurs",     icon: <Shield          className="h-4 w-4" />, group: "Administration", minRank: 5 },
+
+  { id: "gestion",       label: "Gestion Système",  icon: <Wrench          className="h-4 w-4" />, group: "Gestion",        minRank: 1 },
 ];
 
 const Admin = () => {
@@ -134,27 +91,18 @@ const Admin = () => {
     return () => cancelAnimationFrame(raf);
   }, [activeSection, mobileOpen]);
   
-  const [presidentMessage, setPresidentMessage] = useState("");
-  const [presidentUserId, setPresidentUserId] = useState<string>("");
-  const [presidentOptions, setPresidentOptions] = useState<{ id: string; full_name: string; role: string }[]>([]);
-  const [audienceRequests, setAudienceRequests] = useState<AudienceRequest[]>([]);
-  const [saving, setSaving] = useState(false);
-
   useEffect(() => {
     if (!authLoading && !user) {
       navigate("/auth");
       return;
     }
     if (user) {
-        loadUserRoles();
-        loadPresidentMessage();
-        loadPresidentOptions();
-        loadAudienceRequests();
-        supabase
-          .from("support_tickets")
-          .select("*", { count: "exact", head: true })
-          .eq("status", "pending")
-          .then(({ count, error }) => { if (!error) setPendingTickets(count ?? 0); });
+      loadUserRoles();
+      supabase
+        .from("support_tickets")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "pending")
+        .then(({ count, error }) => { if (!error) setPendingTickets(count ?? 0); });
     }
   }, [user, authLoading]);
 
@@ -187,84 +135,6 @@ const Admin = () => {
       console.error(err);
     } finally {
       setRolesLoading(false);
-    }
-  };
-
-  const loadPresidentMessage = async () => {
-    const { data, error } = await (supabase.from('president_message') as any).select('content, president_user_id').single();
-    if (error) console.error("Erreur chargement message présidence", error);
-    else if (data) {
-      setPresidentMessage(data.content);
-      if (data.president_user_id) setPresidentUserId(data.president_user_id);
-    }
-  };
-
-  const loadPresidentOptions = async () => {
-    const { data } = await supabase
-      .from('user_roles')
-      .select('user_id, role, profiles(full_name)')
-      .in('role', ['president', 'presidente']);
-    if (data) {
-      setPresidentOptions(data.map((r: any) => ({
-        id: r.user_id,
-        full_name: r.profiles?.full_name ?? r.user_id,
-        role: r.role,
-      })));
-    }
-  };
-
-  const loadAudienceRequests = async () => {
-    const { data, error } = await supabase
-      .from('audience_requests')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (error) console.error("Erreur chargement demandes d'audience", error);
-    else if (data) setAudienceRequests(data);
-  };
-
-  const handleSaveMessage = async () => {
-    if (primaryRole !== 'president' && primaryRole !== 'presidente' && primaryRole !== 'administrator') return;
-    setSaving(true);
-    const { data: existing } = await supabase.from('president_message').select('id').maybeSingle();
-    let error;
-    if (existing?.id) {
-      ({ error } = await supabase
-        .from('president_message')
-        .update({ content: presidentMessage, updated_by: user?.id, president_user_id: presidentUserId || null } as any)
-        .eq('id', existing.id));
-    } else {
-      const { error: insError } = await supabase
-        .from('president_message')
-        .insert({ content: presidentMessage, updated_by: user?.id, president_user_id: presidentUserId || null } as any);
-      // Race condition: retry as update if unique violation
-      if (insError?.code === '23505') {
-        const { data: retry } = await supabase.from('president_message').select('id').maybeSingle();
-        if (retry?.id) {
-          ({ error } = await supabase
-            .from('president_message')
-            .update({ content: presidentMessage, updated_by: user?.id, president_user_id: presidentUserId || null } as any)
-            .eq('id', retry.id));
-        }
-      } else {
-        error = insError;
-      }
-    }
-    if (error) { console.error("[handleSaveMessage] erreur update:", error); toast.error("Erreur de sauvegarde"); }
-    else toast.success("Message mis à jour");
-    setSaving(false);
-  };
-
-  const handleUpdateAudienceStatus = async (id: string, status: string) => {
-    if (primaryRole !== 'president' && primaryRole !== 'presidente' && primaryRole !== 'administrator') return;
-    const { error } = await supabase
-      .from('audience_requests')
-      .update({ status, reviewed_by: user?.id, reviewed_at: new Date().toISOString() })
-      .eq('id', id);
-
-    if (error) toast.error("Erreur de mise à jour");
-    else {
-        toast.success("Demande mise à jour");
-        loadAudienceRequests();
     }
   };
 
@@ -322,67 +192,6 @@ const Admin = () => {
     );
   }
 
-  const renderSupportSection = () => (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Support & Audiences</h1>
-        <p className="text-muted-foreground text-sm">Gestion des échanges internes et des messages publics.</p>
-      </div>
-
-      <Tabs defaultValue="connected" className="w-full">
-        <TabsList className="bg-muted p-1">
-          <TabsTrigger value="connected">Support Connecté</TabsTrigger>
-          <TabsTrigger value="public">Audiences & Public</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="connected" className="mt-4">
-          <SupportManagement 
-            currentUserRole={primaryRole} 
-            currentUserId={user?.id ?? ""} 
-            currentUserName={userProfile?.full_name ?? "Staff BDL"} 
-          />
-        </TabsContent>
-
-        <TabsContent value="public" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Liste des demandes ({audienceRequests.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {audienceRequests.length === 0 ? (
-                <p className="text-center py-8 text-muted-foreground text-sm italic">Aucun message pour le moment</p>
-              ) : (
-                audienceRequests.map((req) => (
-                  <div key={req.id} className="p-4 rounded-lg border bg-muted/30 space-y-2">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-bold">{req.subject}</h4>
-                        <p className="text-xs text-muted-foreground">{req.requester_name} ({req.requester_email})</p>
-                      </div>
-                      <Badge variant={req.status === 'pending' ? 'default' : req.status === 'approved' ? 'secondary' : 'destructive'}>
-                        {req.status === 'pending' ? 'Attente' : req.status === 'approved' ? 'Traité' : 'Refusé'}
-                      </Badge>
-                    </div>
-                    <p className="text-sm bg-background p-3 rounded border italic">"{req.message}"</p>
-                    {isPresident && req.status === 'pending' && (
-                      <div className="flex gap-2 pt-2">
-                        <Button size="sm" onClick={() => handleUpdateAudienceStatus(req.id, 'approved')}>Accepter</Button>
-                        <Button size="sm" variant="ghost" onClick={() => handleUpdateAudienceStatus(req.id, 'rejected')}>Refuser</Button>
-                      </div>
-                    )}
-                  </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-
   const renderSection = () => {
     const requestedItem = NAV_ITEMS.find((i) => i.id === activeSection);
     const isAllowed = requestedItem?.allowRoles?.includes(primaryRole);
@@ -405,51 +214,15 @@ const Admin = () => {
     );
 
     switch (activeSection) {
-      case "news":          return <NewsManagement         isPresident={isPresident} />;
-      case "events":        return <EventManagement        isPresident={isPresident} />;
-      case "calendar":      return <CalendarManagement />;
-      case "documents":     return <DocumentManagement />;
-      case "journal":       return <OfficialJournalManagement />;
-      case "bdl":           return <BDLCentralManagement />;
       case "dashboard":     return <AdminDashboard />;
+      case "content":       return <ContentCentral isPresident={isPresident} primaryRole={primaryRole} />;
+      case "bdl":           return <BDLCentralManagement />;
       case "bdl-int-notes": return <AdminInternalNotes />;
-      case "scrutin":       return <ScrutinManagement />;
-      case "surveys":       return <SurveyManagement />;
-      case "actions":       return <SuiviActionsManagement />;
-      case "certificat":    return <CertificateManagement />;
-      case "conference":    return <AdminConference />;
-      case "support":       return renderSupportSection();
-      case "president-msg": return (
-        <Card>
-          <CardHeader><CardTitle className="flex items-center gap-2"><MessageSquare className="h-5 w-5" /> Message de la Présidence</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Président(e) affiché(e)</Label>
-              <Select value={presidentUserId} onValueChange={setPresidentUserId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner un(e) président(e)" />
-                </SelectTrigger>
-                <SelectContent>
-                  {presidentOptions.map((opt) => (
-                    <SelectItem key={opt.id} value={opt.id}>
-                      {opt.full_name} — {opt.role === 'presidente' ? 'Présidente' : 'Président'}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <RichTextEditor value={presidentMessage} onChange={setPresidentMessage} />
-            <Button onClick={handleSaveMessage} disabled={saving}>{saving ? "Enregistrement..." : "Mettre à jour le message"}</Button>
-          </CardContent>
-        </Card>
-      );
-      case "establishment": return <EstablishmentManagement />;
-      case "contact":       return <ContactManagement />;
-      case "banner":        return <BannerManagement />;
-      case "maintenance":   return <MaintenanceManagement />;
+      case "participation": return <ParticipationCentral />;
+      case "assistance":    return <AssistanceCentral />;
+      case "site":          return <SiteCentral />;
       case "users":         return <UserManagement />;
-      case "admin-user":    return <AdminManagement />;
-      case "event-themes":  return <EventThemesManagement />;
+      case "gestion":       return <GestionCentral />;
       default:              return null;
     }
   };

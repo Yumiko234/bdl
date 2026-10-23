@@ -71,9 +71,9 @@ describe("Octobre Rose", () => {
     expect(r.id).toBe("halloween");
   });
 
-  it("is inactive on Nov 1 with no other active theme", () => {
-    // Halloween ends Nov 1, so Nov 2 is clear
-    const r = resolveActiveTheme(AUTO_STORE, d(2, 11));
+  it("is inactive on Nov 3 with no other active theme", () => {
+    // Halloween ends Nov 2 inclusive, so Nov 3 is clear
+    const r = resolveActiveTheme(AUTO_STORE, d(3, 11));
     expect(r.id).toBeNull();
   });
 
@@ -90,9 +90,9 @@ describe("Octobre Rose", () => {
 // ─── Halloween ────────────────────────────────────────────────────────────────
 
 describe("Halloween", () => {
-  it("is inactive before Oct 25", () => {
-    const r = resolveActiveTheme(AUTO_STORE, d(24, 10));
-    expect(r.id).toBe("pink-october"); // pink-october is still active
+  it("is inactive before Oct 23", () => {
+    const r = resolveActiveTheme(AUTO_STORE, d(22, 10));
+    expect(r.id).toBe("pink-october"); // pink-october is still active, halloween starts Oct 23
   });
 
   it("is active on Oct 25 (overlaps, higher priority)", () => {
@@ -110,8 +110,13 @@ describe("Halloween", () => {
     expect(r.id).toBe("halloween");
   });
 
-  it("is inactive on Nov 2", () => {
+  it("is active on Nov 2 (last day)", () => {
     const r = resolveActiveTheme(AUTO_STORE, d(2, 11));
+    expect(r.id).toBe("halloween");
+  });
+
+  it("is inactive on Nov 3 (day after end)", () => {
+    const r = resolveActiveTheme(AUTO_STORE, d(3, 11));
     expect(r.id).toBeNull();
   });
 

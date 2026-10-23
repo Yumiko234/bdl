@@ -58,6 +58,11 @@ export function resolveActiveTheme(
       return { id: null, settings: null };
     }
 
+    // Unknown mode → safe fallback (no active theme)
+    if (store.mode !== "auto") {
+      return { id: null, settings: null };
+    }
+
     // Auto mode - find active themes by date, pick highest priority
     const candidates: Array<{ id: EventThemeId; settings: ThemeSettings }> = [];
 

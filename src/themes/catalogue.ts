@@ -1,11 +1,11 @@
-import type { CatalogueEntry, EventThemeId } from "./types";
+﻿import type { CatalogueEntry, EventThemeId } from "./types";
 
 export const CATALOGUE: Record<EventThemeId, CatalogueEntry> = {
   "pink-october": {
     id: "pink-october",
     name: "Octobre Rose",
     icon: "🎀",
-    description: "Sensibilisation au cancer du sein — octobre",
+    description: "Sensibilisation au cancer du sein - octobre",
     defaultDateRange: { startMonth: 10, startDay: 1, endMonth: 10, endDay: 31 },
     defaultPriority: 80,
     defaultEffects: {
@@ -23,7 +23,7 @@ export const CATALOGUE: Record<EventThemeId, CatalogueEntry> = {
     id: "halloween",
     name: "Halloween",
     icon: "🎃",
-    description: "Ambiance Halloween — fin octobre",
+    description: "Ambiance Halloween - fin octobre",
     defaultDateRange: { startMonth: 10, startDay: 23, endMonth: 11, endDay: 2 },
     defaultPriority: 90,
     defaultEffects: {
@@ -45,7 +45,7 @@ export const CATALOGUE: Record<EventThemeId, CatalogueEntry> = {
     id: "noel",
     name: "Noël",
     icon: "🎄",
-    description: "Ambiance Noël — décembre / début janvier",
+    description: "Ambiance Noël - décembre / début janvier",
     defaultDateRange: { startMonth: 12, startDay: 1, endMonth: 1, endDay: 6 },
     defaultPriority: 95,
     defaultEffects: {

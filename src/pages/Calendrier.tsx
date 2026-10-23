@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+﻿import { useState, useEffect, useMemo } from "react";
 import { useSEO } from "@/hooks/useSEO";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -592,7 +592,7 @@ export default function Calendrier() {
                             {(evt.start_time || evt.end_time) && (
                               <Badge variant="secondary" className="flex items-center gap-1 shrink-0">
                                 <Clock className="h-3 w-3" />
-                                {evt.start_time || "—"}
+                                {evt.start_time || "-"}
                                 {evt.end_time && ` – ${evt.end_time}`}
                               </Badge>
                             )}

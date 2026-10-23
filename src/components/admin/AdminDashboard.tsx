@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -184,7 +184,7 @@ export const AdminDashboard = () => {
         </p>
       )}
 
-      {/* Stat cards — réservés aux rangs ≤ 5 (communication_manager et au-dessus) */}
+      {/* Stat cards - réservés aux rangs ≤ 5 (communication_manager et au-dessus) */}
       {userGreeting && rolePrecedence[userGreeting.role] <= 5 && <>{/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         {loading

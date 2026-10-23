@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useSEO } from "@/hooks/useSEO";
 import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
@@ -50,7 +50,7 @@ const BDL = () => {
   };
 
   // Remplace la fonction loadMembers() dans src/pages/BDL.tsx
-  // par celle-ci — elle lit directement full_name, role_label, avatar_url
+  // par celle-ci - elle lit directement full_name, role_label, avatar_url
   // depuis bdl_members (plus besoin de jointure profiles / user_roles)
   const loadMembers = async () => {
     const { data, error } = await supabase
@@ -66,7 +66,7 @@ const BDL = () => {
 
     const mapped = (data ?? []).map((m: any) => ({
       id: m.id,
-      full_name: m.full_name ?? "—",
+      full_name: m.full_name ?? "-",
       email: "",
       avatar_url: m.avatar_url ?? null,
       roles: [m.role_label ?? "bdl_member"],

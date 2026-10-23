@@ -1,4 +1,4 @@
-export interface Skill {
+﻿export interface Skill {
   name: string;
   level: number; // 0 à 100
 }
@@ -43,7 +43,7 @@ export const developers: Developer[] = [
     slug: "alexandre-lejal",
     fullName: "Alexandre Lejal",
     handle: "@Yumiko234",
-    role: "Consultant — Fondateur et propriétaire du site",
+    role: "Consultant - Fondateur et propriétaire du site",
     tagline: "Je suis censé être en L1 Droit, qu'est-ce que je fous là ?",
     accent: "217 91% 55%",
     avatarInitials: "AL",
@@ -110,7 +110,7 @@ export const developers: Developer[] = [
     slug: "mael-vicq",
     fullName: "Maël Vicq",
     handle: "@mv1234vm",
-    role: "Développeur — Co-mainteneur du site",
+    role: "Développeur - Co-mainteneur du site",
     tagline: "J'ai corrigé 35 bugs en une session. Alexandre en a créé 36.",
     accent: "45 100% 51%",
     accentSoft: "45 80% 20%",
@@ -174,7 +174,7 @@ export const developers: Developer[] = [
       "whoami",
       "> mael-vicq  |  @mv1234vm",
       "cat role.txt",
-      "> Développeur — Co-mainteneur du site BDL",
+      "> Développeur - Co-mainteneur du site BDL",
       "git log --author='Maël' --oneline | wc -l",
       "> 63 (sans compter ce qu'Alex a force-pushé)",
     ],

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -666,7 +666,7 @@ const ProfileBDLSuivi = () => {
                         )}
                         <div className="flex items-center gap-3 flex-wrap">
                           <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-semibold ${catCfg.color}`}>
-                            {catCfg.label} — {action.points} pt{action.points > 1 ? "s" : ""}
+                            {catCfg.label} - {action.points} pt{action.points > 1 ? "s" : ""}
                           </span>
                           {action.due_date && (
                             <span className="flex items-center gap-1 text-xs text-muted-foreground">

@@ -1,4 +1,4 @@
-// Chauves-souris Halloween — traversent l'écran en battant des ailes.
+﻿// Chauves-souris Halloween - traversent l'écran en battant des ailes.
 import { useHeaderHeight } from "./useHeaderHeight";
 
 function BatSVG({ size }: { size: number }) {
@@ -33,7 +33,7 @@ export function HalloweenBatsEffect() {
   const HEADER_H = useHeaderHeight();
   return (
     <>
-      {/* Chauve-souris 1 — grande, traverse de gauche à droite */}
+      {/* Chauve-souris 1 - grande, traverse de gauche à droite */}
       <div
         aria-hidden="true"
         style={{
@@ -59,7 +59,7 @@ export function HalloweenBatsEffect() {
         </div>
       </div>
 
-      {/* Chauve-souris 2 — petite, desktop */}
+      {/* Chauve-souris 2 - petite, desktop */}
       <div
         aria-hidden="true"
         className="hw-bat--desktop"
@@ -86,7 +86,7 @@ export function HalloweenBatsEffect() {
         </div>
       </div>
 
-      {/* Chauve-souris 3 — desktop, décalée */}
+      {/* Chauve-souris 3 - desktop, décalée */}
       <div
         aria-hidden="true"
         className="hw-bat--desktop"

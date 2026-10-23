@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+﻿import { useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,7 +30,7 @@ function ThemePreview({
   const cat = CATALOGUE[themeId];
 
   // We apply the preview by temporarily setting data-event-theme and toggling .dark
-  // on the preview iframe's document — instead we just show a styled mock panel
+  // on the preview iframe's document - instead we just show a styled mock panel
   // with the event-theme CSS vars already declared globally.
 
   // Temporarily force the theme on <html> while modal is open
@@ -63,7 +63,7 @@ function ThemePreview({
         <div className="flex items-center justify-between p-4 border-b">
           <div className="flex items-center gap-2">
             <span className="text-xl">{cat.icon}</span>
-            <span className="font-semibold">Prévisualisation — {cat.name}</span>
+            <span className="font-semibold">Prévisualisation - {cat.name}</span>
           </div>
           <div className="flex items-center gap-2">
             {/* Mode toggle inside preview */}
@@ -136,7 +136,7 @@ function ThemePreview({
               color: `hsl(var(--event-accent))`,
             }}
           >
-            {cat.icon} Thème actif : {cat.name} — {previewDark ? "mode sombre" : "mode clair"}
+            {cat.icon} Thème actif : {cat.name} - {previewDark ? "mode sombre" : "mode clair"}
           </div>
 
           {/* Footer mock */}
@@ -294,7 +294,7 @@ function ThemeConfigPanel({ themeId }: { themeId: EventThemeId }) {
             </CardTitle>
             <CardDescription>
               En cas de chevauchement de périodes, le thème avec la priorité la plus haute l'emporte.
-              Octobre Rose : 80 — Halloween : 90 par défaut.
+              Octobre Rose : 80 - Halloween : 90 par défaut.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -368,7 +368,7 @@ function GlobalModePanel() {
     },
     ...CATALOGUE_ORDER.map((id) => ({
       value: `force:${id}` as GlobalMode,
-      label: `Forcer — ${CATALOGUE[id].icon} ${CATALOGUE[id].name}`,
+      label: `Forcer - ${CATALOGUE[id].icon} ${CATALOGUE[id].name}`,
       desc: `Active ${CATALOGUE[id].name} immédiatement pour prévisualiser ou tester, sans modifier les dates.`,
       icon: <Play className="h-4 w-4" />,
     })),
@@ -396,7 +396,7 @@ function GlobalModePanel() {
               </p>
               <p className="text-xs text-muted-foreground">
                 {mode === "auto"
-                  ? `Mode automatique — ${today.toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}`
+                  ? `Mode automatique - ${today.toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}`
                   : mode === "normal"
                   ? "Thèmes désactivés manuellement"
                   : `Forcé manuellement`}

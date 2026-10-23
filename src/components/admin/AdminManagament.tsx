@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,7 +60,7 @@ const getPrimaryRole = (roles: string[]) =>
   );
 
 const fmtDate = (iso: string | null | undefined) => {
-  if (!iso) return "—";
+  if (!iso) return "-";
   return new Date(iso).toLocaleString("fr-FR", {
     day: "2-digit", month: "long", year: "numeric",
     hour: "2-digit", minute: "2-digit",
@@ -161,7 +161,7 @@ export const AdminManagement = () => {
         setUserStats((prev) => ({ ...prev, [userId]: data.user as AuthUserStats }));
       }
     } catch (err: any) {
-      // Edge function might not be deployed yet — graceful fallback
+      // Edge function might not be deployed yet - graceful fallback
       console.warn("Stats unavailable:", err.message);
     } finally {
       setLoadingStats(null);
@@ -255,7 +255,7 @@ export const AdminManagement = () => {
         <div className="flex items-center justify-between flex-wrap gap-3">
           <CardTitle className="flex items-center gap-2">
             <Shield className="h-6 w-6 text-destructive" />
-            Gestion Admin — Utilisateurs
+            Gestion Admin - Utilisateurs
           </CardTitle>
           <Button variant="outline" size="sm" onClick={() => loadUsers(true)} disabled={refreshing}>
             <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
@@ -279,7 +279,7 @@ export const AdminManagement = () => {
         </div>
 
         <p className="text-xs text-muted-foreground">
-          {filtered.length} utilisateur{filtered.length !== 1 ? "s" : ""} — trié par nom de famille
+          {filtered.length} utilisateur{filtered.length !== 1 ? "s" : ""} - trié par nom de famille
         </p>
 
         {/* User list */}
@@ -375,7 +375,7 @@ export const AdminManagement = () => {
                                 ? `✅ ${fmtDate(stats.email_confirmed_at)}`
                                 : "❌ Non confirmé"} />
                             <StatRow icon={<Activity className="h-3.5 w-3.5 text-amber-500" />}
-                              label="Téléphone" value={stats.phone ?? "—"} />
+                              label="Téléphone" value={stats.phone ?? "-"} />
                             {/* Rôles complets */}
                             <div className="sm:col-span-2">
                               <p className="text-xs text-muted-foreground mb-1.5 flex items-center gap-1">

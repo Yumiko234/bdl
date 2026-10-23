@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+﻿import { useNavigate } from "react-router-dom";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,7 @@ export function MemberActionLogDrawer({ memberId, memberName, memberSlugOrId, on
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <History className="h-4 w-4 text-primary" />
-            Historique — {memberName ?? "Membre"}
+            Historique - {memberName ?? "Membre"}
           </SheetTitle>
           <SheetDescription>
             Qui a attribué un point, une absence, une note à ce membre, et quand.

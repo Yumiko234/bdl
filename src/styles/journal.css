@@ -1,4 +1,4 @@
-/* ============================================================
+﻿/* ============================================================
    Feuille institutionnelle du Journal Officiel du BDL
    Corrigée pour Structure Imbriquée et Repliable
    ============================================================ */
@@ -119,7 +119,7 @@
   font-family: "Times New Roman", Times, serif !important;
 }
 
-/* ── Diff inline — suivi de modifications style JO ──────────────────────────── */
+/* ── Diff inline - suivi de modifications style JO ──────────────────────────── */
 
 del.diff-removed {
   color: #dc2626;
@@ -151,7 +151,7 @@ sup.diff-date {
 }
 
 /* ======================================================================
-   BLOC DE SIGNATURES — style Journal Officiel de la République Française
+   BLOC DE SIGNATURES - style Journal Officiel de la République Française
    ====================================================================== */
 
 /**

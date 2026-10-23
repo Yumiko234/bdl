@@ -1,4 +1,4 @@
-// Tests for resolveActiveTheme — run with: npx vitest src/themes/__tests__
+﻿// Tests for resolveActiveTheme - run with: npx vitest src/themes/__tests__
 // Install vitest first: npm install -D vitest
 
 import { describe, it, expect } from "vitest";
@@ -179,7 +179,7 @@ describe("Mode: force", () => {
 
   it("returns to auto after mode reverts", () => {
     const r = resolveActiveTheme(AUTO_STORE, d(15, 7));
-    expect(r.id).toBeNull(); // July — no active theme
+    expect(r.id).toBeNull(); // July - no active theme
   });
 });
 

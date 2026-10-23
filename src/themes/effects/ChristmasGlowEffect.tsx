@@ -1,4 +1,4 @@
-import { useHeaderHeight } from "./useHeaderHeight";
+﻿import { useHeaderHeight } from "./useHeaderHeight";
 import { spawnItsTime } from "./christmasClickEffect";
 
 export function ChristmasGlowEffect() {
@@ -52,7 +52,7 @@ export function ChristmasGlowEffect() {
         }}
       >🌿</div>
 
-      {/* Cloche gauche — desktop */}
+      {/* Cloche gauche - desktop */}
       <div
         aria-hidden="true"
         className="noel--desktop"
@@ -68,7 +68,7 @@ export function ChristmasGlowEffect() {
         }}
       >🔔</div>
 
-      {/* Cloche droite — desktop */}
+      {/* Cloche droite - desktop */}
       <div
         aria-hidden="true"
         className="noel--desktop"
@@ -84,7 +84,7 @@ export function ChristmasGlowEffect() {
         }}
       >🔔</div>
 
-      {/* Étoile milieu gauche — desktop */}
+      {/* Étoile milieu gauche - desktop */}
       <div
         aria-hidden="true"
         className="noel--desktop"
@@ -99,7 +99,7 @@ export function ChristmasGlowEffect() {
         }}
       >⭐</div>
 
-      {/* Étoile milieu droite — desktop */}
+      {/* Étoile milieu droite - desktop */}
       <div
         aria-hidden="true"
         className="noel--desktop"
@@ -114,7 +114,7 @@ export function ChristmasGlowEffect() {
         }}
       >✨</div>
 
-      {/* Cadeau bas-gauche — desktop */}
+      {/* Cadeau bas-gauche - desktop */}
       <div
         aria-hidden="true"
         className="noel--desktop"
@@ -129,7 +129,7 @@ export function ChristmasGlowEffect() {
         }}
       >🎁</div>
 
-      {/* Bonhomme de neige bas-droit — desktop */}
+      {/* Bonhomme de neige bas-droit - desktop */}
       <div
         aria-hidden="true"
         className="noel--desktop"

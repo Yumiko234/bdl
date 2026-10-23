@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -50,7 +50,7 @@ const DevelopersHub = () => {
             </p>
           </div>
 
-          {/* Sélecteur — deux "dev cards" */}
+          {/* Sélecteur - deux "dev cards" */}
           <div className="grid sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
             {developers.map((dev) => (
               <Link

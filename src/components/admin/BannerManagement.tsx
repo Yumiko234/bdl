@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -574,7 +574,7 @@ export const BannerManagement = () => {
             <div className="space-y-2">
               <Label htmlFor="expires_at">
                 Date d'expiration{" "}
-                <span className="text-muted-foreground text-xs">(optionnel — laisser vide = permanent)</span>
+                <span className="text-muted-foreground text-xs">(optionnel - laisser vide = permanent)</span>
               </Label>
               <Input
                 id="expires_at"

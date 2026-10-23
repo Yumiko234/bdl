@@ -1,4 +1,4 @@
-// Ambiance Halloween — toile d'araignée, lueurs et décors bien visibles.
+﻿// Ambiance Halloween - toile d'araignée, lueurs et décors bien visibles.
 import { useHeaderHeight } from "./useHeaderHeight";
 
 function SpiderWeb() {
@@ -121,7 +121,7 @@ export function HalloweenGlowEffect() {
         }}
       />
 
-      {/* Toile d'araignée — coin haut-gauche sous le header */}
+      {/* Toile d'araignée - coin haut-gauche sous le header */}
       <div
         aria-hidden="true"
         style={{
@@ -133,7 +133,7 @@ export function HalloweenGlowEffect() {
         <SpiderWeb />
       </div>
 
-      {/* Crâne — milieu gauche, desktop */}
+      {/* Crâne - milieu gauche, desktop */}
       <div
         aria-hidden="true"
         className="hw-bat--desktop"
@@ -147,7 +147,7 @@ export function HalloweenGlowEffect() {
         <SkullSVG size={42} />
       </div>
 
-      {/* Crâne petit — milieu droit, desktop */}
+      {/* Crâne petit - milieu droit, desktop */}
       <div
         aria-hidden="true"
         className="hw-bat--desktop"

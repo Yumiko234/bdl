@@ -1,9 +1,9 @@
-import { useState, useCallback } from "react";
+﻿import { useState, useCallback } from "react";
 import type { BoumEntry } from "./useBoum";
 import { useBoum } from "./useBoum";
 import { useHeaderHeight } from "./useHeaderHeight";
 
-// Le ruban exact fourni par l'utilisateur — à placer dans public/ribbon-rose.png
+// Le ruban exact fourni par l'utilisateur - à placer dans public/ribbon-rose.png
 const RIBBON_SRC = "/ribbon-rose.png";
 
 function BoumTexts({ boums }: { boums: BoumEntry[] }) {

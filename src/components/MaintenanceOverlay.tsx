@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Wrench, Clock } from "lucide-react";
@@ -127,7 +127,7 @@ export const MaintenanceOverlay = ({ children }: MaintenanceOverlayProps) => {
         )}
 
         <p className="text-xs text-muted-foreground italic pt-2">
-          — L'Équipe Technique
+          - L'Équipe Technique
         </p>
       </div>
     </div>

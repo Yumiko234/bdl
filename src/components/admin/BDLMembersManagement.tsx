@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -382,7 +382,7 @@ export const BDLMembersManagement = () => {
                 </Label>
               </div>
 
-              {/* Profile picker — only when linked */}
+              {/* Profile picker - only when linked */}
               {linkAccount && (
                 <div className="space-y-2">
                   <Label htmlFor="mb-profile">Compte utilisateur</Label>
@@ -396,7 +396,7 @@ export const BDLMembersManagement = () => {
                     <SelectContent>
                       {profiles.map((p) => (
                         <SelectItem key={p.id} value={p.id}>
-                          {p.full_name} — {p.email}
+                          {p.full_name} - {p.email}
                         </SelectItem>
                       ))}
                     </SelectContent>

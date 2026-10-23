@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -574,7 +574,7 @@ const BDLByPerson = () => {
           <Card className="border-primary/40">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base">{editId ? "Modifier la fiche" : `Créer la fiche — ${selPerson?.full_name ?? fd.full_name}`}</CardTitle>
+                <CardTitle className="text-base">{editId ? "Modifier la fiche" : `Créer la fiche - ${selPerson?.full_name ?? fd.full_name}`}</CardTitle>
                 <Button variant="ghost" size="sm" onClick={resetForm}><X className="h-4 w-4" /></Button>
               </div>
             </CardHeader>
@@ -670,7 +670,7 @@ const BDLByPerson = () => {
                     <div className="flex-1 min-w-0 space-y-0.5">
                       <div className="flex items-center gap-2 flex-wrap">
                         <Badge variant="outline" className="text-xs font-medium">
-                          {(p.bdl_years as any)?.year_label ?? "—"}
+                          {(p.bdl_years as any)?.year_label ?? "-"}
                         </Badge>
                         {p.is_published
                           ? <Badge className="text-xs bg-green-600">Publié</Badge>

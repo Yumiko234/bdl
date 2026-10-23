@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+﻿import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -178,7 +178,7 @@ export default function CertificatVerif() {
               {autoTriggered && state === "loading" && (
                 <div className="flex items-center gap-3 p-4 rounded-xl bg-primary/10 border border-primary/20 text-sm text-primary">
                   <QrCode className="h-5 w-5 flex-shrink-0" />
-                  <span>QR code détecté — vérification en cours…</span>
+                  <span>QR code détecté - vérification en cours…</span>
                   <Loader2 className="h-4 w-4 animate-spin ml-auto flex-shrink-0" />
                 </div>
               )}
@@ -287,7 +287,7 @@ export default function CertificatVerif() {
                           Certificat de Participation
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          Bureau des Lycéens — Lycée Saint-André
+                          Bureau des Lycéens - Lycée Saint-André
                         </p>
                       </div>
 

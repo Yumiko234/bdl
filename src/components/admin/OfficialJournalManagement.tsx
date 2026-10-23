@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,18 +39,18 @@ interface JournalEntry {
 // ─── NOR helpers & picker ─────────────────────────────────────────────────────
 
 const EMETTEURS = [
-  { value: "BDL",   label: "BDL — Bureau des Lycéens" },
-  { value: "PBDL",  label: "PBDL — Présidence" },
-  { value: "RCBDL", label: "RCBDL — Dir. Communauté & Com." },
+  { value: "BDL",   label: "BDL - Bureau des Lycéens" },
+  { value: "PBDL",  label: "PBDL - Présidence" },
+  { value: "RCBDL", label: "RCBDL - Dir. Communauté & Com." },
 ];
 
 const DOC_TYPES = [
-  { value: "CR", label: "CR — Compte-Rendu" },
-  { value: "PV", label: "PV — Procès-Verbal" },
-  { value: "DC", label: "DC — Décret" },
-  { value: "AR", label: "AR — Arrêté" },
-  { value: "DE", label: "DE — Décision" },
-  { value: "CM", label: "CM — Communiqué" },
+  { value: "CR", label: "CR - Compte-Rendu" },
+  { value: "PV", label: "PV - Procès-Verbal" },
+  { value: "DC", label: "DC - Décret" },
+  { value: "AR", label: "AR - Arrêté" },
+  { value: "DE", label: "DE - Décision" },
+  { value: "CM", label: "CM - Communiqué" },
 ];
 
 
@@ -132,7 +132,7 @@ const NorPicker = ({ value, onChange, entries, isEditing }: NorPickerProps) => {
     );
   }
 
-  const typeLabel = DOC_TYPES.find(t => t.value === type)?.label.split("—")[1]?.trim() ?? type;
+  const typeLabel = DOC_TYPES.find(t => t.value === type)?.label.split("-")[1]?.trim() ?? type;
 
   return (
     <div className="space-y-2">
@@ -260,7 +260,7 @@ const SignatureZone = ({ signatories, onChange }: SignatureZoneProps) => {
       <div className="rounded-xl border border-dashed border-[#07419e]/40 bg-background px-6 py-5 min-h-[90px]">
         {signatories.length === 0 ? (
           <p className="text-xs text-muted-foreground italic text-center py-3">
-            Aucun signataire — cliquez sur « Ajouter un signataire » ci-dessous.
+            Aucun signataire - cliquez sur « Ajouter un signataire » ci-dessous.
           </p>
         ) : (
           <div className="jo-signatures-grid">
@@ -291,7 +291,7 @@ const SignatureZone = ({ signatories, onChange }: SignatureZoneProps) => {
               <div className="flex-1 min-w-0 truncate">
                 <span className="font-bold text-[#07419e] text-[11px] uppercase tracking-wide mr-1.5">{s.role}</span>
                 <span className="font-medium">{s.name}</span>
-                {s.date && <span className="text-muted-foreground text-xs ml-1.5 italic">— {s.date}</span>}
+                {s.date && <span className="text-muted-foreground text-xs ml-1.5 italic">- {s.date}</span>}
               </div>
               <span className="text-muted-foreground flex-shrink-0">
                 {s.align === "jo-sig-left" && <AlignLeft className="h-3.5 w-3.5" />}
@@ -441,7 +441,7 @@ const ArticleRenderer = ({ entry }: { entry: JournalEntry }) => {
     <div className="border border-[#FFD700] rounded-2xl bg-background shadow-lg p-6 md:p-10">
       <h1 className="text-3xl md:text-4xl font-bold mb-4 text-[#07419e] text-center font-serif">{entry.title}</h1>
       <p className="text-sm text-center text-muted-foreground italic mb-8">
-        NOR : {entry.nor_number} — publié le{" "}
+        NOR : {entry.nor_number} - publié le{" "}
         {new Date(entry.publication_date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
       </p>
       <article className="text-foreground">{renderCollapsible(entry.content)}</article>
@@ -521,7 +521,7 @@ export const OfficialJournalManagement = () => {
         .update({ title: formData.title, nor_number: formData.nor_number, content: formData.content, publication_date: formData.publication_date, modifications: allMods, signatures: signatories })
         .eq("id", editingEntry);
       if (error) { toast.error("Erreur lors de la modification"); console.error(error); }
-      else { toast.success(newMod ? "Entrée modifiée — diff enregistré" : "Entrée modifiée"); resetForm(); loadEntries(); }
+      else { toast.success(newMod ? "Entrée modifiée - diff enregistré" : "Entrée modifiée"); resetForm(); loadEntries(); }
     } else {
       const { error } = await supabase.from("official_journal").insert({
         title: formData.title, nor_number: formData.nor_number, content: formData.content,
@@ -567,7 +567,7 @@ export const OfficialJournalManagement = () => {
       <Card className="max-w-6xl mx-auto shadow-card">
         <CardHeader className="text-center border-b">
           <CardTitle className="flex items-center justify-center gap-2 text-3xl font-serif">
-            <FileText className="h-7 w-7" />Journal Officiel — Gestion des Publications
+            <FileText className="h-7 w-7" />Journal Officiel - Gestion des Publications
           </CardTitle>
         </CardHeader>
         <CardContent className="p-8 space-y-8">
@@ -602,7 +602,7 @@ export const OfficialJournalManagement = () => {
               </p>
               {editingEntry && formData.content !== originalContent && (
                 <p className="text-xs text-amber-600 font-medium mt-1">
-                  ⚠️ Le contenu a été modifié — un diff sera enregistré et visible publiquement.
+                  ⚠️ Le contenu a été modifié - un diff sera enregistré et visible publiquement.
                 </p>
               )}
             </div>

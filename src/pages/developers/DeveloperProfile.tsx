@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -48,7 +48,7 @@ const DeveloperProfile = () => {
         <Navigation />
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center space-y-4 px-4">
-            <h1 className="text-2xl font-bold">404 — Développeur introuvable</h1>
+            <h1 className="text-2xl font-bold">404 - Développeur introuvable</h1>
             <p className="text-muted-foreground">Ce profil n'existe pas (encore ?).</p>
             <Link to="/developers"><Button><ChevronLeft className="h-4 w-4 mr-2" />Retour au hub</Button></Link>
           </div>
@@ -134,7 +134,7 @@ const DeveloperProfile = () => {
           )}
         </section>
 
-        {/* Terminal boot — garde toujours le style sombre (c'est un terminal) */}
+        {/* Terminal boot - garde toujours le style sombre (c'est un terminal) */}
         {dev.terminalBoot && dev.terminalBoot.length > 0 && (
           <section className="relative container mx-auto px-4 pb-16">
             <div className="max-w-2xl mx-auto rounded-xl border border-white/10 bg-black/80 overflow-hidden shadow-2xl">
@@ -143,7 +143,7 @@ const DeveloperProfile = () => {
                 <span className="h-2.5 w-2.5 rounded-full bg-yellow-400/70" />
                 <span className="h-2.5 w-2.5 rounded-full bg-green-400/70" />
                 <span className="ml-2 text-xs font-mono text-slate-500 flex items-center gap-1.5">
-                  <Terminal className="h-3 w-3" /> zsh — {dev.slug}
+                  <Terminal className="h-3 w-3" /> zsh - {dev.slug}
                 </span>
               </div>
               <div className="p-5 font-mono text-sm space-y-1.5">

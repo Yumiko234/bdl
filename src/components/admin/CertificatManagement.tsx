@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -169,7 +169,7 @@ const QrModal = ({ cert, onClose }: QrModalProps) => {
             <p className="font-semibold text-foreground">À imprimer sur le certificat papier</p>
             <p>
               Le scan de ce QR code amène directement sur la page de vérification
-              et affiche automatiquement le résultat — aucune saisie nécessaire.
+              et affiche automatiquement le résultat - aucune saisie nécessaire.
             </p>
           </div>
 
@@ -340,7 +340,7 @@ export const CertificateManagement = () => {
           <CardDescription>
             L'identifiant est généré automatiquement selon le rôle.
             Format&nbsp;: <code className="text-xs bg-muted px-1 rounded">[PRÉFIXE]-[AA]-[ALÉATOIRE]</code>
-            &nbsp;— ex&nbsp;: <code className="text-xs bg-muted px-1 rounded">PBDL-25-K3MX7P</code>.
+            &nbsp;- ex&nbsp;: <code className="text-xs bg-muted px-1 rounded">PBDL-25-K3MX7P</code>.
             Un QR code téléchargeable est disponible sur chaque certificat émis.
           </CardDescription>
         </CardHeader>

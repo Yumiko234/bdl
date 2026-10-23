@@ -1,4 +1,4 @@
-@tailwind base;
+﻿@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -310,7 +310,7 @@ html[data-event-theme="noel"] {
   --event-decoration: 145 52% 32%;
   --event-particle: 200 60% 88%;
   --event-glow: 145 55% 38% / 0.22;
-  /* Palette site — vert sapin + rouge Noël */
+  /* Palette site - vert sapin + rouge Noël */
   --background: 145 18% 98%;
   --foreground: 145 30% 10%;
   --card: 145 12% 96%;
@@ -420,7 +420,7 @@ html.dark[data-event-theme="halloween"] {
 }
 
 /* ============================================================
-   ANIMATIONS — désactivées si prefers-reduced-motion
+   ANIMATIONS - désactivées si prefers-reduced-motion
    ============================================================ */
 
 /* Octobre Rose */

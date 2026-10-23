@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -152,7 +152,7 @@ const Profile = () => {
           options: { emailRedirectTo: `${window.location.origin}/confirm` },
         });
         if (authError) throw authError;
-        // Réinitialise le champ email — le changement sera effectif après confirmation
+        // Réinitialise le champ email - le changement sera effectif après confirmation
         setFormData(prev => ({ ...prev, email: profile?.email || "" }));
         toast.info(`Email de confirmation envoyé à ${formData.email}. Cliquez le lien pour valider.`);
       }

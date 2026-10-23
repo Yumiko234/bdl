@@ -1,4 +1,4 @@
-import Navigation from "@/components/Navigation";
+﻿import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -69,7 +69,7 @@ const Contact = () => {
       return;
     }
 
-    // Client-side rate limit (UX only — bypassable). Real enforcement must be done
+    // Client-side rate limit (UX only - bypassable). Real enforcement must be done
     // server-side via Supabase RLS or an Edge Function with IP-based throttling.
     try {
       const last = localStorage.getItem("contact_last_submit");

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import { useSEO } from "@/hooks/useSEO";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -101,7 +101,7 @@ const Support = () => {
   // Profile
   const [profile, setProfile] = useState<{ full_name: string; email: string } | null>(null);
 
-  // ── Auth guard — handled in render, no redirect ──────────────────────────────
+  // ── Auth guard - handled in render, no redirect ──────────────────────────────
 
   // ── Load profile & tickets ───────────────────────────────────────────────────
   useEffect(() => {
@@ -382,11 +382,11 @@ const Support = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg">
                         <div className="space-y-1">
                           <Label className="text-xs text-muted-foreground uppercase tracking-wide">Nom</Label>
-                          <p className="font-medium">{profile?.full_name ?? "—"}</p>
+                          <p className="font-medium">{profile?.full_name ?? "-"}</p>
                         </div>
                         <div className="space-y-1">
                           <Label className="text-xs text-muted-foreground uppercase tracking-wide">Email</Label>
-                          <p className="font-medium">{profile?.email ?? user?.email ?? "—"}</p>
+                          <p className="font-medium">{profile?.email ?? user?.email ?? "-"}</p>
                         </div>
                       </div>
 
@@ -441,7 +441,7 @@ const Support = () => {
 
                       {form.ticket_type === "audience" && (
                         <div className="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700 text-sm text-blue-800 dark:text-blue-200">
-                          <strong>ℹ️ Demande d'audience</strong> — Votre demande sera examinée par le Président,
+                          <strong>ℹ️ Demande d'audience</strong> - Votre demande sera examinée par le Président,
                           la Vice-Présidente, la Secrétaire Générale ou le Directeur de la Communication.
                           Vous serez notifié(e) de la décision ici.
                         </div>
@@ -594,7 +594,7 @@ const Support = () => {
                     ) : (
                       <div className="px-6 pb-6 pt-4 border-t mt-2">
                         <p className="text-sm text-center text-muted-foreground italic">
-                          Cette demande est clôturée — la discussion est fermée.
+                          Cette demande est clôturée - la discussion est fermée.
                         </p>
                       </div>
                     )}

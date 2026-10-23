@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -190,7 +190,7 @@ const Intranet = () => {
                 <div className="text-center sm:text-left space-y-1">
                   <p className="text-white/70 text-sm uppercase tracking-widest font-medium">Espace Intranet</p>
                   <h1 className="text-3xl font-bold">
-                    {getGreeting()}, {profile?.full_name?.split(" ")[0] ?? "—"} 👋
+                    {getGreeting()}, {profile?.full_name?.split(" ")[0] ?? "-"} 👋
                   </h1>
                   <div className="flex items-center justify-center sm:justify-start gap-2 mt-1">
                     <Badge className={`border-white/30 ${primaryRole === 'administrator' ? 'bg-red-500/80 text-white' : 'bg-white/20 text-white'}`}>
@@ -270,7 +270,7 @@ const Intranet = () => {
                             Annonce de l'Administrateur
                           </p>
                         ) : (
-                          <p className="text-xs text-muted-foreground/70 mt-2">— {note.author_name}</p>
+                          <p className="text-xs text-muted-foreground/70 mt-2">- {note.author_name}</p>
                         )}
                       </CardContent>
                     </Card>
@@ -353,7 +353,7 @@ const Intranet = () => {
               </Link>
             </section>
 
-            {/* Accès rapide — collapsible */}
+            {/* Accès rapide - collapsible */}
             <section>
               <button
                 onClick={() => setQuickAccessOpen(o => !o)}

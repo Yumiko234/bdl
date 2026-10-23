@@ -1,4 +1,4 @@
-// Canonical role system — single source of truth for all files
+﻿// Canonical role system - single source of truth for all files
 // bdl_member (6) ranks above vie_scolaire (7)
 
 export const ROLE_KEYS = [

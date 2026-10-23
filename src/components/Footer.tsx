@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+﻿import { Link } from "react-router-dom";
 import { safeHtml } from "@/lib/sanitize";
 import { useDarkMode } from "@/hooks/useDarkMode";
 import { useBdlLogo } from "@/hooks/useBdlLogo";
@@ -74,7 +74,7 @@ const Footer = () => {
                 rel="noopener noreferrer"
                 className="block text-muted-foreground hover:text-accent transition-colors"
               >
-                Instagram — @bdllgsaintandre
+                Instagram - @bdllgsaintandre
               </a>
               <a 
                 href="https://www.st-andre.com" 
@@ -91,7 +91,7 @@ const Footer = () => {
         <div className="border-t border-border mt-8 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
           <p className="text-center sm:text-left">
             &copy; {new Date().getFullYear()} {'Bureau des Lycéens - Lycée Saint-André. Tous droits réservés.'}
-            <span className="mx-2">—</span>
+            <span className="mx-2">-</span>
             Site développé par{" "}
             <Link
               to="/developers"

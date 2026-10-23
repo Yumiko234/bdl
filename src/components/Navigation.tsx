@@ -1,4 +1,4 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
+﻿import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -179,7 +179,7 @@ const Navigation = () => {
       </nav>
       <GlobalBanner />
 
-      {/* Menu mobile — overlay plein écran */}
+      {/* Menu mobile - overlay plein écran */}
       {isMenuOpen && (
         <div className="xl:hidden fixed inset-0 top-20 z-40 bg-background overflow-y-auto border-t">
           <div className="px-4 py-4 space-y-1">
@@ -202,7 +202,7 @@ const Navigation = () => {
                       </AvatarFallback>
                     </Avatar>
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold truncate">{navProfile?.full_name ?? "—"}</p>
+                      <p className="text-sm font-semibold truncate">{navProfile?.full_name ?? "-"}</p>
                       <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                     </div>
                   </div>

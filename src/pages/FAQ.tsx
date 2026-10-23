@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+﻿import { Link } from "react-router-dom";
 import { useSEO } from "@/hooks/useSEO";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -67,7 +67,7 @@ const faqCategories: FaqCategory[] = [
         question: "Comment se déroulent les élections du BDL ?",
         answer: <>
           Les élections ont lieu chaque année scolaire. Un <L to="/scrutin">scrutin en ligne</L> est organisé
-          sur la plateforme. Seuls les membres BDL enregistrés peuvent voter — le vote est irrévocable une fois
+          sur la plateforme. Seuls les membres BDL enregistrés peuvent voter - le vote est irrévocable une fois
           validé. Le Président·e et l'Administrateur·rice sont neutres et ne participent pas au vote. Les résultats
           sont calculés à la majorité absolue des suffrages exprimés.
         </>,
@@ -99,7 +99,7 @@ const faqCategories: FaqCategory[] = [
         question: "J'ai oublié mon mot de passe, que faire ?",
         answer: <>
           Sur la <L to="/auth">page de connexion</L>, cliquez sur « Mot de passe oublié » et saisissez
-          votre adresse e-mail. Un lien de réinitialisation vous sera envoyé — vérifiez vos spams.
+          votre adresse e-mail. Un lien de réinitialisation vous sera envoyé - vérifiez vos spams.
           Important : <strong>ouvrez ce lien sur le même navigateur</strong> que celui utilisé pour faire
           la demande, sinon il sera invalide. En cas de problème, contactez le <L to="/support">support</L>.
         </>,

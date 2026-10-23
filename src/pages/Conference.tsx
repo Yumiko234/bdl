@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+﻿import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -385,7 +385,7 @@ export default function ConferencePage() {
   // ── speaking / volume ──
   const peerAnalysers = useRef<Record<string, { analyser: AnalyserNode; data: Uint8Array<ArrayBuffer>; ctx: AudioContext }>>({});
   const localAnalyserRef = useRef<{ analyser: AnalyserNode; data: Uint8Array<ArrayBuffer> } | null>(null);
-  // Volumes stored in refs only — no state to avoid 8 re-renders/sec
+  // Volumes stored in refs only - no state to avoid 8 re-renders/sec
   const peerVolumesRef = useRef<Record<string, number>>({});
   const localVolumeRef = useRef(0);
   const [activeSpeakerId, setActiveSpeakerId] = useState<string | null>(null);
@@ -492,14 +492,14 @@ export default function ConferencePage() {
   const syncLocalVideo = useCallback(() => {
     const vid = localVideoRef.current;
     if (!vid) return;
-    // Always use the same stream object — just update its tracks externally
+    // Always use the same stream object - just update its tracks externally
     if (vid.srcObject !== localStream.current) {
       vid.srcObject = localStream.current;
     }
     vid.play().catch(() => {});
   }, []);
 
-  // ─── auth guard — redirect only if no guest-allowed conference is live ────
+  // ─── auth guard - redirect only if no guest-allowed conference is live ────
   useEffect(() => {
     if (loading || user) return;
     // Check if any live conference allows guests before redirecting
@@ -591,7 +591,7 @@ export default function ConferencePage() {
       pc.onconnectionstatechange = () => {
         if (pc.connectionState === "failed" && reconnectAttempts < 3) {
           reconnectAttempts++;
-          console.warn(`[WebRTC] ${peerId} failed — ICE restart attempt ${reconnectAttempts}`);
+          console.warn(`[WebRTC] ${peerId} failed - ICE restart attempt ${reconnectAttempts}`);
           pc.restartIce();
           pc.createOffer({ iceRestart: true }).then(async (offer) => {
             await pc.setLocalDescription(offer);
@@ -679,7 +679,7 @@ export default function ConferencePage() {
           ?? pc.getSenders().find((s) => s.track?.kind === kind);
 
         if (matchedSender) {
-          // replaceTrack never needs renegotiation — perfect for enable/disable
+          // replaceTrack never needs renegotiation - perfect for enable/disable
           matchedSender.replaceTrack(track).catch((e) => console.error("replaceTrack", peerId, e));
         } else if (track) {
           // No sender exists for this kind yet → addTrack + renegotiate
@@ -993,7 +993,7 @@ export default function ConferencePage() {
     }
 
     try {
-      // ⚠️ Do NOT pass audio:false — pass only video constraints
+      // ⚠️ Do NOT pass audio:false - pass only video constraints
       const got = await navigator.mediaDevices.getUserMedia({ video: true });
       await refreshDevices();
 
@@ -1462,7 +1462,7 @@ export default function ConferencePage() {
     return () => document.removeEventListener("fullscreenchange", handler);
   }, []);
 
-  // ── URL ?join=confId — auto-open pre-call for shared links ────────────────
+  // ── URL ?join=confId - auto-open pre-call for shared links ────────────────
   useEffect(() => {
     const joinId = searchParams.get("join");
     if (!joinId || inConference) return;
@@ -1484,7 +1484,7 @@ export default function ConferencePage() {
   }, [searchParams]);
 
   // ─── Volume polling (speaking detection) ─────────────────────────────────
-  // Volumes go to refs only — state is only updated when the speaking set actually changes
+  // Volumes go to refs only - state is only updated when the speaking set actually changes
   // This eliminates the 8 re-renders/sec that caused the conference to freeze.
   useEffect(() => {
     if (!inConference) return;
@@ -1675,7 +1675,7 @@ export default function ConferencePage() {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // MINIMIZED PILL — shown when navigating away while in a call
+  // MINIMIZED PILL - shown when navigating away while in a call
   // ═══════════════════════════════════════════════════════════════════════════
 
   const MinimizedPill = () => (
@@ -2014,7 +2014,7 @@ export default function ConferencePage() {
         {/* ── Video grid ────────────────────────────────────────────────────── */}
         <div className={`flex-1 flex flex-col min-w-0 relative ${focusMode ? "bg-black" : "bg-slate-100 dark:bg-slate-900/50"}`}>
 
-          {/* Focus mode — single large tile */}
+          {/* Focus mode - single large tile */}
           {focusMode && (() => {
             const fId = activeSpeakerId ?? user?.id ?? "local";
             const isLocal = fId === user?.id;
@@ -2137,7 +2137,7 @@ export default function ConferencePage() {
                 {others.length > 0 && (
                   <div className="flex gap-2 h-24 overflow-x-auto flex-shrink-0">
                     {others.map((p) => (
-                      <div key={p.user_id} onClick={() => {/* clicking a thumb doesn't switch speaker — active speaker auto-switches */}}
+                      <div key={p.user_id} onClick={() => {/* clicking a thumb doesn't switch speaker - active speaker auto-switches */}}
                         className={`relative bg-slate-800 rounded-xl overflow-hidden flex-shrink-0 aspect-video h-full cursor-pointer group ${isSpeaking(p.user_id) ? "ring-2 ring-green-400" : "border border-slate-700"}`}>
                         <div className="absolute inset-0 flex items-center justify-center"><div className="w-10 h-10 rounded-full bg-slate-600 flex items-center justify-center text-white text-sm font-bold">{initials(p.user_name)}</div></div>
                         <video ref={(el) => { remoteVideoRefs.current[p.user_id] = el; }} autoPlay playsInline className="w-full h-full object-cover absolute inset-0" />

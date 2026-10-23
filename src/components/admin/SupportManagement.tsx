@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -458,7 +458,7 @@ export const SupportManagement = ({
             ) : (
               <div className="px-6 pb-5 pt-4 border-t mt-2">
                 <p className="text-sm text-center text-muted-foreground italic">
-                  Ticket clôturé — la discussion est fermée.
+                  Ticket clôturé - la discussion est fermée.
                 </p>
               </div>
             )}
@@ -579,7 +579,7 @@ export const SupportManagement = ({
                         <span className="flex items-center gap-1">
                           <User className="h-3 w-3" />
                           {ticket.requester_name}
-                          {ticket.requester_class && ` — ${ticket.requester_class}`}
+                          {ticket.requester_class && ` - ${ticket.requester_class}`}
                         </span>
                         <span className="flex items-center gap-1">
                           <Clock className="h-3 w-3" />

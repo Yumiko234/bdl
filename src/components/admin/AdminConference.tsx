@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -187,7 +187,7 @@ export const AdminConference = () => {
 
   const avgDuration = () => {
     const finished = conferences.filter((c) => c.status === "ended" && c.ended_at);
-    if (finished.length === 0) return "—";
+    if (finished.length === 0) return "-";
     const totalMins = finished.reduce((acc, c) => {
       return acc + Math.floor((new Date(c.ended_at!).getTime() - new Date(c.created_at).getTime()) / 60000);
     }, 0);

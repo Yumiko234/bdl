@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+﻿import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useSEO } from "@/hooks/useSEO";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -219,7 +219,7 @@ const Actualites = () => {
     if (!user) return;
     const isMine = myReactions[newsId]?.has(emoji);
 
-    // Optimistic update — utilise le prénom du profil (fiable) ou fallback metadata
+    // Optimistic update - utilise le prénom du profil (fiable) ou fallback metadata
     const myName = myProfileNameRef.current || user.user_metadata?.full_name || "Vous";
     setReactions((prev) => {
       const updated = { ...prev };

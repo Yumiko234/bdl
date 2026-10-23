@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -329,7 +329,7 @@ const BDLMemberProfile = () => {
                     </Badge>
                   ) : (
                     <Badge className="bg-white/15 text-white border-white/25 text-sm py-1 px-3">
-                      Ancien membre — {rangeLabel}
+                      Ancien membre - {rangeLabel}
                     </Badge>
                   )
                 )}
@@ -425,7 +425,7 @@ const BDLMemberProfile = () => {
               <div className="max-w-3xl mx-auto space-y-3">
                 <h2 className="text-2xl font-bold flex items-center gap-2 mb-6">
                   <History className="h-6 w-6 text-primary" />
-                  Au BDL — par année
+                  Au BDL - par année
                 </h2>
                 {yearEntries.map((entry) => {
                   const isOpen = openYear === entry.year_id;

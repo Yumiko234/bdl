@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+﻿import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { FileText } from "lucide-react";
 import LegalPageLayout, { LegalTocEntry } from "@/components/legal/LegalPageLayout";
@@ -36,7 +36,7 @@ const CGU = () => {
       lastUpdated={LAST_UPDATED}
       toc={TOC}
     >
-      <LegalSection id="objet" title="Article 1 — Objet du site">
+      <LegalSection id="objet" title="Article 1 - Objet du site">
         <p>
           Les présentes Conditions Générales d'Utilisation (ci-après « CGU »)
           ont pour objet de définir les modalités et conditions dans
@@ -68,7 +68,7 @@ const CGU = () => {
         </p>
       </LegalSection>
 
-      <LegalSection id="acces" title="Article 2 — Accès au site">
+      <LegalSection id="acces" title="Article 2 - Accès au site">
         <p>
           Le Site est accessible gratuitement à toute personne disposant
           d'un accès à internet. Tous les frais afférents à cet accès
@@ -91,7 +91,7 @@ const CGU = () => {
         </p>
       </LegalSection>
 
-      <LegalSection id="compte" title="Article 3 — Création de compte et espace personnel">
+      <LegalSection id="compte" title="Article 3 - Création de compte et espace personnel">
         <h3 className="font-semibold text-foreground pt-1">3.1 Inscription</h3>
         <p>
           La création d'un compte requiert la fourniture d'une adresse
@@ -156,7 +156,7 @@ const CGU = () => {
         </p>
       </LegalSection>
 
-      <LegalSection id="scrutins" title="Article 4 — Scrutins et sondages">
+      <LegalSection id="scrutins" title="Article 4 - Scrutins et sondages">
         <p>
           Le Site permet au BDL d'organiser des <strong>scrutins</strong> (votes, élections internes) et des <strong>sondages</strong> de
           consultation.
@@ -197,7 +197,7 @@ const CGU = () => {
         </ul>
       </LegalSection>
 
-      <LegalSection id="conferences" title="Article 5 — Conférences en direct">
+      <LegalSection id="conferences" title="Article 5 - Conférences en direct">
         <p>
           Le Site propose une fonctionnalité de <strong>visioconférence en
           temps réel</strong>, accessible depuis la page{" "}
@@ -234,7 +234,7 @@ const CGU = () => {
         </ul>
       </LegalSection>
 
-      <LegalSection id="regles" title="Article 6 — Règles d'utilisation et comportement des utilisateurs">
+      <LegalSection id="regles" title="Article 6 - Règles d'utilisation et comportement des utilisateurs">
         <p>En utilisant le Site, l'Utilisateur s'engage à :</p>
         <ul className="list-disc pl-5 space-y-1.5">
           <li>respecter la législation en vigueur ainsi que les droits des tiers ;</li>
@@ -263,7 +263,7 @@ const CGU = () => {
         </p>
       </LegalSection>
 
-      <LegalSection id="propriete" title="Article 7 — Propriété intellectuelle">
+      <LegalSection id="propriete" title="Article 7 - Propriété intellectuelle">
         <p>
           Le contenu du Site (textes, images, logos, mise en page, code
           source, base de données, etc.) est protégé par le droit de la
@@ -280,7 +280,7 @@ const CGU = () => {
         </p>
       </LegalSection>
 
-      <LegalSection id="donnees" title="Article 8 — Données personnelles">
+      <LegalSection id="donnees" title="Article 8 - Données personnelles">
         <p>
           L'utilisation du Site entraîne la collecte et le traitement de
           données à caractère personnel (identité, e-mail, données de
@@ -296,7 +296,7 @@ const CGU = () => {
         </p>
       </LegalSection>
 
-      <LegalSection id="disponibilite" title="Article 9 — Disponibilité et évolution du service">
+      <LegalSection id="disponibilite" title="Article 9 - Disponibilité et évolution du service">
         <p>
           Le BDL se réserve le droit, à tout moment et sans préavis, de
           modifier, suspendre ou interrompre tout ou partie du Site,
@@ -309,7 +309,7 @@ const CGU = () => {
         </p>
       </LegalSection>
 
-      <LegalSection id="responsabilite" title="Article 10 — Responsabilité">
+      <LegalSection id="responsabilite" title="Article 10 - Responsabilité">
         <p>
           Le BDL met en œuvre des moyens raisonnables pour assurer
           l'exactitude des informations diffusées sur le Site, sans
@@ -324,7 +324,7 @@ const CGU = () => {
         </ul>
       </LegalSection>
 
-      <LegalSection id="modification" title="Article 11 — Modification des CGU">
+      <LegalSection id="modification" title="Article 11 - Modification des CGU">
         <p>
           Le BDL se réserve le droit de modifier les présentes CGU à tout
           moment, notamment pour se conformer à toute évolution légale,
@@ -337,7 +337,7 @@ const CGU = () => {
         </p>
       </LegalSection>
 
-      <LegalSection id="droit" title="Article 12 — Droit applicable et litiges">
+      <LegalSection id="droit" title="Article 12 - Droit applicable et litiges">
         <p>
           Les présentes CGU sont soumises au droit français. En cas de
           différend relatif à leur interprétation ou à leur exécution, les
@@ -348,10 +348,10 @@ const CGU = () => {
         </p>
       </LegalSection>
 
-      <LegalSection id="contact" title="Article 13 — Contact">
+      <LegalSection id="contact" title="Article 13 - Contact">
         <div className="rounded-lg border border-border bg-muted/30 p-5 space-y-1">
           <p className="font-semibold text-foreground">
-            Bureau des Lycéens — Lycée Saint-André
+            Bureau des Lycéens - Lycée Saint-André
           </p>
           <p>
             E-mail :{" "}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -581,7 +581,7 @@ export const SuiviActionsManagement = () => {
                   <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip
                     formatter={(v: any, _: any, props: any) => [
-                      `${v} pts — ${props.payload.actions} action(s)`,
+                      `${v} pts - ${props.payload.actions} action(s)`,
                       props.payload.fullName,
                     ]}
                   />
@@ -758,7 +758,7 @@ export const SuiviActionsManagement = () => {
                       {!isFuture && pendingValidations > 0 && (
                         <p className="text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-2 flex items-center gap-1.5 mb-2">
                           <StickyNote className="h-3.5 w-3.5 shrink-0" />
-                          {pendingValidations} demande(s) d'absence à valider — cliquez "Présent", "Excusé" ou "Injustifié" pour confirmer.
+                          {pendingValidations} demande(s) d'absence à valider - cliquez "Présent", "Excusé" ou "Injustifié" pour confirmer.
                         </p>
                       )}
                       {members.map((member) => {
@@ -789,7 +789,7 @@ export const SuiviActionsManagement = () => {
                                       <span className="hidden sm:inline">{ATTENDANCE_CONFIG[current].label}</span>
                                     </span>
                                   ) : (
-                                    <span className="text-xs text-muted-foreground italic">—</span>
+                                    <span className="text-xs text-muted-foreground italic">-</span>
                                   )
                                 ) : BUTTONS.map(({ status, label }) => (
                                   <button
@@ -1112,7 +1112,7 @@ export const SuiviActionsManagement = () => {
                   <SelectContent>
                     {members.map((m) => (
                       <SelectItem key={m.id} value={m.id} disabled={!m.hasAccount}>
-                        {m.full_name} — {m.role_label}
+                        {m.full_name} - {m.role_label}
                         {!m.hasAccount && " (pas de compte lié)"}
                       </SelectItem>
                     ))}
@@ -1154,9 +1154,9 @@ export const SuiviActionsManagement = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="petite">⭐ Petite action — 0,5 pt</SelectItem>
-                    <SelectItem value="normale">⭐⭐ Action normale — 1 pt</SelectItem>
-                    <SelectItem value="grande">⭐⭐⭐ Grande action — 2 pts</SelectItem>
+                    <SelectItem value="petite">⭐ Petite action - 0,5 pt</SelectItem>
+                    <SelectItem value="normale">⭐⭐ Action normale - 1 pt</SelectItem>
+                    <SelectItem value="grande">⭐⭐⭐ Grande action - 2 pts</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

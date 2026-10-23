@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+﻿import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ShieldCheck } from "lucide-react";
 import LegalPageLayout, { LegalTocEntry } from "@/components/legal/LegalPageLayout";
@@ -234,12 +234,12 @@ const Confidentialite = () => {
             <TableRow>
               <TableCell className="font-medium text-foreground">Supabase Inc.</TableCell>
               <TableCell>Base de données, authentification, stockage des fichiers</TableCell>
-              <TableCell>Irlande — Union européenne</TableCell>
+              <TableCell>Irlande - Union européenne</TableCell>
             </TableRow>
             <TableRow>
               <TableCell className="font-medium text-foreground">Vercel Inc.</TableCell>
               <TableCell>Fonctions serveur du site</TableCell>
-              <TableCell>Paris, France — région cdg1, Union européenne</TableCell>
+              <TableCell>Paris, France - région cdg1, Union européenne</TableCell>
             </TableRow>
             <TableRow>
               <TableCell className="font-medium text-foreground">Vercel Inc.</TableCell>
@@ -332,7 +332,7 @@ const Confidentialite = () => {
         <ul className="list-disc pl-5 space-y-1.5">
           <li>
             des <strong>cookies techniques essentiels</strong>, notamment
-            pour la gestion de votre session de connexion (Supabase Auth) —
+            pour la gestion de votre session de connexion (Supabase Auth) -
             ces cookies ne nécessitent pas de consentement préalable,
             conformément aux recommandations de la CNIL ;
           </li>
@@ -416,7 +416,7 @@ const Confidentialite = () => {
       <LegalSection id="contact" title="12. Contact">
         <div className="rounded-lg border border-border bg-muted/30 p-5 space-y-1">
           <p className="font-semibold text-foreground">
-            Bureau des Lycéens — Lycée Saint-André
+            Bureau des Lycéens - Lycée Saint-André
           </p>
           <p>
             E-mail :{" "}

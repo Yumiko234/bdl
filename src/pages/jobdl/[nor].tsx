@@ -196,7 +196,7 @@ const exportToPDF = async (entry: JournalEntry, bodyHTML: string): Promise<void>
 
   // ── En-tête ──────────────────────────────────────────────────────────────
   pdf.setFontSize(7); pdf.setFont("times", "bold"); setColor(BLUE);
-  pdf.text("BUREAU DES LYCÉENS — LYCÉE SAINT-ANDRÉ", MX, y);
+  pdf.text("BUREAU DES LYCÉENS - LYCÉE SAINT-ANDRÉ", MX, y);
   pdf.setFontSize(8); pdf.setFont("times", "normal"); setColor(GRAY);
   pdf.text("Journal Officiel du Bureau des Lycéens", MX, y + 3.5);
   pdf.setFontSize(8); pdf.setFont("courier", "bold"); setColor(BLUE);
@@ -211,7 +211,7 @@ const exportToPDF = async (entry: JournalEntry, bodyHTML: string): Promise<void>
     pdf.text(l, PAGE_W / 2, y, { align: "center" }); y += 7;
   }
   pdf.setFontSize(8.5); pdf.setFont("times", "italic"); setColor(GRAY);
-  pdf.text(`NOR : ${entry.nor_number} — ${pubDate}`, PAGE_W / 2, y, { align: "center" });
+  pdf.text(`NOR : ${entry.nor_number} - ${pubDate}`, PAGE_W / 2, y, { align: "center" });
   y += 4; hRule(0.3, "#cccccc"); y += 6;
 
   // ── Moteur de rendu inline ────────────────────────────────────────────────
@@ -405,8 +405,8 @@ const exportToPDF = async (entry: JournalEntry, bodyHTML: string): Promise<void>
   const fy = PAGE_H - 10;
   setDraw("#e5e7eb"); pdf.setLineWidth(0.3); pdf.line(MX, fy - 3, PAGE_W - MX, fy - 3);
   pdf.setFontSize(7); pdf.setFont("times", "normal"); setColor(GRAY);
-  pdf.text("© Bureau des Lycéens — Lycée Saint-André", MX, fy);
-  pdf.text(`${entry.nor_number} — ${pubDate}`, PAGE_W - MX, fy, { align: "right" });
+  pdf.text("© Bureau des Lycéens - Lycée Saint-André", MX, fy);
+  pdf.text(`${entry.nor_number} - ${pubDate}`, PAGE_W - MX, fy, { align: "right" });
 
   pdf.save(`NOR_${entry.nor_number.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`);
 };
@@ -455,7 +455,7 @@ const ModificationsHistory = ({ modifications }: { modifications: Modification[]
             return (
               <div key={i} className="border-l-4 border-[#07419e]/30 pl-4">
                 <p className="text-xs font-bold text-[#07419e] mb-2 uppercase tracking-wide">
-                  Révision {fromVer} → {toVer} — {date}
+                  Révision {fromVer} → {toVer} - {date}
                 </p>
                 {"diff" in mod && Array.isArray(mod.diff) ? (() => {
                   const hunks = extractDiffHunks(mod.diff);
@@ -649,7 +649,7 @@ const JobdlArticle = () => {
             <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
               <div className="space-y-0.5">
                 <p className="text-xs font-bold uppercase tracking-widest text-[#07419e]">
-                  Journal Officiel — Bureau des Lycéens
+                  Journal Officiel - Bureau des Lycéens
                 </p>
                 <p className="text-xs text-muted-foreground font-mono">NOR : {entry.nor_number}</p>
               </div>
@@ -696,7 +696,7 @@ const JobdlArticle = () => {
             <div className="border border-[#FFD700] rounded-2xl bg-white/95 shadow-card p-10">
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 text-[#07419e] text-center">{entry.title}</h1>
               <p className="text-sm text-center text-muted-foreground italic mb-6">
-                NOR : {entry.nor_number} — publié le{" "}
+                NOR : {entry.nor_number} - publié le{" "}
                 {new Date(entry.publication_date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
               </p>
 

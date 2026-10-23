@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -239,7 +239,7 @@ export const AdminInternalNotes = () => {
         ) : (
           <Badge variant="secondary" className="gap-1.5 text-muted-foreground">
             <Lock className="h-3 w-3" />
-            Lecture seule — réservé à l'Exécutif pour publier
+            Lecture seule - réservé à l'Exécutif pour publier
           </Badge>
         )}
       </div>

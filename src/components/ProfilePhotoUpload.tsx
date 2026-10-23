@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, useCallback } from "react";
+﻿import { useState, useRef, useMemo, useCallback } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -279,7 +279,7 @@ export const ProfilePhotoUpload = ({
           </DialogHeader>
 
           <div className="space-y-5 pt-1">
-            {/* Aperçu circulaire — drag pour repositionner */}
+            {/* Aperçu circulaire - drag pour repositionner */}
             <div className="flex flex-col items-center gap-1">
               <div
                 className="relative overflow-hidden rounded-full ring-4 ring-primary bg-muted select-none"

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+﻿import { useState, useEffect, useCallback, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -252,7 +252,7 @@ const ResponsesView = ({
                             {ans
                               ? ans.option_id
                                 ? getOptionText(ans.option_id)
-                                : ans.text_answer || "—"
+                                : ans.text_answer || "-"
                               : "Non répondu"}
                           </p>
                         </div>

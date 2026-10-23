@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   EventThemeId,
   EventThemeStore,
   ResolvedTheme,
@@ -53,12 +53,12 @@ export function resolveActiveTheme(
       }
     }
 
-    // Normal mode — no event theme
+    // Normal mode - no event theme
     if (store.mode === "normal") {
       return { id: null, settings: null };
     }
 
-    // Auto mode — find active themes by date, pick highest priority
+    // Auto mode - find active themes by date, pick highest priority
     const candidates: Array<{ id: EventThemeId; settings: ThemeSettings }> = [];
 
     for (const id of CATALOGUE_ORDER) {

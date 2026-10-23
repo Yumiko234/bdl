@@ -1,4 +1,4 @@
-import { useRef, useCallback, useState } from "react";
+﻿import { useRef, useCallback, useState } from "react";
 
 export type NetQuality = "good" | "medium" | "bad" | "unknown";
 
@@ -66,7 +66,7 @@ export function useConferenceStats(peers: React.MutableRefObject<Record<string, 
 
   const start = useCallback(() => {
     if (intervalRef.current) return;
-    // Collect every 4s — frequent enough to be useful, light enough for CPU
+    // Collect every 4s - frequent enough to be useful, light enough for CPU
     collect();
     intervalRef.current = setInterval(collect, 4000);
   }, [collect]);

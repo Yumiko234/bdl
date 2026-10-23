@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSEO } from "@/hooks/useSEO";
 import Navigation from "@/components/Navigation";
@@ -609,7 +609,7 @@ const Scrutin = () => {
                 </Card>
               )}
 
-              {/* Barre de recherche — déclenchée par Entrée */}
+              {/* Barre de recherche - déclenchée par Entrée */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -624,7 +624,7 @@ const Scrutin = () => {
 
               {totalCount > 0 && (
                 <p className="text-sm text-muted-foreground">
-                  {totalCount} scrutin{totalCount > 1 ? "s" : ""} au total —
+                  {totalCount} scrutin{totalCount > 1 ? "s" : ""} au total -
                   page {currentPage} sur {totalPages}
                   {searchQuery && <span className="ml-1 italic">· filtré par « {searchQuery} »</span>}
                 </p>
@@ -726,7 +726,7 @@ const Scrutin = () => {
                             return (
                               <div className="pt-4 border-t space-y-2">
                                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1">
-                                  <EyeOff className="h-3 w-3" /> Résultats provisoires — admin uniquement
+                                  <EyeOff className="h-3 w-3" /> Résultats provisoires - admin uniquement
                                 </p>
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 bg-muted/20 rounded-lg border text-center">
                                   {[

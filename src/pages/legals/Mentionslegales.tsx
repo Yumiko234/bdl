@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+﻿import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Scale } from "lucide-react";
 import LegalPageLayout, { LegalTocEntry } from "@/components/legal/LegalPageLayout";
@@ -57,14 +57,14 @@ const MentionsLegales = () => {
          Bureau des Lycéens du Lycée Saint-André
           </p>
           <p>
-            <strong>Siège :</strong> 19 Rue Rapp, 68000 Colmar — Haut-Rhin, France
+            <strong>Siège :</strong> 19 Rue Rapp, 68000 Colmar - Haut-Rhin, France
           </p>
           <p>
             <strong>Adresse e-mail :</strong> contact@bdl-saintandre.fr
           </p>
           <p>
             <strong>Établissement de rattachement :</strong> Lycée
-            Saint-André —{" "}
+            Saint-André -{" "}
             <a href="https://www.st-andre.com" target="_blank" rel="noopener noreferrer">
               www.st-andre.com
             </a>
@@ -86,14 +86,14 @@ const MentionsLegales = () => {
          Elodie ROTH
           </p>
           <p>
-            <strong>Siège :</strong> 19 Rue Rapp, 68000 Colmar — Haut-Rhin, France
+            <strong>Siège :</strong> 19 Rue Rapp, 68000 Colmar - Haut-Rhin, France
           </p>
           <p>
             <strong>Adresse e-mail :</strong> presidente@bdl-saintandre.fr
           </p>
           <p>
             <strong>Établissement de rattachement :</strong> Lycée
-            Saint-André —{" "}
+            Saint-André -{" "}
             <a href="https://www.st-andre.com" target="_blank" rel="noopener noreferrer">
               www.st-andre.com
             </a>
@@ -114,7 +114,7 @@ const MentionsLegales = () => {
           </div>
           <div>
             <p className="font-semibold text-foreground">Maël Vicq</p>
-            <p className="text-sm text-muted-foreground">Développeur web — co-mainteneur</p>
+            <p className="text-sm text-muted-foreground">Développeur web - co-mainteneur</p>
             <div className="flex gap-4 mt-1 text-sm">
               <a href="https://mymvweb.fr" target="_blank" rel="noopener noreferrer" className="hover:text-accent transition-colors">Site web</a>
               <Link to="/developers/mael-vicq" className="hover:text-accent transition-colors">Profil développeur →</Link>
@@ -258,7 +258,7 @@ const MentionsLegales = () => {
       <LegalSection id="contact" title="9. Contact">
         <div className="rounded-lg border border-border bg-muted/30 p-5 space-y-1">
           <p className="font-semibold text-foreground">
-            Bureau des Lycéens — Lycée Saint-André
+            Bureau des Lycéens - Lycée Saint-André
           </p>
           <p>
             E-mail :{" "}

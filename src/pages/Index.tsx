@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import { useSEO } from "@/hooks/useSEO";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -87,7 +87,7 @@ const InstagramEmbed = ({ post }: { post: InstagramPost }) => {
     };
   }, [post.url, embeddable]);
 
-  // Carte de fallback — toujours visible si l'embed ne charge pas
+  // Carte de fallback - toujours visible si l'embed ne charge pas
   const fallbackCard = (
     <a
       href={post.url}
@@ -112,7 +112,7 @@ const InstagramEmbed = ({ post }: { post: InstagramPost }) => {
 
   return (
     <div className="relative">
-      {/* Carte toujours visible en dessous — l'embed se superpose si il charge */}
+      {/* Carte toujours visible en dessous - l'embed se superpose si il charge */}
       {!embedLoaded && fallbackCard}
 
       <div

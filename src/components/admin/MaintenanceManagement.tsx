@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -326,7 +326,7 @@ export const MaintenanceManagement = () => {
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground italic">
-                  Aucune page sélectionnée — sélectionnez au moins une page ou passez en mode "Tout le site".
+                  Aucune page sélectionnée - sélectionnez au moins une page ou passez en mode "Tout le site".
                 </p>
               )}
 

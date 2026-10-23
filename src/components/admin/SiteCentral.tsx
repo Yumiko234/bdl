@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { EstablishmentManagement } from "./EstablishmentManagement";
 import { ContactManagement } from "./ContactManagement";
@@ -74,7 +74,7 @@ const PresidentMessageSection = () => {
             <SelectContent>
               {options.map((opt) => (
                 <SelectItem key={opt.id} value={opt.id}>
-                  {opt.full_name} — {opt.role === "presidente" ? "Présidente" : "Président"}
+                  {opt.full_name} - {opt.role === "presidente" ? "Présidente" : "Président"}
                 </SelectItem>
               ))}
             </SelectContent>

@@ -2,6 +2,7 @@
 import { useParams, Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 import { Button } from "@/components/ui/button";
 import {
   ChevronLeft, Github, Linkedin, Instagram, Mail, Globe,
@@ -66,6 +67,7 @@ const DeveloperProfile = () => {
       <Navigation />
 
       <main className="flex-1 relative overflow-hidden">
+        <MaintenanceOverlay>
         <div className="dev-profile-grid absolute inset-0 pointer-events-none" />
         <div className="absolute -top-40 left-1/2 -translate-x-1/2 h-96 w-[36rem] rounded-full pointer-events-none dev-hero-glow" />
 
@@ -244,6 +246,7 @@ const DeveloperProfile = () => {
             </div>
           </section>
         )}
+        </MaintenanceOverlay>
       </main>
 
       <Footer />

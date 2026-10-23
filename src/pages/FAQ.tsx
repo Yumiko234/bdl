@@ -2,6 +2,7 @@
 import { useSEO } from "@/hooks/useSEO";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 import {
   Accordion,
   AccordionContent,
@@ -395,6 +396,7 @@ const FAQ = () => {
       <Navigation />
 
       <main className="flex-1">
+        <MaintenanceOverlay>
         {/* Bannière */}
         <section className="py-16 gradient-institutional text-white">
           <div className="container mx-auto px-4">
@@ -447,6 +449,7 @@ const FAQ = () => {
             </div>
           </div>
         </section>
+        </MaintenanceOverlay>
       </main>
 
       <Footer />

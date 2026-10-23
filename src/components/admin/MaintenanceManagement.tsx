@@ -9,7 +9,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Wrench, Clock, Globe, LayoutList, X, Plus, Info } from "lucide-react";
+import { Wrench, Clock, Globe, LayoutList, X, Plus, Info, ShieldAlert } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+
+// Chemins optionnellement bloquables en mode global (hard bypass /admin /auth /intranet ne figurent pas ici)
+const SOFT_BYPASS_OPTIONS = [
+  { path: "/contact", label: "Contact" },
+  { path: "/support", label: "Support" },
+  { path: "/faq",     label: "FAQ" },
+  { path: "/legal",   label: "Pages légales" },
+];
 
 // Routes disponibles dans l'application
 const AVAILABLE_ROUTES = [
@@ -39,6 +48,7 @@ interface MaintenanceConfig {
   submessage: string | null;
   estimated_end: string | null;
   affected_paths: string[] | null;
+  blocked_bypass_paths: string[] | null;
 }
 
 export const MaintenanceManagement = () => {
@@ -50,6 +60,7 @@ export const MaintenanceManagement = () => {
   // Mode : "global" = toutes les pages, "specific" = pages ciblées
   const [mode, setMode] = useState<"global" | "specific">("global");
   const [selectedPaths, setSelectedPaths] = useState<string[]>([]);
+  const [blockedBypassPaths, setBlockedBypassPaths] = useState<string[]>([]);
   const [customPath, setCustomPath] = useState("");
 
   const [form, setForm] = useState({
@@ -97,6 +108,7 @@ export const MaintenanceManagement = () => {
         setMode("global");
         setSelectedPaths([]);
       }
+      setBlockedBypassPaths(cfg.blocked_bypass_paths ?? []);
     }
     setLoading(false);
   };
@@ -115,6 +127,7 @@ export const MaintenanceManagement = () => {
         ? new Date(form.estimated_end).toISOString()
         : null,
       affected_paths,
+      blocked_bypass_paths: mode === "global" ? blockedBypassPaths : [],
       updated_by: user?.id,
     };
 
@@ -251,6 +264,43 @@ export const MaintenanceManagement = () => {
               </div>
             </button>
           </div>
+
+          {/* Options supplémentaires en mode global */}
+          {mode === "global" && (
+            <div className="space-y-3 p-4 rounded-xl border bg-muted/20">
+              <div className="flex items-center gap-2">
+                <ShieldAlert className="h-4 w-4 text-muted-foreground" />
+                <p className="text-sm font-medium">Bloquer aussi (optionnel)</p>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Ces pages sont accessibles par défaut même en maintenance globale. Cochez pour les bloquer aussi.
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {SOFT_BYPASS_OPTIONS.map((opt) => (
+                  <label key={opt.path} className="flex items-center gap-2 cursor-pointer select-none">
+                    <Checkbox
+                      checked={blockedBypassPaths.includes(opt.path)}
+                      onCheckedChange={(checked) =>
+                        setBlockedBypassPaths((prev) =>
+                          checked
+                            ? [...prev, opt.path]
+                            : prev.filter((p) => p !== opt.path)
+                        )
+                      }
+                    />
+                    <span className="text-sm">{opt.label}</span>
+                    <span className="text-xs text-muted-foreground">{opt.path}</span>
+                  </label>
+                ))}
+              </div>
+              <div className="flex gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800 dark:bg-amber-950/30 dark:border-amber-800 dark:text-amber-300">
+                <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                <p>
+                  <strong>/admin</strong>, <strong>/auth</strong> et <strong>/intranet</strong> ne peuvent jamais être bloqués. Les administrateurs contournent toujours la maintenance.
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Sélecteur de pages (mode specific) */}
           {mode === "specific" && (

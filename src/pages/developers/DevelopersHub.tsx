@@ -2,6 +2,7 @@
 import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 import { Terminal, ArrowRight, Code2 } from "lucide-react";
 import { developers } from "@/data/developers";
 import { useSEO } from "@/hooks/useSEO";
@@ -26,6 +27,7 @@ const DevelopersHub = () => {
       <Navigation />
 
       <main className="flex-1 relative overflow-hidden">
+        <MaintenanceOverlay>
         {/* Fond : grille + halos */}
         <div className="dev-hub-grid absolute inset-0 pointer-events-none" />
         <div className="absolute -top-32 -left-32 h-96 w-96 rounded-full bg-blue-500/10 dark:bg-blue-500/20 blur-3xl pointer-events-none" />
@@ -95,6 +97,7 @@ const DevelopersHub = () => {
             <span>bdl-saintandre.fr/developers</span>
           </div>
         </section>
+        </MaintenanceOverlay>
       </main>
 
       <Footer />

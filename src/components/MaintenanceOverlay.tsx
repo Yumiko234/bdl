@@ -8,38 +8,46 @@ interface MaintenanceConfig {
   message: string;
   submessage: string | null;
   estimated_end: string | null;
-  // Nouveau champ : null ou vide = toutes les pages, sinon liste de routes ciblées
   affected_paths: string[] | null;
+  blocked_bypass_paths: string[] | null;
 }
 
 interface MaintenanceOverlayProps {
   children: React.ReactNode;
 }
 
-// Pages toujours accessibles quoi qu'il arrive
-const BYPASS_PATHS = ["/admin", "/auth", "/intranet", "/contact", "/support", "/faq", "/legal"];
+// Ces chemins ne peuvent JAMAIS être bloqués
+const HARD_BYPASS_PATHS = ["/admin", "/auth", "/intranet"];
 
-const isBypassPath = () =>
-  BYPASS_PATHS.some((p) => window.location.pathname.startsWith(p));
+// Ces chemins sont accessibles par défaut mais peuvent être bloqués optionnellement
+const SOFT_BYPASS_PATHS = ["/contact", "/support", "/faq", "/legal"];
+
+const isHardBypass = () =>
+  HARD_BYPASS_PATHS.some((p) => window.location.pathname.startsWith(p));
 
 export const MaintenanceOverlay = ({ children }: MaintenanceOverlayProps) => {
   const { user } = useAuth();
   const [config, setConfig] = useState<MaintenanceConfig | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isBDLStaff, setIsBDLStaff] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [roleChecked, setRoleChecked] = useState(false);
 
   useEffect(() => {
     loadConfig();
   }, []);
 
   useEffect(() => {
-    if (user) checkStaffRole();
+    if (user) {
+      checkAdminRole();
+    } else {
+      setRoleChecked(true);
+    }
   }, [user]);
 
   const loadConfig = async () => {
     const { data, error } = await supabase
       .from("maintenance_mode")
-      .select("is_active, message, submessage, estimated_end, affected_paths")
+      .select("is_active, message, submessage, estimated_end, affected_paths, blocked_bypass_paths")
       .limit(1)
       .maybeSingle();
 
@@ -48,8 +56,8 @@ export const MaintenanceOverlay = ({ children }: MaintenanceOverlayProps) => {
     setLoading(false);
   };
 
-  const checkStaffRole = async () => {
-    if (!user) return;
+  const checkAdminRole = async () => {
+    if (!user) { setRoleChecked(true); return; }
     const { data } = await supabase
       .from("user_roles")
       .select("role")
@@ -62,23 +70,35 @@ export const MaintenanceOverlay = ({ children }: MaintenanceOverlayProps) => {
         "communication_manager", "communication_manager2",
         "vie_scolaire", "bdl_member",
       ];
-      setIsBDLStaff(data.some((r: any) => staffRoles.includes(r.role)));
+      setIsAdmin(data.some((r: any) => staffRoles.includes(r.role)));
     }
+    setRoleChecked(true);
   };
 
-  if (loading) return <>{children}</>;
+  // Attendre que les deux chargements soient finis pour éviter un flash
+  if (loading || !roleChecked) return <>{children}</>;
   if (!config?.is_active) return <>{children}</>;
 
-  // Le staff BDL et les pages bypass passent toujours
-  if (isBDLStaff || isBypassPath()) return <>{children}</>;
+  // Administrateurs et staff BDL : jamais bloqués
+  if (isAdmin) return <>{children}</>;
 
-  // Si affected_paths est défini et non vide, on ne bloque QUE ces pages
+  // Hard bypass : /admin, /auth, /intranet — jamais bloqués
+  if (isHardBypass()) return <>{children}</>;
+
   const currentPath = window.location.pathname;
+
+  // Mode pages spécifiques : on ne bloque QUE les chemins ciblés
   if (config.affected_paths && config.affected_paths.length > 0) {
-    const isAffected = config.affected_paths.some((p) =>
-      currentPath.startsWith(p)
-    );
+    const isAffected = config.affected_paths.some((p) => currentPath.startsWith(p));
     if (!isAffected) return <>{children}</>;
+  } else {
+    // Mode global : les soft bypass sont accessibles sauf si explicitement bloqués
+    const blockedOptional = config.blocked_bypass_paths ?? [];
+    const isSoftBypass = SOFT_BYPASS_PATHS.some((p) => currentPath.startsWith(p));
+    if (isSoftBypass) {
+      const isExplicitlyBlocked = blockedOptional.some((p) => currentPath.startsWith(p));
+      if (!isExplicitlyBlocked) return <>{children}</>;
+    }
   }
 
   const estimatedEnd = config.estimated_end

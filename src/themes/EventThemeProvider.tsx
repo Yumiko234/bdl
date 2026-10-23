@@ -17,6 +17,9 @@ import type {
 } from "./types";
 import { resolveActiveTheme } from "./resolver";
 import { supabase } from "@/integrations/supabase/client";
+// site_settings n'est pas encore dans les types générés — cast unique centralisé
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const siteSettingsFrom = () => (supabase as any).from("site_settings");
 
 // ─── Storage helpers (localStorage = fallback uniquement) ─────────────────────
 
@@ -87,12 +90,11 @@ export function EventThemeProvider({ children }: Props) {
   useEffect(() => {
     let channel: ReturnType<typeof supabase.channel> | null = null;
 
-    supabase
-      .from("site_settings" as any)
+    siteSettingsFrom()
       .select("value")
       .eq("key", SUPABASE_KEY)
       .single()
-      .then(({ data, error }: { data: any; error: any }) => {
+      .then(({ data, error }: { data: { value: unknown } | null; error: unknown }) => {
         isInitialLoad.current = false;
         if (!error && data?.value) {
           isFromRemote.current = true;
@@ -107,6 +109,7 @@ export function EventThemeProvider({ children }: Props) {
     channel = supabase
       .channel("site-settings-theme")
       .on(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         "postgres_changes" as any,
         {
           event: "UPDATE",
@@ -140,10 +143,9 @@ export function EventThemeProvider({ children }: Props) {
       return;
     }
     writeLocalStore(store);
-    supabase
-      .from("site_settings" as any)
+    siteSettingsFrom()
       .upsert(
-        { key: SUPABASE_KEY, value: store as any, updated_at: new Date().toISOString() },
+        { key: SUPABASE_KEY, value: store as unknown, updated_at: new Date().toISOString() },
         { onConflict: "key" }
       )
       .then(() => {});

@@ -2,8 +2,9 @@ import { useHeaderHeight } from "./useHeaderHeight";
 
 function SleighSVG({ size = 220 }: { size?: number }) {
   const h = Math.round(size * 0.3);
-  const c = "hsl(var(--event-secondary))";
-  const cd = "hsl(var(--event-decoration))";
+  const c = "hsl(145 48% 24%)";           // rennes : vert sapin foncé
+  const cd = "hsl(145 42% 18%)";          // accents sombres
+  const cr = "hsl(var(--event-primary))"; // traîneau : rouge Noël
   return (
     <svg viewBox="0 0 220 66" width={size} height={h} aria-hidden="true" fill="none">
       {/* ── Reindeer 1 (front) ── */}
@@ -43,24 +44,24 @@ function SleighSVG({ size = 220 }: { size?: number }) {
 
       {/* ── Sleigh runner ── */}
       <path d="M136,52 C142,60 162,62 190,58 C206,55 216,52 220,50"
-        stroke={c} strokeWidth="4" strokeLinecap="round" fill="none" />
+        stroke={cd} strokeWidth="4" strokeLinecap="round" fill="none" />
       <path d="M133,52 C138,62 160,64 192,60 C208,57 218,54 222,52"
-        stroke={c} strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.5" />
+        stroke={cd} strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.5" />
 
-      {/* ── Sleigh body ── */}
+      {/* ── Sleigh body — rouge ── */}
       <path d="M145,28 C140,36 137,44 136,52 L185,52 C185,44 184,36 178,30 Z"
-        fill={c} />
+        fill={cr} />
       {/* Seat back */}
       <path d="M178,30 C183,20 186,12 188,10 C192,12 190,22 186,30 Z"
-        fill={c} />
+        fill={cr} />
 
       {/* ── Santa hat ── */}
       <ellipse cx="187" cy="10" rx="9" ry="3" fill="white" opacity="0.9" />
-      <path d="M184,10 L188,10 L192,-4 Z" fill="hsl(var(--event-primary))" />
+      <path d="M184,10 L188,10 L192,-4 Z" fill={cr} />
       <circle cx="193" cy="-5" r="3.5" fill="white" opacity="0.95" />
 
       {/* ── Sack hint in sleigh ── */}
-      <ellipse cx="158" cy="42" rx="13" ry="9" fill={cd} opacity="0.65" />
+      <ellipse cx="158" cy="42" rx="13" ry="9" fill="hsl(var(--event-secondary))" opacity="0.7" />
     </svg>
   );
 }

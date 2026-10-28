@@ -32,21 +32,21 @@ function TreeSVG({ size = 80 }: { size?: number }) {
         strokeWidth="0.8"
       />
 
-      {/* Ornaments */}
+      {/* Ornaments — rouge et vert uniquement */}
       <circle cx="32" cy="44" r="3.5" fill="hsl(var(--event-primary))" />
-      <circle cx="22" cy="52" r="3" fill="hsl(var(--event-particle))" opacity="0.85" />
+      <circle cx="22" cy="52" r="3" fill="hsl(var(--event-secondary))" />
       <circle cx="43" cy="50" r="3" fill="hsl(var(--event-primary))" />
-      <circle cx="28" cy="58" r="2.8" fill="hsl(var(--event-particle))" opacity="0.85" />
-      <circle cx="42" cy="60" r="2.5" fill="hsl(0 60% 60%)" />
-      <circle cx="32" cy="30" r="2.5" fill="hsl(var(--event-primary))" />
-      <circle cx="24" cy="36" r="2.2" fill="hsl(46 90% 60%)" />
-      <circle cx="40" cy="34" r="2.2" fill="hsl(var(--event-particle))" opacity="0.85" />
+      <circle cx="28" cy="58" r="2.8" fill="hsl(var(--event-secondary))" />
+      <circle cx="42" cy="60" r="2.5" fill="hsl(var(--event-primary))" />
+      <circle cx="32" cy="30" r="2.5" fill="hsl(var(--event-secondary))" />
+      <circle cx="24" cy="36" r="2.2" fill="hsl(var(--event-primary))" />
+      <circle cx="40" cy="34" r="2.2" fill="hsl(var(--event-secondary))" />
 
-      {/* Subtle string of lights */}
+      {/* Guirlande rouge */}
       <path d="M20,50 Q26,48 32,50 Q38,52 44,50"
-        stroke="hsl(46 90% 68%)" strokeWidth="1" fill="none" opacity="0.6" />
+        stroke="hsl(var(--event-primary))" strokeWidth="1.2" fill="none" opacity="0.55" />
       <path d="M14,60 Q23,58 32,60 Q41,62 50,60"
-        stroke="hsl(var(--event-particle))" strokeWidth="1" fill="none" opacity="0.5" />
+        stroke="hsl(var(--event-secondary))" strokeWidth="1.2" fill="none" opacity="0.5" />
     </svg>
   );
 }

@@ -38,15 +38,17 @@ function HollyCorner({ flip = false }: { flip?: boolean }) {
   );
 }
 
-function BellSVG({ size = 36 }: { size?: number }) {
+function BellSVG({ size = 36, green = false }: { size?: number; green?: boolean }) {
+  const fill = green ? "hsl(var(--event-secondary))" : "hsl(var(--event-primary))";
+  const stroke = green ? "hsl(145 55% 24%)" : "hsl(0 60% 32%)";
   return (
     <svg viewBox="0 0 40 46" width={size} height={Math.round(size * 1.15)} aria-hidden="true" fill="none">
       <path d="M20,5 C20,5 28,5 33,11 C37,17 38,25 38,31 L2,31 C2,25 3,17 7,11 C12,5 20,5 20,5 Z"
-        fill="hsl(46 92% 60%)" stroke="hsl(36 85% 38%)" strokeWidth="0.8" />
-      <path d="M0,31 Q20,41 40,31" fill="hsl(46 88% 52%)" stroke="hsl(36 85% 38%)" strokeWidth="0.8" />
-      <rect x="17" y="1" width="6" height="6" rx="3" fill="hsl(36 80% 42%)" stroke="hsl(36 80% 30%)" strokeWidth="0.7" />
-      <circle cx="20" cy="38" r="4" fill="hsl(36 70% 42%)" stroke="hsl(36 70% 30%)" strokeWidth="0.7" />
-      <ellipse cx="14" cy="16" rx="4" ry="6" fill="white" opacity="0.28" />
+        fill={fill} stroke={stroke} strokeWidth="0.8" />
+      <path d="M0,31 Q20,41 40,31" fill={fill} stroke={stroke} strokeWidth="0.8" />
+      <rect x="17" y="1" width="6" height="6" rx="3" fill="hsl(46 80% 55%)" stroke="hsl(36 80% 36%)" strokeWidth="0.7" />
+      <circle cx="20" cy="38" r="4" fill="hsl(46 65% 40%)" stroke="hsl(36 65% 28%)" strokeWidth="0.7" />
+      <ellipse cx="14" cy="16" rx="4" ry="6" fill="white" opacity="0.25" />
     </svg>
   );
 }
@@ -157,7 +159,7 @@ export function ChristmasGlowEffect() {
         <HollyCorner flip />
       </div>
 
-      {/* Cloche gauche */}
+      {/* Cloche gauche — rouge */}
       <div
         aria-hidden="true"
         className="noel--desktop"
@@ -173,7 +175,7 @@ export function ChristmasGlowEffect() {
         <BellSVG size={38} />
       </div>
 
-      {/* Cloche droite */}
+      {/* Cloche droite — verte */}
       <div
         aria-hidden="true"
         className="noel--desktop"
@@ -186,7 +188,7 @@ export function ChristmasGlowEffect() {
           cursor: "pointer",
         }}
       >
-        <BellSVG size={38} />
+        <BellSVG size={38} green />
       </div>
 
       {/* Étoile milieu gauche */}

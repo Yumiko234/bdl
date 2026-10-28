@@ -51,11 +51,15 @@ export const CATALOGUE: Record<EventThemeId, CatalogueEntry> = {
     defaultEffects: {
       snowflakes: true,
       christmasGlow: true,
+      santaSleigh: true,
+      christmasTree: true,
     },
-    availableEffects: ["snowflakes", "christmasGlow"],
+    availableEffects: ["snowflakes", "christmasGlow", "santaSleigh", "christmasTree"],
     effectLabels: {
       snowflakes: "Flocons de neige",
       christmasGlow: "Lueurs & décorations",
+      santaSleigh: "Traîneau du Père Noël",
+      christmasTree: "Sapins interactifs",
     },
   },
 };

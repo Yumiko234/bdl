@@ -22,6 +22,8 @@ export interface ThemeEffectConfig {
   // Noël
   snowflakes?: boolean;
   christmasGlow?: boolean;
+  santaSleigh?: boolean;
+  christmasTree?: boolean;
 }
 
 export type EffectKey = keyof ThemeEffectConfig;

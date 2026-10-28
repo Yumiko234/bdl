@@ -548,6 +548,9 @@ html.dark[data-event-theme="halloween"] {
   .hw-bat--desktop,
   .hw-pumpkin--desktop,
   .noel--desktop { display: none !important; }
+
+  /* Sur mobile, aucun élément décoratif ne doit intercepter les taps */
+  .evt-overlay * { pointer-events: none !important; }
 }
 
 /* Supprimer les mouvements si l'utilisateur le préfère */

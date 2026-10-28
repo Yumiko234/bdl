@@ -23,6 +23,7 @@ export function EventThemeOverlay() {
   return (
     <div
       aria-hidden="true"
+      className="evt-overlay"
       style={{
         position: "fixed",
         inset: 0,

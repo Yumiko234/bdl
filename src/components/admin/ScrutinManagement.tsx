@@ -101,10 +101,7 @@ export const ScrutinManagement = () => {
       .select("vote")
       .eq("scrutin_id", scrutinId);
 
-    if (error) {
-      console.error("Error loading votes:", error);
-      return;
-    }
+    if (error) return;
 
     const counts: VoteCount = {
       pour: 0,

@@ -73,9 +73,6 @@ export const CalendarManagement = () => {
   // ---- validation helper ----
   const [formError, setFormError] = useState<string | null>(null);
 
-  // -----------------------------------------------------------------------
-  // Load
-  // -----------------------------------------------------------------------
   useEffect(() => {
     fetchEvents();
   }, []);
@@ -186,9 +183,6 @@ export const CalendarManagement = () => {
     setSaving(false);
   };
 
-  // -----------------------------------------------------------------------
-  // Delete
-  // -----------------------------------------------------------------------
   const handleDelete = (id: number) => {
     setConfirmDelete(() => async () => {
       const { error } = await supabase.from("calendar_events").delete().eq("id", id);

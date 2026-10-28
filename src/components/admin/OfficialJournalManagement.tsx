@@ -105,6 +105,7 @@ const NorPicker = ({ value, onChange, entries, isEditing }: NorPickerProps) => {
   useEffect(() => {
     if (!manual && !isEditing) onChange(generated);
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // onChange omis : prop instable en référence, re-run sur generated/manual/isEditing suffit
   }, [generated, manual, isEditing]);
 
   if (isEditing) {

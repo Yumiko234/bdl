@@ -46,7 +46,6 @@ export const EstablishmentManagement = () => {
       if (error) throw error;
       setSections((data as any) || []);
     } catch (error) {
-      console.error('Error loading sections:', error);
       toast.error("Erreur lors du chargement des sections");
     }
   };
@@ -99,7 +98,6 @@ export const EstablishmentManagement = () => {
       resetForm();
       loadSections();
     } catch (error) {
-      console.error('Error saving section:', error);
       toast.error("Erreur lors de l'enregistrement");
     }
   };
@@ -122,7 +120,6 @@ export const EstablishmentManagement = () => {
         toast.success("Section supprimée avec succès");
         loadSections();
       } catch (error) {
-        console.error('Error deleting section:', error);
         toast.error("Erreur lors de la suppression");
       }
     });

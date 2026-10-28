@@ -177,9 +177,6 @@ export default function Calendrier() {
   // ---- popover (selected day) ----
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
 
-  // -----------------------------------------------------------------------
-  // Fetch
-  // -----------------------------------------------------------------------
   useEffect(() => {
     fetchEvents();
   }, []);
@@ -316,9 +313,6 @@ export default function Calendrier() {
     setSelectedDay(day);
   };
 
-  // -----------------------------------------------------------------------
-  // Render
-  // -----------------------------------------------------------------------
   const monthLabel = currentMonth.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
   const monthTitle = monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1);
 

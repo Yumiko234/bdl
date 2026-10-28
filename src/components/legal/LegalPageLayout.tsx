@@ -57,7 +57,8 @@ const LegalPageLayout = ({
 
     headings.forEach((el) => observer.observe(el));
     return () => observer.disconnect();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // headings lu depuis le DOM à chaque run, pas une dep React ; toc.length suffit à relancer quand la structure change
   }, [toc.length]);
 
   const scrollToSection = (id: string) => {

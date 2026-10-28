@@ -90,7 +90,6 @@ export const BDLProfileManagement = () => {
       if (error) throw error;
       setProfiles(data || []);
     } catch (error) {
-      console.error("Error loading profiles:", error);
       toast.error("Erreur lors du chargement des profils");
     }
   };
@@ -104,8 +103,8 @@ export const BDLProfileManagement = () => {
 
       if (error) throw error;
       setYears(data || []);
-    } catch (error) {
-      console.error("Error loading years:", error);
+    } catch {
+      // silencieux : le select d'année reste vide
     }
   };
 
@@ -243,7 +242,6 @@ export const BDLProfileManagement = () => {
       resetForm();
       loadProfiles();
     } catch (error: any) {
-      console.error("Error saving profile:", error);
       if (error.code === "23505") {
         toast.error("Ce slug existe déjà. Veuillez modifier le nom.");
       } else {
@@ -285,7 +283,6 @@ export const BDLProfileManagement = () => {
       toast.success("Profil supprimé");
       loadProfiles();
     } catch (error) {
-      console.error("Error deleting profile:", error);
       toast.error("Erreur lors de la suppression");
     }
   };

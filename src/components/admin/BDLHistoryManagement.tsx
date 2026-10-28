@@ -83,7 +83,6 @@ export const BDLHistoryManagement = () => {
         await loadMembersForYear(year.id);
       }
     } catch (error) {
-      console.error("Error loading years:", error);
       toast.error("Erreur lors du chargement des années");
     }
   };
@@ -99,8 +98,8 @@ export const BDLHistoryManagement = () => {
 
       if (error) throw error;
       setMembers((prev) => ({ ...prev, [yearId]: data || [] }));
-    } catch (error) {
-      console.error("Error loading members:", error);
+    } catch {
+      // silencieux : l'année s'affiche juste sans membres
     }
   };
 
@@ -134,7 +133,6 @@ export const BDLHistoryManagement = () => {
       });
       loadYears();
     } catch (error: any) {
-      console.error("Error creating year:", error);
       toast.error(error.message || "Erreur lors de la création");
     } finally {
       setLoading(false);
@@ -153,7 +151,6 @@ export const BDLHistoryManagement = () => {
       toast.success("Année supprimée");
       loadYears();
     } catch (error) {
-      console.error("Error deleting year:", error);
       toast.error("Erreur lors de la suppression");
     }
   };
@@ -190,7 +187,6 @@ export const BDLHistoryManagement = () => {
       });
       loadMembersForYear(selectedYear);
     } catch (error: any) {
-      console.error("Error adding member:", error);
       toast.error(error.message || "Erreur lors de l'ajout");
     } finally {
       setLoading(false);
@@ -209,7 +205,6 @@ export const BDLHistoryManagement = () => {
       toast.success("Membre supprimé");
       loadMembersForYear(yearId);
     } catch (error) {
-      console.error("Error deleting member:", error);
       toast.error("Erreur lors de la suppression");
     }
   };

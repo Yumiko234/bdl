@@ -242,11 +242,12 @@ const Profile = () => {
     if (!user) return;
     setExportLoading(true);
     try {
-      const [profileRes, rolesRes, votesRes, deletionRes] = await Promise.all([
+      const [profileRes, rolesRes, votesRes, deletionRes, ideesRes] = await Promise.all([
         supabase.from("profiles").select("first_name, last_name, class_name, email, avatar_url, created_at").eq("id", user.id).maybeSingle(),
         supabase.from("user_roles").select("role").eq("user_id", user.id),
         supabase.from("scrutin_votes").select("scrutin_id, choice, created_at").eq("user_id", user.id),
         supabase.from("deletion_requests").select("requested_at, scheduled_deletion_at, cancelled_at").eq("user_id", user.id).maybeSingle(),
+        supabase.from("boite_a_idees").select("content, is_anonymous, author_name, classe, status, reply, created_at").eq("author_id", user.id).order("created_at", { ascending: false }),
       ]);
 
       const payload = {
@@ -254,6 +255,7 @@ const Profile = () => {
         profile: profileRes.data,
         roles: rolesRes.data ?? [],
         scrutin_votes: votesRes.data ?? [],
+        boite_a_idees: ideesRes.data ?? [],
         deletion_request: deletionRes.data ?? null,
       };
 

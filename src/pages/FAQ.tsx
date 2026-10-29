@@ -348,6 +348,42 @@ const faqCategories: FaqCategory[] = [
     ],
   },
   {
+    title: "Boîte à idées",
+    items: [
+      {
+        question: "C'est quoi la boîte à idées ?",
+        answer: <>
+          La <L to="/idees">boîte à idées</L> te permet de soumettre des suggestions, des projets ou
+          des améliorations directement au BDL. L'exécutif lit chaque idée et peut te répondre
+          directement depuis l'interface d'administration.
+        </>,
+      },
+      {
+        question: "Qui peut soumettre une idée ?",
+        answer: <>
+          N'importe quel lycéen connecté à la plateforme peut soumettre une idée. Si tu n'as pas encore
+          de compte, rends-toi sur la page <L to="/auth">Connexion</L> pour en créer un.
+        </>,
+      },
+      {
+        question: "Puis-je soumettre une idée anonymement ?",
+        answer: <>
+          Oui. Sur la page <L to="/idees">boîte à idées</L>, active simplement le mode anonyme avant
+          d'envoyer. Ton nom ne sera pas affiché à l'exécutif. Ton identifiant interne reste associé
+          pour éviter les abus, mais n'est jamais visible.
+        </>,
+      },
+      {
+        question: "Qui peut voir les idées soumises ?",
+        answer: <>
+          Seul l'exécutif BDL (Président·e, Vice-Président·e, Secrétaire Général·e, Directeur·rice de
+          la Communication, Administrateur·rice) peut consulter et répondre aux idées. Chaque lycéen
+          ne voit que ses propres soumissions et les réponses du BDL.
+        </>,
+      },
+    ],
+  },
+  {
     title: "Données personnelles & Vie privée",
     items: [
       {

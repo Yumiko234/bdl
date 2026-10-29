@@ -18,6 +18,7 @@ import { AssistanceCentral }     from "@/components/admin/AssistanceCentral";
 import { SiteCentral }           from "@/components/admin/SiteCentral";
 import { GestionCentral }        from "@/components/admin/GestionCentral";
 import { UserManagement }        from "@/components/admin/UserManagement";
+import { IdeaBoxManagement }     from "@/components/admin/IdeaBoxManagement";
 
 // ─── UI ───────────────────────────────────────────────────────────────────────
 import { Button } from "@/components/ui/button";
@@ -25,7 +26,7 @@ import { Badge }  from "@/components/ui/badge";
 import {
   Loader2, Newspaper, Vote, History, BookMarked,
   Headphones, Building2, Wrench, Shield, Users,
-  ChevronRight, LayoutDashboard,
+  ChevronRight, LayoutDashboard, Lightbulb,
 } from "lucide-react";
 
 // ─── Nav items definition ─────────────────────────────────────────────────────
@@ -48,6 +49,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "bdl-int-notes", label: "Notes Internes",   icon: <BookMarked      className="h-4 w-4" />, group: "BDL",            minRank: 5 },
 
   { id: "participation", label: "Participation",    icon: <Vote            className="h-4 w-4" />, group: "Participation",  minRank: 5 },
+  { id: "idees",         label: "Boîte à idées",   icon: <Lightbulb       className="h-4 w-4" />, group: "Participation",  minRank: 5 },
 
   { id: "assistance",    label: "Assistance",       icon: <Headphones      className="h-4 w-4" />, group: "Assistance",     minRank: 5 },
 
@@ -219,6 +221,7 @@ const Admin = () => {
       case "bdl":           return <BDLCentralManagement />;
       case "bdl-int-notes": return <AdminInternalNotes />;
       case "participation": return <ParticipationCentral />;
+      case "idees":         return <IdeaBoxManagement />;
       case "assistance":    return <AssistanceCentral />;
       case "site":          return <SiteCentral />;
       case "users":         return <UserManagement />;

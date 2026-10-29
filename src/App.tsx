@@ -36,6 +36,7 @@ const AdminMemberActionLog = lazy(() => import("./pages/AdminMemberActionLog"));
 const Contact          = lazy(() => import("./pages/Contact"));
 const Support          = lazy(() => import("./pages/Support"));
 const FAQ              = lazy(() => import("./pages/FAQ"));
+const Idees            = lazy(() => import("./pages/Idees"));
 const Conference       = lazy(() => import("./pages/Conference"));
 const CertificatVerif  = lazy(() => import("./pages/CertificatVerif"));
 const Confirm          = lazy(() => import("./pages/Confirm"));
@@ -112,6 +113,7 @@ const App = () => {
               <Route path="/contact" element={<Contact />} />
               <Route path="/support" element={<Support />} />
               <Route path="/faq" element={<FAQ />} />
+              <Route path="/idees" element={<Idees />} />
               
               <Route path="/certificat-verif" element={<CertificatVerif />} />
               <Route path="/conference" element={<Conference />} />

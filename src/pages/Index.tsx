@@ -13,7 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Link } from "react-router-dom";
-import { ChevronRight, FileText, Users, MessageCircle, AlertCircle, Vote, X, Headphones, Instagram, ExternalLink, Pin, BookUser } from "lucide-react";
+import { ChevronRight, FileText, Vote, X, Headphones, Instagram, ExternalLink, Pin, BookUser } from "lucide-react";
 import { useBdlLogo } from "@/hooks/useBdlLogo";
 import { supabase } from "@/integrations/supabase/client";
 import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
@@ -57,7 +57,9 @@ const InstagramEmbed = ({ post }: { post: InstagramPost }) => {
     const tryProcess = () => {
       if (cancelled) return;
       if (typeof (window as any).instgrm !== "undefined") {
+        const savedScrollY = window.scrollY;
         (window as any).instgrm.Embeds.process();
+        requestAnimationFrame(() => { if (!cancelled) window.scrollTo(0, savedScrollY); });
         fallbackTimer = setTimeout(() => {
           if (cancelled) return;
           const iframe = containerRef.current?.querySelector("iframe");
@@ -307,21 +309,6 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Alert Banner */}
-        <div className="bg-accent/10 border-y border-accent/20 py-4">
-          <div className="container mx-auto px-4">
-            <div className="flex items-center justify-center gap-2 text-sm md:text-base">
-              <AlertCircle className="h-5 w-5 text-accent flex-shrink-0" />
-              <p className="text-center">
-                <span className="font-semibold">
-                  Site d'information accessible à tous.
-                </span>{" "}
-                Une connexion est requise pour consulter certains contenus.
-              </p>
-            </div>
-          </div>
-        </div>
-
         {/* President's Message */}
         <section className="py-16 bg-muted/30">
           <div className="container mx-auto px-4">
@@ -365,12 +352,9 @@ const Index = () => {
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto space-y-8">
               <div className="text-center">
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold">
                   Actualités & Événements
                 </h2>
-                <p className="text-muted-foreground">
-                  Restez informés des dernières nouvelles et événements
-                </p>
               </div>
 
               {(latestNews.length > 0 || latestEvents.length > 0) ? (
@@ -379,7 +363,7 @@ const Index = () => {
                     {latestNews.map((article) => (
                       <Card
                         key={article.id}
-                        className="shadow-card hover:shadow-elegant transition-all cursor-pointer"
+                        className="shadow-card hover:shadow-elegant transition-[box-shadow,transform] cursor-pointer"
                         onClick={() => openModal(article, 'news')}
                       >
                         <CardContent className="p-6 space-y-3">
@@ -419,7 +403,7 @@ const Index = () => {
                         {latestEvents.map((event) => (
                           <Card
                             key={event._key ?? `ev-${event.id}`}
-                            className="shadow-card hover:shadow-elegant transition-all border-primary/20 cursor-pointer"
+                            className="shadow-card hover:shadow-elegant transition-[box-shadow,transform] border-primary/20 cursor-pointer"
                             onClick={() => openModal(event, 'event')}
                           >
                             <CardContent className="p-6 space-y-3">
@@ -517,24 +501,6 @@ const Index = () => {
                 </a>
               </div>
 
-              {/* Info sur les bloqueurs */}
-              <div className="flex items-start gap-2.5 p-3 rounded-lg bg-muted/50 border border-border text-xs text-muted-foreground">
-                <Instagram className="h-4 w-4 flex-shrink-0 mt-0.5 text-pink-400" />
-                <p>
-                  Les publications sont chargées directement depuis Instagram. Si elles n'apparaissent pas,
-                  vérifiez que votre bloqueur de publicités est désactivé ou{" "}
-                  <a
-                    href="https://www.instagram.com/bdllgsaintandre"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-semibold underline"
-                  >
-                    consultez notre profil directement
-                  </a>
-                  .
-                </p>
-              </div>
-
               {/* Grille des deux posts */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {INSTAGRAM_POSTS.map((post, index) => (
@@ -569,54 +535,49 @@ const Index = () => {
         {/* Quick Access */}
         <section className="py-16 bg-muted/30">
           <div className="container mx-auto px-4">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-12">Accès Rapide</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-10">Accès Rapide</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl mx-auto">
               {[
                 {
                   title: "Conférence",
-                  description: "Accédez à la salle de conférence du BDL",
+                  description: "Salle de conférence du BDL",
                   icon: Headphones,
                   link: "/conference",
                   gradient: "gradient-institutional",
                 },
                 {
                   title: "Scrutins",
-                  description: "Suivez les résultats des votes du Bureau",
+                  description: "Résultats des votes du Bureau",
                   icon: Vote,
                   link: "/scrutin",
                   gradient: "gradient-gold",
                 },
                 {
                   title: "JoBDL",
-                  description: "Consultez le Journal officiel du Bureau des Lycéens",
+                  description: "Journal officiel du Bureau des Lycéens",
                   icon: FileText,
                   link: "/jo",
                   gradient: "gradient-institutional",
                 },
                 {
                   title: "Certificat",
-                  description: "Vérifiez la validité d'un certificat émis par le Bureau",
+                  description: "Vérifier la validité d'un certificat",
                   icon: BookUser,
                   link: "/certificat-verif",
                   gradient: "gradient-gold",
                 },
               ].map((item, index) => (
                 <Link key={index} to={item.link}>
-                  <Card className="group h-full hover:shadow-elegant transition-all duration-300 hover:-translate-y-2 cursor-pointer">
-                    <CardContent className="p-6 text-center space-y-4">
-                      <div
-                        className={`w-16 h-16 mx-auto rounded-full ${item.gradient} flex items-center justify-center text-white group-hover:scale-110 transition-transform duration-300`}
-                      >
-                        <item.icon className="h-8 w-8" />
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-bold mb-2">{item.title}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {item.description}
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <div className="group flex items-center gap-4 p-4 rounded-xl border bg-card hover:bg-muted/60 hover:shadow-md transition-[box-shadow,background-color] duration-200 active:scale-[0.98]">
+                    <div className={`w-10 h-10 rounded-lg ${item.gradient} flex items-center justify-center text-white flex-shrink-0`}>
+                      <item.icon className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-sm">{item.title}</p>
+                      <p className="text-xs text-muted-foreground truncate">{item.description}</p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground ml-auto flex-shrink-0 group-hover:translate-x-0.5 transition-transform duration-150" />
+                  </div>
                 </Link>
               ))}
             </div>

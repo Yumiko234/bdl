@@ -1,0 +1,264 @@
+diff --git a/src/components/RichTextEditor.tsx b/src/components/RichTextEditor.tsx
+index d7ea0cf..5b0f784 100644
+--- a/src/components/RichTextEditor.tsx
++++ b/src/components/RichTextEditor.tsx
+@@ -2,2 +1,0 @@ import { useEffect, useRef, useState } from 'react';
+-import ReactQuill from 'react-quill';
+-import 'react-quill/dist/quill.snow.css';
+@@ -4,0 +3,3 @@ import Quill from 'quill';
++import QuillTableBetter from 'quill-table-better';
++import 'quill/dist/quill.snow.css';
++import 'quill-table-better/dist/quill-table-better.css';
+@@ -7 +8 @@ import Quill from 'quill';
+-const Font = Quill.import('formats/font');
++const Font: any = Quill.import('formats/font');
+@@ -12,2 +13,2 @@ Quill.register(Font, true);
+-const Parchment = Quill.import('parchment');
+-const LineHeightStyle = new Parchment.Attributor.Style('lineheight', 'line-height', {
++const Parchment: any = Quill.import('parchment');
++const LineHeightStyle = new Parchment.StyleAttributor('lineheight', 'line-height', {
+@@ -15 +16 @@ const LineHeightStyle = new Parchment.Attributor.Style('lineheight', 'line-heigh
+-  whitelist: ['1', '1.15', '1.5', '2', '2.5']
++  whitelist: ['1', '1.15', '1.5', '2', '2.5'],
+@@ -18,0 +20,3 @@ Quill.register(LineHeightStyle, true);
++// === TABLEAUX ===
++Quill.register({ 'modules/table-better': QuillTableBetter }, true);
++
+@@ -24,0 +29,30 @@ interface RichTextEditorProps {
++const TOOLBAR = [
++  [{ header: [1, 2, 3, 4, 5, 6, false] }],
++  [{ font: Font.whitelist }],
++  [{ size: ['small', false, 'large', 'huge'] }],
++  [{ lineheight: ['1', '1.15', '1.5', '2', '2.5'] }],
++  ['bold', 'italic', 'underline', 'strike'],
++  [{ color: [] }, { background: [] }],
++  [{ align: [] }],
++  [{ list: 'ordered' }, { list: 'bullet' }],
++  ['blockquote', 'code-block'],
++  ['link', 'image'],
++  ['table-better'],
++  ['clean'],
++];
++
++/**
++ * Nettoie le HTML produit par Quill 2 (getSemanticHTML) avant stockage :
++ *  - retire l'élément technique <temporary> ajouté dans les tableaux,
++ *  - retire les classes d'interface de l'éditeur (cellule sélectionnée/focus),
++ *  - retire les paragraphes vides en fin de contenu,
++ *  - transforme <p></p> en <p><br></p> (sinon les lignes vides s'effondrent à l'affichage).
++ */
++const cleanHtml = (html: string): string =>
++  html
++    .replace(/<temporary[^>]*><\/temporary>/g, '')
++    .replace(/\s?ql-cell-(focused|selected)/g, '')
++    .replace(/ class=""/g, '')
++    .replace(/(<p[^>]*>(<br>)?<\/p>)+$/g, '')
++    .replace(/(<p[^>]*>)<\/p>/g, '$1<br></p>');
++
+@@ -26 +60,5 @@ export const RichTextEditor = ({ value, onChange, placeholder }: RichTextEditorP
+-  const quillRef = useRef<ReactQuill>(null);
++  const hostRef = useRef<HTMLDivElement>(null);
++  const quillRef = useRef<Quill | null>(null);
++  const onChangeRef = useRef(onChange);
++  const lastEmitted = useRef<string>(value ?? '');
++  const valueRef = useRef(value);
+@@ -29,14 +67,9 @@ export const RichTextEditor = ({ value, onChange, placeholder }: RichTextEditorP
+-  const modules = {
+-    toolbar: [
+-      [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+-      [{ 'font': Font.whitelist }],
+-      [{ 'size': ['small', false, 'large', 'huge'] }],
+-      [{ 'lineheight': ['1', '1.15', '1.5', '2', '2.5'] }],
+-      ['bold', 'italic', 'underline', 'strike'],
+-      [{ 'color': [] }, { 'background': [] }],
+-      [{ 'align': [] }],
+-      [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+-      ['blockquote', 'code-block'],
+-      ['link', 'image'],
+-      ['clean']
+-    ]
++  onChangeRef.current = onChange;
++  valueRef.current = value;
++
++  // Remplace le contenu de l'éditeur sans déclencher onChange.
++  // (setContents casse l'affichage des tableaux : on vide puis on applique le delta.)
++  const loadHtml = (quill: Quill, html: string) => {
++    const delta = quill.clipboard.convert({ html: html || '' });
++    quill.deleteText(0, quill.getLength(), 'silent');
++    quill.updateContents(delta, 'silent');
+@@ -45,11 +78,42 @@ export const RichTextEditor = ({ value, onChange, placeholder }: RichTextEditorP
+-  const formats = [
+-    'header', 'font', 'size', 'lineheight',
+-    'bold', 'italic', 'underline', 'strike',
+-    'color', 'background',
+-    'align',
+-    'list', 'bullet',
+-    'blockquote', 'code-block',
+-    'link', 'image'
+-  ];
+-
+-  // ✅ Set default font and line-height to reflect toolbar
++  // Création / destruction de l'éditeur (recréé au retour du mode HTML).
++  useEffect(() => {
++    if (htmlMode || !hostRef.current) return;
++    const host = hostRef.current;
++    const editorEl = document.createElement('div');
++    host.appendChild(editorEl);
++
++    const quill = new Quill(editorEl, {
++      theme: 'snow',
++      placeholder,
++      modules: {
++        table: false,
++        toolbar: TOOLBAR,
++        'table-better': {
++          language: 'fr_FR',
++          menus: ['column', 'row', 'merge', 'table', 'cell', 'wrap', 'delete'],
++          toolbarTable: true,
++        },
++        keyboard: { bindings: QuillTableBetter.keyboardBindings },
++      },
++    });
++    quillRef.current = quill;
++
++    loadHtml(quill, valueRef.current);
++    lastEmitted.current = valueRef.current ?? '';
++
++    quill.on('text-change', (_delta, _old, source) => {
++      if (source === 'silent') return;
++      const html = quill.getLength() <= 1 ? '' : cleanHtml(quill.getSemanticHTML());
++      if (html === lastEmitted.current) return;
++      lastEmitted.current = html;
++      onChangeRef.current(html);
++    });
++
++    return () => {
++      quillRef.current = null;
++      host.innerHTML = ''; // retire la barre d'outils et l'éditeur (compatible StrictMode)
++    };
++    // eslint-disable-next-line react-hooks/exhaustive-deps
++  }, [htmlMode]);
++
++  // Valeur modifiée depuis l'extérieur (ex. ouverture d'un autre élément à éditer).
+@@ -57,7 +121,5 @@ export const RichTextEditor = ({ value, onChange, placeholder }: RichTextEditorP
+-    const editor = quillRef.current?.getEditor();
+-    if (editor) {
+-      editor.format('font', 'times-new-roman');
+-      const currentLineHeight = editor.getFormat()?.lineheight || '1.15';
+-      editor.format('lineheight', currentLineHeight);
+-    }
+-  }, []);
++    const quill = quillRef.current;
++    if (!quill || value === lastEmitted.current) return;
++    lastEmitted.current = value ?? '';
++    loadHtml(quill, value);
++  }, [value]);
+@@ -71 +133 @@ export const RichTextEditor = ({ value, onChange, placeholder }: RichTextEditorP
+-          title={htmlMode ? "Retour à l'éditeur visuel" : "Éditer le HTML source"}
++          title={htmlMode ? "Retour à l'éditeur visuel" : 'Éditer le HTML source'}
+@@ -74,2 +136,2 @@ export const RichTextEditor = ({ value, onChange, placeholder }: RichTextEditorP
+-              ? "bg-primary text-primary-foreground border-primary"
+-              : "border-border text-muted-foreground hover:border-primary/50 hover:text-foreground"
++              ? 'bg-primary text-primary-foreground border-primary'
++              : 'border-border text-muted-foreground hover:border-primary/50 hover:text-foreground'
+@@ -78 +140 @@ export const RichTextEditor = ({ value, onChange, placeholder }: RichTextEditorP
+-          {"<>"}
++          {'<>'}
+@@ -89,10 +151 @@ export const RichTextEditor = ({ value, onChange, placeholder }: RichTextEditorP
+-        <ReactQuill
+-          ref={quillRef}
+-          theme="snow"
+-          value={value}
+-          onChange={onChange}
+-          modules={modules}
+-          formats={formats}
+-          placeholder={placeholder}
+-          className="bg-background text-foreground"
+-        />
++        <div ref={hostRef} className="bg-background text-foreground" />
+diff --git a/src/index.css b/src/index.css
+index 6d733b4..854fb07 100644
+--- a/src/index.css
++++ b/src/index.css
+@@ -570,0 +571,33 @@ html {
++
++/* ============================================================
++   Tableaux créés avec l'éditeur (quill-table-better)
++   S'applique à l'affichage public ; l'éditeur garde son propre style.
++   ============================================================ */
++table.ql-table-better:not(.ql-editor table) {
++  border-collapse: collapse;
++  max-width: 100%;
++  margin: 1rem 0;
++}
++
++table.ql-table-better:not(.ql-editor table) td,
++table.ql-table-better:not(.ql-editor table) th {
++  border: 1px solid hsl(var(--border));
++  padding: 0.4rem 0.6rem;
++  vertical-align: top;
++}
++
++table.ql-table-better:not(.ql-editor table) th {
++  background-color: hsl(var(--muted));
++  font-weight: 600;
++  text-align: left;
++}
++
++table.ql-table-better:not(.ql-editor table) p {
++  margin: 0;
++}
++
++/* Éditeur : thème sombre lisible pour les menus de tableau */
++.rich-text-editor .ql-table-better,
++.rich-text-editor .ql-table-better td {
++  color: inherit;
++}
+diff --git a/src/pages/jobdl/[nor].tsx b/src/pages/jobdl/[nor].tsx
+index 00a0a98..fe5725b 100644
+--- a/src/pages/jobdl/[nor].tsx
++++ b/src/pages/jobdl/[nor].tsx
+@@ -349,0 +350,43 @@ const exportToPDF = async (entry: JournalEntry, bodyHTML: string): Promise<void>
++    if (tag === "table") {
++      const rows = Array.from(node.querySelectorAll("tr"));
++      if (!rows.length) return;
++      const spanOf = (c: Element) => Math.max(1, parseInt(c.getAttribute("colspan") || "1", 10) || 1);
++      const nCols = Math.max(...rows.map((r) => Array.from(r.children).reduce((sum, c) => sum + spanOf(c), 0)));
++      // Largeurs de colonnes : <col width / style.width> si complet, sinon colonnes égales
++      const rawW = Array.from(node.querySelectorAll("col")).map((c) =>
++        parseFloat(c.getAttribute("width") || (c as HTMLElement).style.width || ""));
++      const useRaw = rawW.length === nCols && rawW.every((w) => Number.isFinite(w) && w > 0);
++      const weights = useRaw ? rawW : Array(nCols).fill(1);
++      const totalW = weights.reduce((a, b) => a + b, 0);
++      const colW = weights.map((w) => (w / totalW) * CW);
++      const FS = 9, LH = FS * MM_PT * 1.45, PAD = 1.5;
++
++      y += 2;
++      rows.forEach((tr) => {
++        let ci = 0;
++        const cells = (Array.from(tr.children) as HTMLElement[]).map((cell) => {
++          const span = spanOf(cell);
++          const w = colW.slice(ci, ci + span).reduce((a, b) => a + b, 0);
++          const x = MX + colW.slice(0, ci).reduce((a, b) => a + b, 0);
++          ci += span;
++          const isTh = cell.tagName.toLowerCase() === "th";
++          const paras = Array.from(cell.querySelectorAll("p"));
++          const raw = paras.length ? paras.map((p) => p.textContent || "").join(" ") : cell.textContent || "";
++          pdf.setFontSize(FS); pdf.setFont("times", isTh ? "bold" : "normal");
++          const lines = pdf.splitTextToSize(raw.replace(/\s+/g, " ").trim(), Math.max(w - 2 * PAD, 5)) as string[];
++          return { x, w, isTh, lines: lines.length ? lines : [""] };
++        });
++        const rowH = Math.max(...cells.map((c) => c.lines.length)) * LH + 2 * PAD;
++        checkPage(rowH);
++        cells.forEach((c) => {
++          if (c.isTh) { pdf.setFillColor(243, 244, 246); pdf.rect(c.x, y, c.w, rowH, "F"); }
++          setDraw("#9ca3af"); pdf.setLineWidth(0.2); pdf.rect(c.x, y, c.w, rowH);
++          pdf.setFontSize(FS); pdf.setFont("times", c.isTh ? "bold" : "normal"); setColor(BLACK);
++          c.lines.forEach((l, i) => pdf.text(l, c.x + PAD, y + PAD + LH * (i + 0.8)));
++        });
++        y += rowH;
++      });
++      y += 3;
++      return;
++    }
++

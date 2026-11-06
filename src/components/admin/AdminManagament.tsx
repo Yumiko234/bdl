@@ -5,6 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
+  Select, SelectContent, SelectItem,
+  SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog, DialogContent, DialogHeader,
   DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
@@ -59,6 +63,10 @@ const getPrimaryRole = (roles: string[]) =>
     roles[0] ?? "student"
   );
 
+// Un utilisateur sans rôle est affiché "Étudiant" : on le traite donc comme "student"
+const getEffectiveRoles = (roles: string[]) =>
+  roles.length === 0 ? ["student"] : roles;
+
 const fmtDate = (iso: string | null | undefined) => {
   if (!iso) return "—";
   return new Date(iso).toLocaleString("fr-FR", {
@@ -95,6 +103,7 @@ const callAdminFunction = async (payload: Record<string, any>) => {
 export const AdminManagement = () => {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState<string>("all");
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
@@ -243,11 +252,29 @@ export const AdminManagement = () => {
 
   // ── Filter + display ──────────────────────────────────────────────────────
 
-  const filtered = users.filter(
-    (u) =>
+  // Rôles réellement présents dans les données, triés par priorité
+  const roleOptions = Array.from(
+    new Set(users.flatMap((u) => getEffectiveRoles(u.roles)))
+  ).sort((a, b) => (ROLE_PRIORITY[a] ?? 99) - (ROLE_PRIORITY[b] ?? 99));
+
+  const roleCount = (role: string) =>
+    users.filter((u) => getEffectiveRoles(u.roles).includes(role)).length;
+
+  // Si le rôle sélectionné n'existe plus (ex : dernier utilisateur supprimé), on réinitialise
+  useEffect(() => {
+    if (roleFilter !== "all" && !roleOptions.includes(roleFilter)) {
+      setRoleFilter("all");
+    }
+  }, [roleFilter, roleOptions]);
+
+  const filtered = users.filter((u) => {
+    const matchesSearch =
       u.full_name.toLowerCase().includes(search.toLowerCase()) ||
-      u.email.toLowerCase().includes(search.toLowerCase())
-  );
+      u.email.toLowerCase().includes(search.toLowerCase());
+    const matchesRole =
+      roleFilter === "all" || getEffectiveRoles(u.roles).includes(roleFilter);
+    return matchesSearch && matchesRole;
+  });
 
   return (
     <Card className="shadow-card">
@@ -267,15 +294,31 @@ export const AdminManagement = () => {
 
         {/* Warning */}
 
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            className="pl-9"
-            placeholder="Rechercher par nom ou email…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+        {/* Search + role filter */}
+        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              className="pl-9"
+              placeholder="Rechercher par nom ou email…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+
+          <Select value={roleFilter} onValueChange={setRoleFilter}>
+            <SelectTrigger className="sm:w-[240px]">
+              <SelectValue placeholder="Filtrer par rôle" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les rôles ({users.length})</SelectItem>
+              {roleOptions.map((role) => (
+                <SelectItem key={role} value={role}>
+                  {roleLabel(role)} ({roleCount(role)})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <p className="text-xs text-muted-foreground">

@@ -551,3 +551,23 @@ html {
     background-color 0.3s ease,
     color 0.3s ease;
 }
+
+table.ql-table-better:not(.ql-editor table) {
+  border-collapse: collapse;
+  max-width: 100%;
+  margin: 1rem 0;
+}
+table.ql-table-better:not(.ql-editor table) td,
+table.ql-table-better:not(.ql-editor table) th {
+  border: 1px solid hsl(var(--border));
+  padding: 0.4rem 0.6rem;
+  vertical-align: top;
+}
+table.ql-table-better:not(.ql-editor table) th {
+  background-color: hsl(var(--muted));
+  font-weight: 600;
+  text-align: left;
+}
+table.ql-table-better:not(.ql-editor table) p {
+  margin: 0;
+}

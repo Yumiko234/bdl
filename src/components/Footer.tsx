@@ -64,23 +64,23 @@ const Footer = () => {
                 className="block"
                 dangerouslySetInnerHTML={safeHtml('Lycée Saint-André')}
               />
-              <span 
-                className="block text-muted-foreground"
+              <span
+                className="block text-secondary-foreground/60"
                 dangerouslySetInnerHTML={safeHtml('contact@bdl-saintandre.fr')}
               />
-              <a 
+              <a
                 href="https://www.instagram.com/bdllgsaintandre"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block text-muted-foreground hover:text-accent transition-colors"
+                className="block text-secondary-foreground/60 hover:text-accent transition-colors"
               >
                 Instagram — @bdllgsaintandre
               </a>
-              <a 
-                href="https://www.st-andre.com" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="block text-muted-foreground hover:text-accent transition-colors"
+              <a
+                href="https://www.st-andre.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block text-secondary-foreground/60 hover:text-accent transition-colors"
               >
                 www.st-andre.com
               </a>
@@ -88,14 +88,14 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="border-t border-border mt-8 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+        <div className="border-t border-border mt-8 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-secondary-foreground/60">
           <p className="text-center sm:text-left">
             &copy; {new Date().getFullYear()} {'Bureau des Lycéens - Lycée Saint-André. Tous droits réservés.'}
             <span className="mx-2">—</span>
             Site développé par{" "}
             <Link
               to="/developers"
-              className="text-muted-foreground hover:text-accent transition-colors underline-offset-4 hover:underline"
+              className="text-secondary-foreground/60 hover:text-accent transition-colors underline-offset-4 hover:underline"
             >
               l'Équipe Technique
             </Link>

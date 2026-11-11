@@ -1,0 +1,24 @@
+# Bureau des Lycéens — Lycée Saint-André
+
+Site officiel du Bureau des Lycéens (BDL) du Lycée d'Enseignement Général Saint-André (Bordeaux).
+Le BDL représente les lycéens, organise des événements et publie des informations officielles.
+
+## Pages principales
+
+- [Accueil](https://bdl-saintandre.fr/)
+- [Le BDL](https://bdl-saintandre.fr/bdl)
+- [L'Établissement](https://bdl-saintandre.fr/etablissement)
+- [Actualités](https://bdl-saintandre.fr/actualites)
+- [Événements](https://bdl-saintandre.fr/events)
+- [Documents](https://bdl-saintandre.fr/documents)
+- [Journal Officiel du BDL](https://bdl-saintandre.fr/jo)
+- [Scrutins](https://bdl-saintandre.fr/scrutin)
+- [Boîte à idées](https://bdl-saintandre.fr/idees)
+- [Contact](https://bdl-saintandre.fr/contact)
+- [FAQ](https://bdl-saintandre.fr/faq)
+
+## Informations légales
+
+- [Mentions légales](https://bdl-saintandre.fr/legal/mentions-legales)
+- [CGU](https://bdl-saintandre.fr/legal/cgu)
+- [Politique de confidentialité](https://bdl-saintandre.fr/legal/confidentialite)

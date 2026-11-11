@@ -170,7 +170,7 @@ const Navigation = () => {
             </div>
 
             {/* Bouton menu mobile */}
-            <Button variant="ghost" size="icon" className="xl:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+            <Button variant="ghost" size="icon" className="xl:hidden" aria-label={isMenuOpen ? "Fermer le menu" : "Ouvrir le menu"} onClick={() => setIsMenuOpen(!isMenuOpen)}>
               {isMenuOpen ? <X /> : <Menu />}
             </Button>
           </div>

@@ -61,7 +61,10 @@ const InstagramEmbed = ({ post }: { post: InstagramPost }) => {
         fallbackTimer = setTimeout(() => {
           if (cancelled) return;
           const iframe = containerRef.current?.querySelector("iframe");
-          if (iframe) setEmbedLoaded(true);
+          if (iframe) {
+            iframe.setAttribute("title", "Publication Instagram");
+            setEmbedLoaded(true);
+          }
         }, 4000);
       } else {
         checkTimer = setTimeout(tryProcess, 200);
@@ -397,7 +400,7 @@ const Index = () => {
                           {article.author_name && (
                             <div className="flex items-center gap-2 pt-2 border-t">
                               <Avatar className="h-6 w-6">
-                                <AvatarImage src={article.author_avatar} />
+                                <AvatarImage src={article.author_avatar} alt={article.author_name} />
                                 <AvatarFallback>
                                   {article.author_name.charAt(0)}
                                 </AvatarFallback>
@@ -438,7 +441,7 @@ const Index = () => {
                               {event.author_name && (
                                 <div className="flex items-center gap-2 pt-2 border-t">
                                   <Avatar className="h-6 w-6">
-                                    <AvatarImage src={event.author_avatar} />
+                                    <AvatarImage src={event.author_avatar} alt={event.author_name} />
                                     <AvatarFallback>
                                       {event.author_name.charAt(0)}
                                     </AvatarFallback>

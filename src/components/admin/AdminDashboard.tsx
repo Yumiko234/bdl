@@ -113,7 +113,7 @@ export const AdminDashboard = () => {
       label: "Membres BDL",
       value: stats.members,
       icon: <Users className="h-5 w-5 text-primary" />,
-      section: "bdl-members",
+      section: "bdl",
       color: "bg-primary/10",
     },
     {
@@ -135,7 +135,7 @@ export const AdminDashboard = () => {
       label: "Scrutins ouverts",
       value: stats.openScrutins,
       icon: <Vote className="h-5 w-5 text-green-600" />,
-      section: "scrutin",
+      section: "participation",
       color: "bg-green-50 dark:bg-green-900/20",
       badge: stats.openScrutins > 0 ? { label: "En cours", variant: "default" as const } : undefined,
     },
@@ -143,14 +143,14 @@ export const AdminDashboard = () => {
       label: "Votes en cours",
       value: stats.openScrutinVotes,
       icon: <BarChart2 className="h-5 w-5 text-emerald-600" />,
-      section: "scrutin",
+      section: "participation",
       color: "bg-emerald-50 dark:bg-emerald-900/20",
     },
     {
       label: "Tickets en attente",
       value: stats.pendingTickets,
       icon: <Headphones className="h-5 w-5 text-amber-600" />,
-      section: "support",
+      section: "assistance",
       color: "bg-amber-50 dark:bg-amber-900/20",
       badge: stats.pendingTickets > 0 ? { label: "À traiter", variant: "secondary" as const } : undefined,
     },
@@ -225,7 +225,7 @@ export const AdminDashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Card
           className="shadow-card cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => navigate("/admin/news")}
+          onClick={() => navigate("/admin/content")}
         >
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
@@ -257,7 +257,7 @@ export const AdminDashboard = () => {
 
         <Card
           className="shadow-card cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => navigate("/admin/news")}
+          onClick={() => navigate("/admin/content")}
         >
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
@@ -276,7 +276,7 @@ export const AdminDashboard = () => {
 
         <Card
           className="shadow-card cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => navigate("/admin/surveys")}
+          onClick={() => navigate("/admin/participation")}
         >
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
@@ -354,23 +354,23 @@ export const AdminDashboard = () => {
               const role = userGreeting?.role;
               const rank = role ? rolePrecedence[role] : 99;
               if (role === "vie_scolaire") return [
-                { label: "Actualités", section: "news" },
-                { label: "Événements", section: "events" },
+                { label: "Actualités", section: "content" },
+                { label: "Événements", section: "content" },
                 { label: "Calendrier", section: "calendar" },
-                { label: "Journal Officiel", section: "journal" },
+                { label: "Journal Officiel", section: "content" },
               ];
               if (rank > 5) return [
-                { label: "Actualités", section: "news" },
-                { label: "Événements", section: "events" },
+                { label: "Actualités", section: "content" },
+                { label: "Événements", section: "content" },
                 { label: "Calendrier", section: "calendar" },
-                { label: "Documents", section: "documents" },
+                { label: "Documents", section: "content" },
               ];
               return [
-                { label: rank <= 1.5 ? "Actualités" : "Publier une actu", section: "news" },
-                { label: "Scrutins", section: "scrutin" },
+                { label: rank <= 1.5 ? "Actualités" : "Publier une actu", section: "content" },
+                { label: "Scrutins", section: "participation" },
                 { label: "Membres BDL", section: "bdl-members" },
                 { label: "Support", section: "support" },
-                { label: "Documents", section: "documents" },
+                { label: "Documents", section: "content" },
               ];
             })().map((a) => (
               <button

@@ -1,3 +1,5 @@
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { NewsManagement } from "./NewsManagement";
 import { EventManagement } from "./EventManagement";
@@ -10,13 +12,23 @@ interface Props { isPresident: boolean; primaryRole: string; }
 
 export const ContentCentral = ({ isPresident, primaryRole }: Props) => {
   const showDocuments = primaryRole !== "vie_scolaire";
+  const VALID_TABS = ["news", "events", "calendar", ...(showDocuments ? ["documents"] : []), "journal"];
+  const [searchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get("tab");
+  const [tab, setTab] = useState(VALID_TABS.includes(tabFromUrl ?? "") ? tabFromUrl! : "news");
+
+  useEffect(() => {
+    if (tabFromUrl && VALID_TABS.includes(tabFromUrl) && tabFromUrl !== tab) setTab(tabFromUrl);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabFromUrl]);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <Newspaper className="h-6 w-6" />
         <h2 className="text-xl font-bold">Contenu</h2>
       </div>
-      <Tabs defaultValue="news">
+      <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="flex flex-wrap h-auto gap-1 bg-muted p-1">
           <TabsTrigger value="news">Actualités</TabsTrigger>
           <TabsTrigger value="events">Événements</TabsTrigger>

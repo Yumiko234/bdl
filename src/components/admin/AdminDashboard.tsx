@@ -110,7 +110,7 @@ export const AdminDashboard = () => {
 
   const statCards = stats ? [
     {
-      label: "Membres BDL",
+      label: "Membres BDL_2",
       value: stats.members,
       icon: <Users className="h-5 w-5 text-primary" />,
       section: "bdl",

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -711,27 +712,40 @@ const BDLByPerson = () => {
 
 // ─── Export principal ─────────────────────────────────────────────────────────
 
-export const BDLCentralManagement = () => (
-  <div className="space-y-4">
-    <div className="flex items-center gap-2">
-      <History className="h-6 w-6" />
-      <h2 className="text-xl font-bold">Gestion BDL</h2>
+const BDL_VALID_TABS = ["active", "year", "person"];
+
+export const BDLCentralManagement = () => {
+  const [searchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get("tab");
+  const [tab, setTab] = useState(BDL_VALID_TABS.includes(tabFromUrl ?? "") ? tabFromUrl! : "active");
+
+  useEffect(() => {
+    if (tabFromUrl && BDL_VALID_TABS.includes(tabFromUrl) && tabFromUrl !== tab) setTab(tabFromUrl);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabFromUrl]);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <History className="h-6 w-6" />
+        <h2 className="text-xl font-bold">Gestion BDL</h2>
+      </div>
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="active" className="flex items-center gap-1.5 text-sm">
+            <Users className="h-3.5 w-3.5" />Membres actifs
+          </TabsTrigger>
+          <TabsTrigger value="year" className="flex items-center gap-1.5 text-sm">
+            <CalendarDays className="h-3.5 w-3.5" />Historique des bureaux
+          </TabsTrigger>
+          <TabsTrigger value="person" className="flex items-center gap-1.5 text-sm">
+            <UserCircle className="h-3.5 w-3.5" />Fiches détaillées
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="active" className="mt-4"><BDLMembersManagement /></TabsContent>
+        <TabsContent value="year" className="mt-4"><BDLByYear /></TabsContent>
+        <TabsContent value="person" className="mt-4"><BDLByPerson /></TabsContent>
+      </Tabs>
     </div>
-    <Tabs defaultValue="active">
-      <TabsList className="grid w-full grid-cols-3">
-        <TabsTrigger value="active" className="flex items-center gap-1.5 text-sm">
-          <Users className="h-3.5 w-3.5" />Membres actifs
-        </TabsTrigger>
-        <TabsTrigger value="year" className="flex items-center gap-1.5 text-sm">
-          <CalendarDays className="h-3.5 w-3.5" />Historique des bureaux
-        </TabsTrigger>
-        <TabsTrigger value="person" className="flex items-center gap-1.5 text-sm">
-          <UserCircle className="h-3.5 w-3.5" />Fiches détaillées
-        </TabsTrigger>
-      </TabsList>
-      <TabsContent value="active" className="mt-4"><BDLMembersManagement /></TabsContent>
-      <TabsContent value="year" className="mt-4"><BDLByYear /></TabsContent>
-      <TabsContent value="person" className="mt-4"><BDLByPerson /></TabsContent>
-    </Tabs>
-  </div>
-);
+  );
+};

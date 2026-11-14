@@ -110,10 +110,11 @@ export const AdminDashboard = () => {
 
   const statCards = stats ? [
     {
-      label: "Membres BDL_2",
+      label: "Membres BDL",
       value: stats.members,
       icon: <Users className="h-5 w-5 text-primary" />,
       section: "bdl",
+      tab: "active",
       color: "bg-primary/10",
     },
     {
@@ -121,6 +122,7 @@ export const AdminDashboard = () => {
       value: stats.totalUsers,
       icon: <TrendingUp className="h-5 w-5 text-blue-600" />,
       section: "users",
+      tab: undefined as string | undefined,
       color: "bg-blue-50 dark:bg-blue-900/20",
     },
     {
@@ -128,6 +130,7 @@ export const AdminDashboard = () => {
       value: stats.newUsersThisWeek,
       icon: <UserPlus className="h-5 w-5 text-indigo-600" />,
       section: "users",
+      tab: undefined as string | undefined,
       color: "bg-indigo-50 dark:bg-indigo-900/20",
       badge: stats.newUsersThisWeek > 0 ? { label: "+7j", variant: "secondary" as const } : undefined,
     },
@@ -136,6 +139,7 @@ export const AdminDashboard = () => {
       value: stats.openScrutins,
       icon: <Vote className="h-5 w-5 text-green-600" />,
       section: "participation",
+      tab: "scrutin",
       color: "bg-green-50 dark:bg-green-900/20",
       badge: stats.openScrutins > 0 ? { label: "En cours", variant: "default" as const } : undefined,
     },
@@ -144,6 +148,7 @@ export const AdminDashboard = () => {
       value: stats.openScrutinVotes,
       icon: <BarChart2 className="h-5 w-5 text-emerald-600" />,
       section: "participation",
+      tab: "scrutin",
       color: "bg-emerald-50 dark:bg-emerald-900/20",
     },
     {
@@ -151,6 +156,7 @@ export const AdminDashboard = () => {
       value: stats.pendingTickets,
       icon: <Headphones className="h-5 w-5 text-amber-600" />,
       section: "assistance",
+      tab: "support",
       color: "bg-amber-50 dark:bg-amber-900/20",
       badge: stats.pendingTickets > 0 ? { label: "À traiter", variant: "secondary" as const } : undefined,
     },
@@ -201,7 +207,7 @@ export const AdminDashboard = () => {
               <Card
                 key={c.label}
                 className="shadow-card cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => navigate(`/admin/${c.section}`)}
+                onClick={() => navigate(`/admin/${c.section}${c.tab ? `?tab=${c.tab}` : ""}`)}
               >
                 <CardContent className="p-5 space-y-2">
                   <div className={`h-9 w-9 rounded-lg flex items-center justify-center ${c.color}`}>
@@ -225,7 +231,7 @@ export const AdminDashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Card
           className="shadow-card cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => navigate("/admin/content")}
+          onClick={() => navigate("/admin/content?tab=news")}
         >
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
@@ -257,7 +263,7 @@ export const AdminDashboard = () => {
 
         <Card
           className="shadow-card cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => navigate("/admin/content")}
+          onClick={() => navigate("/admin/content?tab=news")}
         >
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
@@ -276,7 +282,7 @@ export const AdminDashboard = () => {
 
         <Card
           className="shadow-card cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => navigate("/admin/participation")}
+          onClick={() => navigate("/admin/participation?tab=surveys")}
         >
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
@@ -354,28 +360,28 @@ export const AdminDashboard = () => {
               const role = userGreeting?.role;
               const rank = role ? rolePrecedence[role] : 99;
               if (role === "vie_scolaire") return [
-                { label: "Actualités", section: "content" },
-                { label: "Événements", section: "content" },
-                { label: "Calendrier", section: "calendar" },
-                { label: "Journal Officiel", section: "content" },
+                { label: "Actualités", section: "content", tab: "news" },
+                { label: "Événements", section: "content", tab: "events" },
+                { label: "Calendrier", section: "content", tab: "calendar" },
+                { label: "Journal Officiel", section: "content", tab: "journal" },
               ];
               if (rank > 5) return [
-                { label: "Actualités", section: "content" },
-                { label: "Événements", section: "content" },
-                { label: "Calendrier", section: "calendar" },
-                { label: "Documents", section: "content" },
+                { label: "Actualités", section: "content", tab: "news" },
+                { label: "Événements", section: "content", tab: "events" },
+                { label: "Calendrier", section: "content", tab: "calendar" },
+                { label: "Documents", section: "content", tab: "documents" },
               ];
               return [
-                { label: rank <= 1.5 ? "Actualités" : "Publier une actu", section: "content" },
-                { label: "Scrutins", section: "participation" },
-                { label: "Membres BDL", section: "bdl-members" },
-                { label: "Support", section: "support" },
-                { label: "Documents", section: "content" },
+                { label: rank <= 1.5 ? "Actualités" : "Publier une actu", section: "content", tab: "news" },
+                { label: "Scrutins", section: "participation", tab: "scrutin" },
+                { label: "Membres BDL", section: "bdl", tab: "active" },
+                { label: "Support", section: "assistance", tab: "support" },
+                { label: "Documents", section: "content", tab: "documents" },
               ];
             })().map((a) => (
               <button
-                key={a.section}
-                onClick={() => navigate(`/admin/${a.section}`)}
+                key={`${a.section}-${a.tab}`}
+                onClick={() => navigate(`/admin/${a.section}?tab=${a.tab}`)}
                 className="px-3 py-1.5 text-sm border rounded-md hover:bg-muted transition-colors"
               >
                 {a.label}

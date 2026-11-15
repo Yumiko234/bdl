@@ -15,7 +15,7 @@ import {
   ThumbsUp, ThumbsDown, AlertCircle, Search
 } from "lucide-react";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// Types
 
 interface Ticket {
   id: string;
@@ -45,7 +45,7 @@ interface Message {
   created_at: string;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// Helpers
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   pending:     { label: "En attente",   color: "bg-amber-100 text-amber-800 border-amber-300",    icon: <Clock className="h-3 w-3" /> },
@@ -68,10 +68,10 @@ const StatusBadge = ({ status }: { status: string }) => {
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleString("fr-FR", { day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
 
-// ─── Roles that can handle audience requests ──────────────────────────────────
+// Roles that can handle audience requests
 const AUDIENCE_ROLES = ["administrator","president", "presidente", "vice_president", "vice_presidente","secretary_general", "secretary_general2", "communication_manager", "communication_manager2"];
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// Component
 
 interface SupportManagementProps {
   currentUserRole?: string;
@@ -98,7 +98,7 @@ export const SupportManagement = ({
 
   const canHandleAudience = AUDIENCE_ROLES.includes(currentUserRole);
 
-  // ── Load tickets ─────────────────────────────────────────────────────────────
+  // Load tickets
   useEffect(() => {
     loadTickets();
   }, []);
@@ -147,7 +147,7 @@ export const SupportManagement = ({
     setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
   };
 
-  // ── Status update ─────────────────────────────────────────────────────────────
+  // Status update
   const updateStatus = async (ticketId: string, newStatus: string) => {
     const { error } = await supabase
       .from("support_tickets")
@@ -172,7 +172,7 @@ export const SupportManagement = ({
     }
   };
 
-  // ── Send staff reply ──────────────────────────────────────────────────────────
+  // Send staff reply
   const sendReply = async () => {
     if (!reply.trim() || !selectedTicket) return;
 
@@ -204,7 +204,7 @@ export const SupportManagement = ({
     setSendingReply(false);
   };
 
-  // ── Filtering ────────────────────────────────────────────────────────────────
+  // Filtering
   const filteredTickets = tickets.filter((t) => {
     const matchType = filterType === "all" || t.ticket_type === filterType;
     const matchStatus = filterStatus === "all" || t.status === filterStatus;
@@ -228,7 +228,7 @@ export const SupportManagement = ({
   const isClosed = (ticket: Ticket) =>
     ["resolved", "closed", "refused", "accepted"].includes(ticket.status);
 
-  // ── DETAIL VIEW ───────────────────────────────────────────────────────────────
+  // DETAIL VIEW
   if (selectedTicket) {
     const isAudience = selectedTicket.ticket_type === "audience";
     const canHandleThis = isAudience ? canHandleAudience : true;
@@ -468,7 +468,7 @@ export const SupportManagement = ({
     );
   }
 
-  // ── LIST VIEW ─────────────────────────────────────────────────────────────────
+  // LIST VIEW
   return (
     <Card className="shadow-card">
       <CardHeader>

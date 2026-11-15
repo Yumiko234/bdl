@@ -81,9 +81,7 @@ function StatCard({ label, value, icon }: { label: string; value: string | numbe
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
-// ═══════════════════════════════════════════════════════════════════════════════
 
 export const AdminConference = () => {
   const readOnly = useAdminReadOnly();
@@ -197,7 +195,6 @@ export const AdminConference = () => {
 
   const filtered = conferences.filter((c) => filter === "all" || c.status === filter);
 
-  // ─────────────────────────────────────────────────────────────────────────────
 
   return (
     <div className="space-y-6">

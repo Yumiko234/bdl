@@ -30,7 +30,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// Types
 
 interface BDLMember {
   id: string;
@@ -98,7 +98,7 @@ interface MemberStats {
   attendanceRate: number; // % de présence sur (présent + absent), excusés exclus du calcul
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// Constants
 
 const CATEGORY_CONFIG = {
   petite:  { label: "Petite action",  points: 0.5, color: "bg-blue-100 text-blue-700 border-blue-200",   icon: "⭐" },
@@ -131,7 +131,7 @@ const getInitials = (name: string) =>
 const fmtDate = (iso: string) =>
   new Date(iso).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" });
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// Sub-components
 
 function StatusBadge({ status }: { status: Action["status"] }) {
   const cfg = STATUS_CONFIG[status];
@@ -151,7 +151,7 @@ function CategoryBadge({ category }: { category: Action["category"] }) {
   );
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
+// Main component
 
 export const SuiviActionsManagement = () => {
   const readOnly = useAdminReadOnly();
@@ -186,7 +186,7 @@ export const SuiviActionsManagement = () => {
   });
   const [noteForm, setNoteForm] = useState({ content: "", is_private: false });
 
-  // ── Load ────────────────────────────────────────────────────────────────────
+  // Load
 
   useEffect(() => {
     let isMounted = true;
@@ -266,7 +266,7 @@ export const SuiviActionsManagement = () => {
     if (data) setAbsenceRequests(data as Array<{ meeting_id: string; member_id: string; reason: string }>);
   };
 
-  // ── Stats computation ────────────────────────────────────────────────────────
+  // Stats computation
 
   const getMemberStats = (): MemberStats[] => {
     return members.map((member) => {
@@ -302,7 +302,7 @@ export const SuiviActionsManagement = () => {
   const memberStats = getMemberStats();
   const sortedStats = [...memberStats].sort((a, b) => b.totalPoints - a.totalPoints);
 
-  // ── Action CRUD ──────────────────────────────────────────────────────────────
+  // Action CRUD
 
   const openCreateAction = (memberId?: string) => {
     setEditingAction(null);
@@ -390,7 +390,7 @@ export const SuiviActionsManagement = () => {
     else { await loadActions(); }
   };
 
-  // ── Note CRUD ────────────────────────────────────────────────────────────────
+  // Note CRUD
 
   const handleSaveNote = async (memberId: string) => {
     if (!noteForm.content.trim()) { toast.error("Note vide."); return; }
@@ -416,7 +416,7 @@ export const SuiviActionsManagement = () => {
     else { toast.success("Note supprimée."); await loadNotes(); }
   };
 
-  // ── Meeting CRUD ─────────────────────────────────────────────────────────────
+  // Meeting CRUD
 
   const openCreateMeeting = () => {
     setMeetingForm({ title: "", meeting_date: new Date().toISOString().slice(0, 10), description: "" });
@@ -442,7 +442,7 @@ export const SuiviActionsManagement = () => {
     toast.success("Réunion créée !");
     setShowMeetingForm(false);
     await loadMeetings();
-    if (data) setExpandedMeeting((data as any).id); // ouvre direct la feuille de présence
+    if (data) setExpandedMeeting((data as any).id);
   };
 
   const handleDeleteMeeting = async (id: string) => {
@@ -454,7 +454,7 @@ export const SuiviActionsManagement = () => {
     }
   };
 
-  // ── Attendance CRUD (upsert du statut d'un membre pour une réunion) ────────
+  // Attendance CRUD (upsert du statut d'un membre pour une réunion)
 
   const setMemberAttendance = async (meetingId: string, memberId: string, status: AttendanceStatus) => {
     const existing = attendance.find((a) => a.meeting_id === meetingId && a.member_id === memberId);
@@ -483,7 +483,7 @@ export const SuiviActionsManagement = () => {
     }
   };
 
-  // ── Chart data ───────────────────────────────────────────────────────────────
+  // Chart data
 
   const barData = sortedStats
     .filter((s) => s.totalActions > 0)

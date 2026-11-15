@@ -41,9 +41,7 @@ interface TokenResponse {
   name: string;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Contenu de la salle (doit être à l'intérieur de <LiveKitRoom>)
-// ─────────────────────────────────────────────────────────────────────────────
 
 function RoomUI({
   conferenceId, initialRole, statsRef,
@@ -146,9 +144,7 @@ function RoomUI({
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Composant principal
-// ─────────────────────────────────────────────────────────────────────────────
 
 export default function LiveKitCall({
   conferenceId, title, guestName, onLeave, onEnded,

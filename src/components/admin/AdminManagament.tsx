@@ -22,7 +22,7 @@ import {
   UserX, UserCheck, KeyRound, AtSign, Trash2,
 } from "lucide-react";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// Types
 
 interface UserProfile {
   id: string;
@@ -45,7 +45,7 @@ interface AuthUserStats {
   user_metadata: Record<string, any>;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// Helpers
 
 
 const ROLE_PRIORITY: Record<string, number> = {
@@ -78,7 +78,7 @@ const fmtDate = (iso: string | null | undefined) => {
 const getInitials = (name: string) =>
   name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 
-// ─── Appel vers la Edge Function ─────────────────────────────────────────────
+// Appel vers la Edge Function
 
 const callAdminFunction = async (payload: Record<string, any>) => {
   const { data, error } = await supabase.functions.invoke("admin-users", {
@@ -98,7 +98,7 @@ const callAdminFunction = async (payload: Record<string, any>) => {
   return data;
 };
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// Component
 
 export const AdminManagement = () => {
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -121,7 +121,7 @@ export const AdminManagement = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [actionLoading, setActionLoading]   = useState(false);
 
-  // ── Load users ───────────────────────────────────────────────────────────────
+  // Load users
 
   useEffect(() => { loadUsers(); }, []);
 
@@ -159,7 +159,7 @@ export const AdminManagement = () => {
     setLoading(false); setRefreshing(false);
   };
 
-  // ── Load stats for one user (via edge function) ───────────────────────────
+  // Load stats for one user (via edge function)
 
   const loadUserStats = async (userId: string) => {
     if (userStats[userId]) return; // already loaded
@@ -186,7 +186,7 @@ export const AdminManagement = () => {
     }
   };
 
-  // ── Actions ───────────────────────────────────────────────────────────────
+  // Actions
 
   const handleChangeEmail = async () => {
     if (!emailDialog.user) return;
@@ -250,7 +250,7 @@ export const AdminManagement = () => {
     }
   };
 
-  // ── Filter + display ──────────────────────────────────────────────────────
+  // Filter + display
 
   // Rôles réellement présents dans les données, triés par priorité
   const roleOptions = Array.from(
@@ -582,7 +582,7 @@ export const AdminManagement = () => {
   );
 };
 
-// ─── Small helper component ───────────────────────────────────────────────────
+// Small helper component
 
 const StatRow = ({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) => (
   <div className="flex items-start gap-2">

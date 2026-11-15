@@ -21,9 +21,7 @@ import {
   type PollState,
 } from "./signals";
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Rôle de l'utilisateur courant (attribut posé par le serveur)
-// ─────────────────────────────────────────────────────────────────────────────
 
 export function useMyRole(fallback: ConfRole): ConfRole {
   const participants = useParticipants();
@@ -32,9 +30,7 @@ export function useMyRole(fallback: ConfRole): ConfRole {
   return value ? toRole(value) : fallback;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Mains levées
-// ─────────────────────────────────────────────────────────────────────────────
 
 const HAND_REFRESH_MS = 5000; // rappel tant que la main est levée
 const HAND_EXPIRE_MS = 15000; // sans rappel, la main est considérée baissée
@@ -105,9 +101,7 @@ export function useHands(myRole: ConfRole) {
   return { handUp, toggle, raised };
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Réactions flottantes
-// ─────────────────────────────────────────────────────────────────────────────
 
 export function useReactions() {
   const { localParticipant } = useLocalParticipant();
@@ -141,9 +135,7 @@ export function useReactions() {
   return { items, send };
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Sondages
-// ─────────────────────────────────────────────────────────────────────────────
 // Le créateur du sondage tient le décompte : il reçoit les votes, les compte
 // (1 par personne, identité garantie par LiveKit) et rediffuse l'état complet.
 // Les autres affichent simplement le dernier état reçu, à condition qu'il vienne

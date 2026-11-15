@@ -13,9 +13,7 @@ import { RichTextEditor } from "@/components/RichTextEditor";
 import { safeHtml } from "@/lib/sanitize";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
-// ---------------------------------------------------------------------------
 // Types
-// ---------------------------------------------------------------------------
 interface CalendarEvent {
   id: number;
   title: string;
@@ -46,17 +44,13 @@ const EMPTY_FORM: FormState = {
   end_time: "",
 };
 
-// ---------------------------------------------------------------------------
 // Helper – format a date string ("2025-06-10") to "10 juin 2025"
-// ---------------------------------------------------------------------------
 const fmtDate = (iso: string) => {
   const date = new Date(iso + "T00:00:00");
   return date.toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
 };
 
-// ---------------------------------------------------------------------------
 // Component
-// ---------------------------------------------------------------------------
 export const CalendarManagement = () => {
   const readOnly = useAdminReadOnly();
   const { user } = useAuth();
@@ -73,9 +67,7 @@ export const CalendarManagement = () => {
   // ---- validation helper ----
   const [formError, setFormError] = useState<string | null>(null);
 
-  // -----------------------------------------------------------------------
   // Load
-  // -----------------------------------------------------------------------
   useEffect(() => {
     fetchEvents();
   }, []);
@@ -95,9 +87,7 @@ export const CalendarManagement = () => {
     setLoading(false);
   };
 
-  // -----------------------------------------------------------------------
   // Open modal – create or edit
-  // -----------------------------------------------------------------------
   const openCreate = () => {
     setEditingId(null);
     setForm(EMPTY_FORM);
@@ -124,9 +114,7 @@ export const CalendarManagement = () => {
     setFormError(null);
   };
 
-  // -----------------------------------------------------------------------
   // Validation
-  // -----------------------------------------------------------------------
   const validate = (): boolean => {
     if (!form.title.trim()) {
       setFormError("Le titre est obligatoire.");
@@ -145,9 +133,7 @@ export const CalendarManagement = () => {
     return true;
   };
 
-  // -----------------------------------------------------------------------
   // Save (create | update)
-  // -----------------------------------------------------------------------
   const handleSave = async () => {
     if (!validate()) return;
     setSaving(true);
@@ -186,9 +172,7 @@ export const CalendarManagement = () => {
     setSaving(false);
   };
 
-  // -----------------------------------------------------------------------
   // Delete
-  // -----------------------------------------------------------------------
   const handleDelete = (id: number) => {
     setConfirmDelete(() => async () => {
       const { error } = await supabase.from("calendar_events").delete().eq("id", id);
@@ -197,9 +181,7 @@ export const CalendarManagement = () => {
     });
   };
 
-  // -----------------------------------------------------------------------
   // Render
-  // -----------------------------------------------------------------------
   return (
     <Card className="shadow-card">
       {/* ---- Header ---- */}

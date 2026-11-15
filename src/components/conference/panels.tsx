@@ -13,9 +13,7 @@ import {
   type ConfRole, type FloatingReaction, type PollState,
 } from "./signals";
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Statistiques de session (pour le résumé de fin)
-// ─────────────────────────────────────────────────────────────────────────────
 
 export interface SessionStats {
   start: number;
@@ -39,9 +37,7 @@ export function StatsTracker({ statsRef }: { statsRef: MutableRefObject<SessionS
   return null;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Réactions flottantes
-// ─────────────────────────────────────────────────────────────────────────────
 
 export function ReactionsLayer({ items }: { items: FloatingReaction[] }) {
   if (!items.length) return null;
@@ -67,9 +63,7 @@ export function ReactionsLayer({ items }: { items: FloatingReaction[] }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Barre d'outils (en haut à droite de la zone vidéo)
-// ─────────────────────────────────────────────────────────────────────────────
 
 interface ToolbarProps {
   role: ConfRole;
@@ -143,9 +137,7 @@ export function Toolbar(p: ToolbarProps) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Panneau des participants + modération
-// ─────────────────────────────────────────────────────────────────────────────
 
 const ROLE_LABEL: Record<ConfRole, string> = {
   moderator: "Modérateur",
@@ -320,9 +312,7 @@ function IconAction(props: {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Sondage : création (modérateurs) + carte de vote
-// ─────────────────────────────────────────────────────────────────────────────
 
 interface PollPanelProps {
   canCreate: boolean;

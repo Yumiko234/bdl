@@ -24,9 +24,7 @@ import {
 } from "date-fns";
 import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 
-// ---------------------------------------------------------------------------
 // Types
-// ---------------------------------------------------------------------------
 interface CalendarEvent {
   id: number;
   title: string;
@@ -44,9 +42,7 @@ interface EventBar {
   row: number;
 }
 
-// ---------------------------------------------------------------------------
 // Helper pour formater une date en YYYY-MM-DD sans conversion UTC
-// ---------------------------------------------------------------------------
 const formatLocalDate = (date: Date): string => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -54,9 +50,7 @@ const formatLocalDate = (date: Date): string => {
   return `${year}-${month}-${day}`;
 };
 
-// ---------------------------------------------------------------------------
 // iCal helpers
-// ---------------------------------------------------------------------------
 
 /**
  * Escape special characters required by RFC 5545
@@ -150,14 +144,10 @@ const openGoogleCalendar = () => {
   window.open("https://calendar.google.com/calendar/r/settings/addcalendar", "_blank", "noopener,noreferrer");
 };
 
-// ---------------------------------------------------------------------------
 // Day-names header (lundi … dimanche – French locale)
-// ---------------------------------------------------------------------------
 const DAYS_FR = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
 
-// ---------------------------------------------------------------------------
 // Component
-// ---------------------------------------------------------------------------
 export default function Calendrier() {
   useSEO({
     title: "Calendrier – Bureau des Lycéens",
@@ -177,9 +167,7 @@ export default function Calendrier() {
   // ---- popover (selected day) ----
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
 
-  // -----------------------------------------------------------------------
   // Fetch
-  // -----------------------------------------------------------------------
   useEffect(() => {
     fetchEvents();
   }, []);
@@ -199,9 +187,7 @@ export default function Calendrier() {
     setLoading(false);
   };
 
-  // -----------------------------------------------------------------------
   // Calendar grid days
-  // -----------------------------------------------------------------------
   const calendarDays = useMemo(() => {
     const monthStart = startOfMonth(currentMonth);
     const monthEnd = endOfMonth(currentMonth);
@@ -219,9 +205,7 @@ export default function Calendrier() {
     return days;
   }, [currentMonth]);
 
-  // -----------------------------------------------------------------------
   // Calculate event bars for the calendar grid
-  // -----------------------------------------------------------------------
   const eventBars = useMemo(() => {
     const bars: EventBar[] = [];
     const weeksCount = Math.ceil(calendarDays.length / 7);
@@ -281,17 +265,13 @@ export default function Calendrier() {
     return bars;
   }, [events, calendarDays]);
 
-  // -----------------------------------------------------------------------
   // Events for a given day (for click handling)
-  // -----------------------------------------------------------------------
   const eventsForDay = (day: Date): CalendarEvent[] => {
     const dayStr = formatLocalDate(day);
     return events.filter((e) => e.start_date <= dayStr && e.end_date >= dayStr);
   };
 
-  // -----------------------------------------------------------------------
   // Navigation
-  // -----------------------------------------------------------------------
   const prevMonth = () => {
     setSelectedDay(null);
     setCurrentMonth((m) => subMonths(m, 1));
@@ -301,9 +281,7 @@ export default function Calendrier() {
     setCurrentMonth((m) => addMonths(m, 1));
   };
 
-  // -----------------------------------------------------------------------
   // Day click → show popover with events
-  // -----------------------------------------------------------------------
   const handleDayClick = (day: Date) => {
     const dayEvents = eventsForDay(day);
     if (dayEvents.length === 0) return;
@@ -316,9 +294,7 @@ export default function Calendrier() {
     setSelectedDay(day);
   };
 
-  // -----------------------------------------------------------------------
   // Render
-  // -----------------------------------------------------------------------
   const monthLabel = currentMonth.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
   const monthTitle = monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1);
 

@@ -32,7 +32,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// Types
 
 interface Certificate {
   id: string;
@@ -45,7 +45,7 @@ interface Certificate {
   created_at: string;
 }
 
-// ─── Rôles disponibles ────────────────────────────────────────────────────────
+// Rôles disponibles
 
 const ROLE_OPTIONS = [
   { value: "president",              label: "Président",                              prefix: "PBDL"  },
@@ -67,7 +67,7 @@ const getPrefixForRole = (roleValue: RoleValue): string =>
 const getLabelForRole = (roleValue: RoleValue): string =>
   ROLE_OPTIONS.find((r) => r.value === roleValue)?.label ?? roleValue;
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// Helpers
 
 /**
  * Génère un identifiant structuré : [PRÉFIXE]-[AA]-[6 chars aléatoires]
@@ -98,7 +98,7 @@ const fmtDate = (iso: string) =>
     day: "2-digit", month: "long", year: "numeric",
   });
 
-// ─── QR Modal ─────────────────────────────────────────────────────────────────
+// QR Modal
 
 interface QrModalProps {
   cert: Certificate | null;
@@ -189,7 +189,7 @@ const QrModal = ({ cert, onClose }: QrModalProps) => {
   );
 };
 
-// ─── Main component ───────────────────────────────────────────────────────────
+// Main component
 
 export const CertificateManagement = () => {
   const readOnly = useAdminReadOnly();
@@ -212,7 +212,7 @@ export const CertificateManagement = () => {
     certificate_id: generateCertId("bdl_member"),
   });
 
-  // ── Regénère l'ID quand le rôle change ────────────────────────────────────
+  // Regénère l'ID quand le rôle change
 
   const handleRoleChange = (roleValue: RoleValue) => {
     setForm((prev) => ({
@@ -222,7 +222,7 @@ export const CertificateManagement = () => {
     }));
   };
 
-  // ── Load ──────────────────────────────────────────────────────────────────
+  // Load
 
   useEffect(() => { fetchCertificates(); }, []);
 
@@ -245,7 +245,7 @@ export const CertificateManagement = () => {
     setRefreshing(false);
   };
 
-  // ── Create ─────────────────────────────────────────────────────────────────
+  // Create
 
   const handleCreate = async () => {
     if (!form.first_name.trim() || !form.last_name.trim()) {
@@ -284,7 +284,7 @@ export const CertificateManagement = () => {
     setSaving(false);
   };
 
-  // ── Delete ─────────────────────────────────────────────────────────────────
+  // Delete
 
   const handleDelete = async (id: string) => {
     const { error } = await supabase
@@ -300,7 +300,7 @@ export const CertificateManagement = () => {
     }
   };
 
-  // ── Copy ID ────────────────────────────────────────────────────────────────
+  // Copy ID
 
   const copyId = (certId: string) => {
     navigator.clipboard.writeText(certId).then(() => {
@@ -309,7 +309,7 @@ export const CertificateManagement = () => {
     });
   };
 
-  // ── Filter ─────────────────────────────────────────────────────────────────
+  // Filter
 
   const filtered = certificates.filter((c) => {
     const q = search.toLowerCase();
@@ -322,7 +322,7 @@ export const CertificateManagement = () => {
     );
   });
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  // Render
 
   return (
     <div className="space-y-6">

@@ -38,7 +38,7 @@ const Etablissement = () => {
       if (error) throw error;
       setSections((data as any) || []);
     } catch (error) {
-      console.error('Error loading sections:', error);
+      console.error('Chargement des sections échoué :', error);
       toast.error("Erreur lors du chargement des informations");
     } finally {
       setLoading(false);

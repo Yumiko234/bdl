@@ -40,7 +40,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// Types
 
 interface Survey {
   id: string;
@@ -88,7 +88,7 @@ interface SurveyAnswer {
   text_answer: string | null;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// Helpers
 
 const StatusBadge = ({ status }: { status: string }) => {
   if (status === "draft") return <Badge variant="secondary">Brouillon</Badge>;
@@ -98,7 +98,7 @@ const StatusBadge = ({ status }: { status: string }) => {
   return null;
 };
 
-// ─── Sub-view: Responses ──────────────────────────────────────────────────────
+// Sub-view: Responses
 
 const ResponsesView = ({
   survey,
@@ -269,11 +269,11 @@ const ResponsesView = ({
   );
 };
 
-// ─── Main component ──────────────────────────────────────────────────────────
+// Main component
 
 export const SurveyManagement = () => {
   const readOnly = useAdminReadOnly();
-  // ── state ───────────────────────────────────────────────────────────────────
+  // state
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -306,7 +306,7 @@ export const SurveyManagement = () => {
   // drag state
   const dragIndexRef = useRef<number | null>(null);
 
-  // ── load ────────────────────────────────────────────────────────────────────
+  // load
   useEffect(() => {
     loadSurveys();
   }, []);
@@ -349,7 +349,7 @@ export const SurveyManagement = () => {
     return result;
   };
 
-  // ── create survey ───────────────────────────────────────────────────────────
+  // create survey
   const handleCreateSurvey = async () => {
     if (!formData.title.trim()) {
       toast.error("Le titre est requis");
@@ -399,7 +399,7 @@ export const SurveyManagement = () => {
     setLoading(false);
   };
 
-  // ── patch survey ────────────────────────────────────────────────────────────
+  // patch survey
   const patchSurvey = async (surveyId: string, patch: Partial<Survey>) => {
     const { error } = await supabase
       .from("surveys")
@@ -415,7 +415,7 @@ export const SurveyManagement = () => {
     }
   };
 
-  // ── delete survey ───────────────────────────────────────────────────────────
+  // delete survey
   const handleDeleteSurvey = async (surveyId: string) => {
     const { error } = await supabase
       .from("surveys")
@@ -430,7 +430,7 @@ export const SurveyManagement = () => {
     }
   };
 
-  // ── add question or info block ──────────────────────────────────────────────
+  // add question or info block
   const handleAddQuestion = async (surveyId: string) => {
     if (!newQuestionText.trim()) {
       toast.error("Le texte de la question est requis");
@@ -504,7 +504,7 @@ export const SurveyManagement = () => {
     setNewOptions(["Option 1", "Option 2"]);
   };
 
-  // ── delete question / info block ────────────────────────────────────────────
+  // delete question / info block
   const handleDeleteQuestion = async (questionId: string, surveyId: string) => {
     const { error } = await supabase
       .from("survey_questions")
@@ -519,7 +519,7 @@ export const SurveyManagement = () => {
     }
   };
 
-  // ── update info block text inline ───────────────────────────────────────────
+  // update info block text inline
   const handleUpdateInfoText = async (questionId: string, newText: string) => {
     const { error } = await supabase
       .from("survey_questions")
@@ -528,7 +528,7 @@ export const SurveyManagement = () => {
     if (error) toast.error("Erreur lors de la mise à jour");
   };
 
-  // ── option CRUD ─────────────────────────────────────────────────────────────
+  // option CRUD
   // Met à jour l'état local à chaque frappe (sinon le champ paraît figé).
   const handleUpdateOption = (optionId: string, newText: string) => {
     setQuestions((prev) =>
@@ -568,14 +568,14 @@ export const SurveyManagement = () => {
     await loadQuestions(surveyId);
   };
 
-  // ── responses view ──────────────────────────────────────────────────────────
+  // responses view
   const openResponses = async (survey: Survey) => {
     const qs = await loadQuestions(survey.id);
     setViewingQuestions(qs);
     setViewingResponses(survey);
   };
 
-  // ── drag & drop ─────────────────────────────────────────────────────────────
+  // drag & drop
   const handleDragStart = (
     e: React.DragEvent<HTMLDivElement>,
     index: number
@@ -625,7 +625,7 @@ export const SurveyManagement = () => {
     );
   };
 
-  // ── render ──────────────────────────────────────────────────────────────────
+  // render
 
   if (viewingResponses) {
     return (

@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { useSEO } from "@/hooks/useSEO";
+import { useTrackingLock } from "@/hooks/useTrackingLock";
+import { TrackingLockBanner } from "@/components/admin/TrackingLockControl";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
@@ -106,6 +108,7 @@ const ProfileBDLSuivi = () => {
   const [absenceModal, setAbsenceModal] = useState<{ meetingId: string; meetingTitle: string } | null>(null);
   const [absenceReason, setAbsenceReason] = useState("");
   const [savingAbsence, setSavingAbsence] = useState(false);
+  const lock = useTrackingLock();
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -336,6 +339,12 @@ const ProfileBDLSuivi = () => {
           </div>
         </section>
 
+        {lock.locked && (
+          <div className="container mx-auto px-4 pt-6">
+            <TrackingLockBanner lock={lock} />
+          </div>
+        )}
+
         <div className="container mx-auto px-4 py-10 max-w-5xl space-y-8">
 
           {/* ── Stats cards ── */}
@@ -478,7 +487,7 @@ const ProfileBDLSuivi = () => {
                               size="sm"
                               variant="outline"
                               className="gap-1 h-7 text-xs"
-                              onClick={() => handleCancelAbsenceDeclaration(m.id)}
+                              disabled={lock.locked} onClick={() => handleCancelAbsenceDeclaration(m.id)}
                             >
                               <UserCheck className="h-3 w-3" />
                               Je serai présent
@@ -490,7 +499,7 @@ const ProfileBDLSuivi = () => {
                                   size="sm"
                                   variant="outline"
                                   className="gap-1 h-7 text-xs text-green-700 border-green-300 hover:bg-green-50"
-                                  onClick={() => handleDeclarePresent(m.id)}
+                                  disabled={lock.locked} onClick={() => handleDeclarePresent(m.id)}
                                 >
                                   <UserCheck className="h-3 w-3" />
                                   Je serai présent
@@ -501,7 +510,7 @@ const ProfileBDLSuivi = () => {
                                   size="sm"
                                   variant="ghost"
                                   className="gap-1 h-7 text-xs text-muted-foreground"
-                                  onClick={() => handleCancelPresence(m.id)}
+                                  disabled={lock.locked} onClick={() => handleCancelPresence(m.id)}
                                 >
                                   Annuler
                                 </Button>
@@ -510,7 +519,7 @@ const ProfileBDLSuivi = () => {
                                 size="sm"
                                 variant="outline"
                                 className="gap-1 h-7 text-xs text-red-600 border-red-300 hover:bg-red-50"
-                                onClick={() => openAbsenceModal(m.id, m.title)}
+                                disabled={lock.locked} onClick={() => openAbsenceModal(m.id, m.title)}
                               >
                                 <UserX className="h-3 w-3" />
                                 Signaler une absence
@@ -529,7 +538,7 @@ const ProfileBDLSuivi = () => {
                             size="sm"
                             variant="ghost"
                             className="h-6 px-2 text-xs flex-shrink-0"
-                            onClick={() => openAbsenceModal(m.id, m.title)}
+                            disabled={lock.locked} onClick={() => openAbsenceModal(m.id, m.title)}
                           >
                             Modifier
                           </Button>
@@ -594,7 +603,7 @@ const ProfileBDLSuivi = () => {
                               size="sm"
                               variant="ghost"
                               className="h-6 px-2 text-xs text-amber-600 hover:text-amber-700"
-                              onClick={() => openAbsenceModal(meetingId, a.meeting?.title ?? "Réunion")}
+                              disabled={lock.locked} onClick={() => openAbsenceModal(meetingId, a.meeting?.title ?? "Réunion")}
                             >
                               {hasRequest ? "✓ Justif. envoyée" : "Justifier"}
                             </Button>
@@ -762,7 +771,7 @@ const ProfileBDLSuivi = () => {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setAbsenceModal(null)}>Annuler</Button>
-            <Button onClick={handleSubmitAbsence} disabled={savingAbsence} className="gap-1.5">
+            <Button onClick={handleSubmitAbsence} disabled={savingAbsence || lock.locked} className="gap-1.5">
               {savingAbsence ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
               Signaler mon absence
             </Button>

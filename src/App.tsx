@@ -14,7 +14,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { EventThemeProvider } from "./themes/EventThemeProvider";
 import { EventThemeOverlay } from "./themes/EventThemeOverlay";
 
-// Chargement paresseux de chaque page â€” le bundle initial ne charge que ce qui est nÃ©cessaire
+
 const Index            = lazy(() => import("./pages/Index"));
 const Etablissement    = lazy(() => import("./pages/Etablissement"));
 const BDL              = lazy(() => import("./pages/BDL"));

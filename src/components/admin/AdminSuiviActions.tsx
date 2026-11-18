@@ -10,6 +10,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAdminReadOnly } from "@/contexts/AdminReadOnlyContext";
+import { useTrackingLock } from "@/hooks/useTrackingLock";
+import { TrackingLockBanner, TrackingLockButton } from "@/components/admin/TrackingLockControl";
 import {
   Plus, Trash2, Edit2, CheckCircle2, Clock, AlertCircle,
   Star, TrendingUp, Users, Target, StickyNote, X, Save,
@@ -154,7 +156,11 @@ function CategoryBadge({ category }: { category: Action["category"] }) {
 // Main component
 
 export const SuiviActionsManagement = () => {
-  const readOnly = useAdminReadOnly();
+  const adminReadOnly = useAdminReadOnly();
+  const lock = useTrackingLock();
+  // Le verrou global d'écriture se comporte comme la lecture seule : tous les
+  // contrôles « !readOnly » de ce fichier le respectent sans autre modification.
+  const readOnly = adminReadOnly || lock.locked;
   const [members, setMembers] = useState<BDLMember[]>([]);
   const [actions, setActions] = useState<Action[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
@@ -535,11 +541,18 @@ export const SuiviActionsManagement = () => {
             Attribuez et suivez les actions de chaque membre du Bureau.
           </p>
         </div>
-        <Button onClick={() => openCreateAction()} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Nouvelle action
-        </Button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <TrackingLockButton lock={lock} />
+          {!readOnly && (
+            <Button onClick={() => openCreateAction()} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Nouvelle action
+            </Button>
+          )}
+        </div>
       </div>
+
+      <TrackingLockBanner lock={lock} />
 
       {/* ── Global stats ── */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">

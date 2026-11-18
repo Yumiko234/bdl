@@ -28,6 +28,7 @@ const Events           = lazy(() => import("./pages/Events"));
 const Calendrier       = lazy(() => import("./pages/Calendrier"));
 const JOBDL            = lazy(() => import("./pages/jobdl/JOBDL"));
 const JobdlArticle     = lazy(() => import("./pages/jobdl/[nor]"));
+const Idees            = lazy(() => import("./pages/Idees"));
 const Scrutin          = lazy(() => import("./pages/Scrutin"));
 const Sondage          = lazy(() => import("./pages/Sondage"));
 const Auth             = lazy(() => import("./pages/Auth"));
@@ -108,6 +109,7 @@ const App = () => {
               <Route path="/auth" element={<Auth />} />
               <Route path="/intranet" element={<Navigate to="/admin" replace />} />
               <Route path="/scrutin" element={<Scrutin />} />
+              <Route path="/idees" element={<Idees />} />
 
               <Route path="/contact" element={<Contact />} />
               <Route path="/support" element={<Support />} />

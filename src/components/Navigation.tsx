@@ -69,7 +69,6 @@ const Navigation = () => {
     name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
 
   const navItems = [
-    { path: "/", label: "Accueil" },
     { path: "/etablissement", label: "L'Établissement" },
     { path: "/bdl", label: "Le BDL" },
     { path: "/scrutin", label: "Scrutins" },
@@ -77,6 +76,7 @@ const Navigation = () => {
     { path: "/events", label: "Événements" },
     { path: "/documents", label: "Documents" },
     { path: "/jo", label: "Journal Officiel" },
+    { path: "/idees", label: "Idées" },
     { path: "/contact", label: "Contact" },
   ];
 

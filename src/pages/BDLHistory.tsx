@@ -40,6 +40,7 @@ const ROLE_LABELS: Record<string, string> = {
   communication_manager: "Directeur ComCom",
   communication_manager2: "Directrice ComCom",
   bdl_member: "Membre BDL",
+  ancien_eleve: "Ancien Élève",
 };
 
 const getInitials = (name: string) =>

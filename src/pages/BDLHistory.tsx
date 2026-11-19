@@ -90,6 +90,18 @@ const BDLHistory = () => {
       const yearsById: Record<string, { start_year: number; end_year: number }> =
         Object.fromEntries((yearsRes.data || []).map((y: any) => [y.id, y]));
 
+      // Exclure les membres actifs cette année de la liste honorifique
+      const currentYearId = (yearsRes.data || []).find((y: any) => y.is_current)?.id ?? null;
+      let currentActiveSlugs = new Set<string>();
+      if (currentYearId) {
+        const { data: activeNow } = await supabase
+          .from("bdl_historical_members")
+          .select("full_name")
+          .eq("year_id", currentYearId)
+          .eq("is_honorary", false);
+        currentActiveSlugs = new Set((activeNow || []).map((m: any) => toPersonSlug(m.full_name)));
+      }
+
       if (!honoraryRes.error && honoraryRes.data) {
         const grouped: Record<
           string,
@@ -105,6 +117,7 @@ const BDLHistory = () => {
 
         honoraryRes.data.forEach((m: any) => {
           const key = toPersonSlug(m.full_name);
+          if (currentActiveSlugs.has(key)) return; // membre actif cette année → pas dans honorifiques
           const yearInfo = yearsById[m.year_id];
           const start = yearInfo?.start_year;
           const end = yearInfo?.end_year;

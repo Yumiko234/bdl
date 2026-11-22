@@ -236,16 +236,20 @@ const Profile = () => {
     }
   };
 
-  /* ===================== EXPORT RGPD ===================== */
-
- /* ===================== EXPORT RGPD ===================== */
-
- /* ===================== EXPORT RGPD ===================== */
+/* ===================== EXPORT RGPD ===================== */
 
   const handleExportData = async () => {
     if (!user) return;
     setExportLoading(true);
     try {
+      const normalizeName = (str: string | null | undefined): string =>
+        (str ?? "")
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLowerCase()
+          .replace(/\s+/g, " ")
+          .trim();
+
       const [
         profileRes,
         rolesRes,
@@ -295,8 +299,7 @@ const Profile = () => {
           .eq("user_id", user.id),
         supabase
           .from("bdl_member_profiles")
-          .select("full_name, role, class, age, biography, career_path, anecdote, contact_method, is_published, created_at")
-          .eq("user_id", user.id),
+          .select("full_name, role, class, age, biography, career_path, anecdote, contact_method, is_published, created_at"),
         profile?.first_name && profile?.last_name
           ? supabase
               .from("bdl_certificates")
@@ -390,6 +393,31 @@ const Profile = () => {
           .eq("member_id", user.id),
       ]);
 
+      // Filtrage des fiches publiques bdl_member_profiles par nom normalisé (et e-mail perso hors @bdl-saintandre.fr)
+      const resolvedProfile = profileRes.data ?? profile;
+      const firstName = normalizeName(resolvedProfile?.first_name);
+      const lastName = normalizeName(resolvedProfile?.last_name);
+      const validFullNames = new Set(
+        [
+          normalizeName(resolvedProfile?.full_name),
+          `${firstName} ${lastName}`.trim(),
+          `${lastName} ${firstName}`.trim(),
+        ].filter(Boolean)
+      );
+      const userEmail = (resolvedProfile?.email ?? user.email ?? "").trim().toLowerCase();
+
+      const filteredPublicProfiles = (bdlMemberProfileRes.data ?? []).filter((row) => {
+        const rowName = normalizeName(row.full_name);
+        const matchesName = validFullNames.has(rowName);
+
+        const rowContact = (row.contact_method ?? "").trim().toLowerCase();
+        const isPersonalEmail =
+          rowContact.includes("@") && !rowContact.endsWith("@bdl-saintandre.fr");
+        const matchesEmail = Boolean(userEmail) && isPersonalEmail && rowContact === userEmail;
+
+        return matchesName || matchesEmail;
+      });
+
       const payload = {
         exported_at: new Date().toISOString(),
         account: {
@@ -399,7 +427,7 @@ const Profile = () => {
         },
         bdl_membership: {
           memberships: bdlMemberRes.data ?? [],
-          public_profiles: bdlMemberProfileRes.data ?? [],
+          public_profiles: filteredPublicProfiles,
           certificates: certificatesRes.data ?? [],
           assigned_actions: actionsRes.data ?? [],
           meeting_attendance: attendanceRes.data ?? [],
@@ -428,11 +456,21 @@ const Profile = () => {
         },
       };
 
+      // Construction du nom de fichier : NOM Prénom — Mes données BDL — JJ-MM-AAAA.json
+      const rawLastName = (resolvedProfile?.last_name ?? "").trim().toUpperCase();
+      const rawFirstName = (resolvedProfile?.first_name ?? "").trim();
+      const fullNameLabel =
+        [rawLastName, rawFirstName].filter(Boolean).join(" ") ||
+        (resolvedProfile?.full_name ?? "Utilisateur").trim();
+
+      const safeFullName = fullNameLabel.replace(/[\\/:*?"<>|]/g, "-");
+      const exportDate = new Date().toLocaleDateString("fr-FR").replace(/\//g, "-");
+
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `mes-donnees-bdl-${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = `${safeFullName} — Mes données BDL — ${exportDate}.json`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -445,7 +483,7 @@ const Profile = () => {
       setExportLoading(false);
     }
   };
-
+  
   /* ===================== DELETE ACCOUNT ===================== */
 
   const handleDeleteAccount = async () => {

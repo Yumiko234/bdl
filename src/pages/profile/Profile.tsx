@@ -238,23 +238,194 @@ const Profile = () => {
 
   /* ===================== EXPORT RGPD ===================== */
 
+ /* ===================== EXPORT RGPD ===================== */
+
+ /* ===================== EXPORT RGPD ===================== */
+
   const handleExportData = async () => {
     if (!user) return;
     setExportLoading(true);
     try {
-      const [profileRes, rolesRes, votesRes, deletionRes] = await Promise.all([
-        supabase.from("profiles").select("first_name, last_name, class_name, email, avatar_url, created_at").eq("id", user.id).maybeSingle(),
-        supabase.from("user_roles").select("role").eq("user_id", user.id),
-        supabase.from("scrutin_votes").select("scrutin_id, choice, created_at").eq("user_id", user.id),
-        supabase.from("deletion_requests").select("requested_at, scheduled_deletion_at, cancelled_at").eq("user_id", user.id).maybeSingle(),
+      const [
+        profileRes,
+        rolesRes,
+        deletionRes,
+        bdlMemberRes,
+        bdlMemberProfileRes,
+        certificatesRes,
+        newsRes,
+        eventsRes,
+        joBdlRes,
+        documentsRes,
+        surveysCreatedRes,
+        votesRes,
+        delegationsRes,
+        surveyResponsesRes,
+        ideasRes,
+        forumMessagesRes,
+        newsReactionsRes,
+        clubsRes,
+        audienceRes,
+        ticketsRes,
+        supportMsgsRes,
+        actionsRes,
+        attendanceRes,
+        absenceRes,
+      ] = await Promise.all([
+        // 1. Profil & compte
+        supabase
+          .from("profiles")
+          .select("full_name, first_name, last_name, class_name, email, avatar_url, is_banned, created_at, updated_at")
+          .eq("id", user.id)
+          .maybeSingle(),
+        supabase
+          .from("user_roles")
+          .select("role, assigned_at")
+          .eq("user_id", user.id),
+        supabase
+          .from("deletion_requests")
+          .select("requested_at, scheduled_deletion_at, cancelled_at")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+
+        // 2. Statut & fiche publique BDL
+        supabase
+          .from("bdl_members")
+          .select("full_name, role_label, custom_role, is_executive, created_at")
+          .eq("user_id", user.id),
+        supabase
+          .from("bdl_member_profiles")
+          .select("full_name, role, class, age, biography, career_path, anecdote, contact_method, is_published, created_at")
+          .eq("user_id", user.id),
+        profile?.first_name && profile?.last_name
+          ? supabase
+              .from("bdl_certificates")
+              .select("certificate_id, first_name, last_name, role_label, year_label, created_at")
+              .ilike("first_name", profile.first_name)
+              .ilike("last_name", profile.last_name)
+          : Promise.resolve({ data: [] }),
+
+        // 3. Publications & actes officiels de l'utilisateur
+        supabase
+          .from("news")
+          .select("title, category, content, is_important, is_pinned, visibility, author_role, published_at, updated_at")
+          .eq("author_id", user.id),
+        supabase
+          .from("events")
+          .select("title, description, start_date, end_date, start_time, end_time, author_role, is_pinned, created_at")
+          .eq("author_id", user.id),
+        supabase
+          .from("official_journal")
+          .select("nor_number, title, content, publication_date, author_role, modifications, signatures, created_at")
+          .eq("author_id", user.id),
+        supabase
+          .from("documents")
+          .select("title, description, category, file_url, file_size, visibility, created_at")
+          .eq("uploaded_by", user.id),
+        supabase
+          .from("surveys")
+          .select("title, description, status, start_date, end_date, is_form, created_at")
+          .eq("created_by", user.id),
+
+        // 4. Scrutins & délégations
+        supabase
+          .from("scrutin_votes")
+          .select("scrutin_id, vote, voted_at, scrutins(title, is_secret)")
+          .eq("user_id", user.id),
+        supabase
+          .from("scrutin_delegations")
+          .select("scrutin_id, delegator_id, delegate_id, created_at")
+          .or(`delegator_id.eq.${user.id},delegate_id.eq.${user.id}`),
+
+        // 5. Sondages & formulaires répondus
+        supabase
+          .from("survey_responses")
+          .select("id, survey_id, respondent_name, is_anonymous, submitted_at, surveys(title), survey_answers(question_id, option_id, text_answer)")
+          .eq("user_id", user.id),
+
+        // 6. Boîte à idées, forums, réactions & clubs
+        supabase
+          .from("boite_a_idees")
+          .select("content, classe, is_anonymous, status, reply, created_at")
+          .eq("author_id", user.id),
+        supabase
+          .from("forum_messages")
+          .select("message, created_at, class_forums(class_name)")
+          .eq("author_id", user.id),
+        supabase
+          .from("news_reactions")
+          .select("news_id, emoji, created_at")
+          .eq("user_id", user.id),
+        supabase
+          .from("clubs")
+          .select("name, type, president_name, description, status, created_at")
+          .eq("created_by", user.id),
+
+        // 7. Audiences & assistance
+        supabase
+          .from("audience_requests")
+          .select("request_type, subject, message, status, review_message, created_at, reviewed_at")
+          .eq("requester_id", user.id),
+        supabase
+          .from("support_tickets")
+          .select("id, ticket_type, subject, description, requester_class, status, created_at, handled_at")
+          .eq("requester_user_id", user.id),
+        supabase
+          .from("support_messages")
+          .select("ticket_id, sender_name, is_staff, content, created_at")
+          .eq("sender_user_id", user.id),
+
+        // 8. Suivi interne BDL (actions & présences aux réunions)
+        supabase
+          .from("bdl_actions")
+          .select("title, description, category, points, status, due_date, completed_at, created_at")
+          .eq("assigned_to", user.id),
+        supabase
+          .from("bdl_meeting_attendance")
+          .select("status, recorded_at, bdl_meetings(title, meeting_date)")
+          .eq("member_id", user.id),
+        supabase
+          .from("bdl_meeting_absence_requests")
+          .select("reason, submitted_at, bdl_meetings(title, meeting_date)")
+          .eq("member_id", user.id),
       ]);
 
       const payload = {
         exported_at: new Date().toISOString(),
-        profile: profileRes.data,
-        roles: rolesRes.data ?? [],
-        scrutin_votes: votesRes.data ?? [],
-        deletion_request: deletionRes.data ?? null,
+        account: {
+          profile: profileRes.data ?? null,
+          roles: rolesRes.data ?? [],
+          deletion_request: deletionRes.data ?? null,
+        },
+        bdl_membership: {
+          memberships: bdlMemberRes.data ?? [],
+          public_profiles: bdlMemberProfileRes.data ?? [],
+          certificates: certificatesRes.data ?? [],
+          assigned_actions: actionsRes.data ?? [],
+          meeting_attendance: attendanceRes.data ?? [],
+          absence_requests: absenceRes.data ?? [],
+        },
+        publications: {
+          news: newsRes.data ?? [],
+          events: eventsRes.data ?? [],
+          official_journal: joBdlRes.data ?? [],
+          uploaded_documents: documentsRes.data ?? [],
+          created_surveys: surveysCreatedRes.data ?? [],
+        },
+        participation: {
+          scrutin_votes: votesRes.data ?? [],
+          scrutin_delegations: delegationsRes.data ?? [],
+          survey_responses: surveyResponsesRes.data ?? [],
+          ideas_box: ideasRes.data ?? [],
+          forum_messages: forumMessagesRes.data ?? [],
+          news_reactions: newsReactionsRes.data ?? [],
+          created_clubs: clubsRes.data ?? [],
+        },
+        requests_and_support: {
+          audience_requests: audienceRes.data ?? [],
+          support_tickets: ticketsRes.data ?? [],
+          support_messages: supportMsgsRes.data ?? [],
+        },
       };
 
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });

@@ -36,53 +36,12 @@ interface JournalEntry {
   created_at: string; modifications?: Modification[]; signatures?: Signatory[];
 }
 
-// ─── NOR helpers & picker ─────────────────────────────────────────────────────
+// ─── Sélecteur de NOR (Registre Central, Annexe 2) ────────────────────────────
+// Le NOR n'est plus calculé ici : il est attribué par le Secrétaire général dans
+// l'onglet « Registre NOR ». La base refuse tout NOR absent du registre, sauf les
+// NOR spéciaux (« RI »).
 
-const EMETTEURS = [
-  { value: "BDL",   label: "BDL — Bureau des Lycéens" },
-  { value: "PBDL",  label: "PBDL — Présidence" },
-  { value: "RCBDL", label: "RCBDL — Dir. Communauté & Com." },
-];
-
-const DOC_TYPES = [
-  { value: "CR", label: "CR — Compte-Rendu" },
-  { value: "PV", label: "PV — Procès-Verbal" },
-  { value: "DC", label: "DC — Décret" },
-  { value: "AR", label: "AR — Arrêté" },
-  { value: "DE", label: "DE — Décision" },
-  { value: "CM", label: "CM — Communiqué" },
-];
-
-
-function parseNor(nor: string) {
-  const m = nor.match(/^(RCBDL|PBDL|BDL)(\d{2})(CR|PV|DC|AR|DE|CM)(\d{4})([A-Z])$/);
-  if (!m) return null;
-  return { emetteur: m[1], year: m[2], type: m[3], seq: parseInt(m[4]), version: m[5] };
-}
-
-function computeNextSeq(entries: JournalEntry[], emetteur: string, year: string, type: string): number {
-  let max = 0;
-  for (const e of entries) {
-    const p = parseNor(e.nor_number);
-    if (p && p.emetteur === emetteur && p.year === year && p.type === type) {
-      if (p.seq > max) max = p.seq;
-    }
-  }
-  return max + 1;
-}
-
-function computeNextVersion(entries: JournalEntry[], emetteur: string, year: string, type: string, seq: number): string {
-  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  let maxIdx = -1;
-  for (const e of entries) {
-    const p = parseNor(e.nor_number);
-    if (p && p.emetteur === emetteur && p.year === year && p.type === type && p.seq === seq) {
-      const idx = letters.indexOf(p.version);
-      if (idx > maxIdx) maxIdx = idx;
-    }
-  }
-  return letters[maxIdx + 1] ?? "A";
-}
+interface NorOption { nor: string; label: string; }
 
 interface NorPickerProps {
   value: string;
@@ -92,20 +51,36 @@ interface NorPickerProps {
 }
 
 const NorPicker = ({ value, onChange, entries, isEditing }: NorPickerProps) => {
-  const currentYear = String(new Date().getFullYear()).slice(2);
-  const [manual, setManual] = useState(false);
-  const [emetteur, setEmetteur] = useState("BDL");
-  const [type, setType] = useState("CR");
-
-  const nextSeq = computeNextSeq(entries, emetteur, currentYear, type);
-  const seqStr = String(nextSeq).padStart(4, "0");
-  const version = computeNextVersion(entries, emetteur, currentYear, type, nextSeq);
-  const generated = `${emetteur}${currentYear}${type}${seqStr}${version}`;
+  const [options, setOptions] = useState<NorOption[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!manual && !isEditing) onChange(generated);
+    if (isEditing) return;
+    let cancelled = false;
+    (async () => {
+      const [reg, spec] = await Promise.all([
+        supabase.from("nor_registry_view" as any).select("nor, title, status")
+          .eq("status", "EN_VIGUEUR").order("created_at", { ascending: false }),
+        supabase.from("nor_special" as any).select("code, title"),
+      ]);
+      if (cancelled) return;
+      if (reg.error || spec.error) {
+        toast.error("Lecture du Registre des NOR impossible");
+        console.error(reg.error ?? spec.error);
+      }
+      // Un NOR du registre ne peut être publié qu'une fois ; un NOR spécial reste réutilisable.
+      const used = new Set(entries.map((e) => e.nor_number));
+      const specials = ((spec.data ?? []) as unknown as { code: string; title: string }[])
+        .map((r) => ({ nor: r.code, label: `${r.code} — ${r.title} (NOR spécial)` }));
+      const registry = ((reg.data ?? []) as unknown as { nor: string; title: string }[])
+        .filter((r) => !used.has(r.nor))
+        .map((r) => ({ nor: r.nor, label: `${r.nor} — ${r.title}` }));
+      setOptions([...specials, ...registry]);
+      setLoading(false);
+    })();
+    return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [generated, manual, isEditing]);
+  }, [isEditing, entries.length]);
 
   if (isEditing) {
     return (
@@ -118,51 +93,19 @@ const NorPicker = ({ value, onChange, entries, isEditing }: NorPickerProps) => {
     );
   }
 
-  if (manual) {
-    return (
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="nor">Numéro NOR</Label>
-          <button type="button" onClick={() => { setManual(false); onChange(generated); }}
-            className="text-xs text-[#07419e] hover:underline">← Générateur auto</button>
-        </div>
-        <Input id="nor" value={value} onChange={(e) => onChange(e.target.value)}
-          placeholder="Ex : BDL26CR0001A" className="font-mono" />
-      </div>
-    );
-  }
-
-  const typeLabel = DOC_TYPES.find(t => t.value === type)?.label.split("—")[1]?.trim() ?? type;
-
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <Label>Numéro NOR</Label>
-        <button type="button" onClick={() => setManual(true)}
-          className="text-xs text-muted-foreground hover:underline">
-          Saisie manuelle
-        </button>
-      </div>
-
-      {/* Deux selects */}
-      <div className="flex gap-2">
-        <select value={emetteur} onChange={(e) => setEmetteur(e.target.value)}
-          className="flex-1 h-10 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring">
-          {EMETTEURS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
-        <select value={type} onChange={(e) => setType(e.target.value)}
-          className="flex-[2] h-10 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring">
-          {DOC_TYPES.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
-      </div>
-
-      {/* NOR résultant */}
-      <div className="flex items-center justify-between rounded-lg border border-[#07419e]/30 bg-[#07419e]/5 px-4 py-2.5">
-        <span className="font-mono text-lg font-black text-[#07419e] tracking-widest">{generated}</span>
-        <span className="text-xs text-muted-foreground">
-          {nextSeq === 1 ? `1er ${typeLabel}` : `${typeLabel} n°${nextSeq}`} • ver. {version} • auto
-        </span>
-      </div>
+    <div className="space-y-1.5">
+      <Label htmlFor="nor">Numéro NOR</Label>
+      <select id="nor" value={value} onChange={(e) => onChange(e.target.value)} disabled={loading}
+        className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-ring">
+        <option value="">{loading ? "Chargement…" : "Choisir un NOR du registre…"}</option>
+        {options.map((o) => <option key={o.nor} value={o.nor}>{o.label}</option>)}
+      </select>
+      {!loading && options.length === 0 && (
+        <p className="text-xs text-destructive">
+          Aucun NOR disponible : le Secrétaire général doit d'abord en attribuer un dans Registre NOR.
+        </p>
+      )}
     </div>
   );
 };

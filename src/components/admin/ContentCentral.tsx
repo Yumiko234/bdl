@@ -6,13 +6,14 @@ import { EventManagement } from "./EventManagement";
 import { CalendarManagement } from "./CalendarManagement";
 import { DocumentManagement } from "./DocumentManagement";
 import { OfficialJournalManagement } from "./OfficialJournalManagement";
+import { NorRegistry } from "./NorRegistry";
 import { Newspaper } from "lucide-react";
 
 interface Props { isPresident: boolean; primaryRole: string; }
 
 export const ContentCentral = ({ isPresident, primaryRole }: Props) => {
   const showDocuments = primaryRole !== "vie_scolaire";
-  const VALID_TABS = ["news", "events", "calendar", ...(showDocuments ? ["documents"] : []), "journal"];
+  const VALID_TABS = ["news", "events", "calendar", ...(showDocuments ? ["documents"] : []), "journal", "nor"];
   const [searchParams] = useSearchParams();
   const tabFromUrl = searchParams.get("tab");
   const [tab, setTab] = useState(VALID_TABS.includes(tabFromUrl ?? "") ? tabFromUrl! : "news");
@@ -35,12 +36,14 @@ export const ContentCentral = ({ isPresident, primaryRole }: Props) => {
           <TabsTrigger value="calendar">Calendrier</TabsTrigger>
           {showDocuments && <TabsTrigger value="documents">Documents</TabsTrigger>}
           <TabsTrigger value="journal">Journal Officiel</TabsTrigger>
+          <TabsTrigger value="nor">Registre NOR</TabsTrigger>
         </TabsList>
         <TabsContent value="news"     className="mt-4"><NewsManagement isPresident={isPresident} /></TabsContent>
         <TabsContent value="events"   className="mt-4"><EventManagement isPresident={isPresident} /></TabsContent>
         <TabsContent value="calendar" className="mt-4"><CalendarManagement /></TabsContent>
         {showDocuments && <TabsContent value="documents" className="mt-4"><DocumentManagement /></TabsContent>}
         <TabsContent value="journal"  className="mt-4"><OfficialJournalManagement /></TabsContent>
+        <TabsContent value="nor"      className="mt-4"><NorRegistry /></TabsContent>
       </Tabs>
     </div>
   );
